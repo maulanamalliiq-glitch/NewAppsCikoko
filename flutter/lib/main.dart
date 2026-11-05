@@ -370,12 +370,57 @@ class _HomeState extends State<HomePage> {
     default: return featureUnavailable(section);
   }}
   Widget featureUnavailable(String name) => Center(child:Padding(padding:const EdgeInsets.all(22),child:Card(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.construction_outlined,size:44,color:blue),const SizedBox(height:16),Text(name,style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:10),const Text('Halaman ini tercantum dalam rancangan role, tetapi modul data dan API belum tersedia. Tidak ada perubahan data yang dilakukan.',textAlign:TextAlign.center),const SizedBox(height:18),FilledButton(onPressed:()=>switchTo('Dashboard'),child:const Text('Kembali ke Beranda'))])))));
-  Widget menuPage()=>ListView(padding:const EdgeInsets.all(14),children:[
-    Text('Menu $roleLabel',style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:6),
-    const Text('Pilih layanan sesuai kewenangan akun.',style:TextStyle(color:Colors.blueGrey)),
-    if(!permissionsOk)const Card(child:ListTile(leading:Icon(Icons.warning_amber_rounded,color:Colors.orange),title:Text('Izin server belum berhasil dimuat'),subtitle:Text('Menu khusus disembunyikan sampai koneksi pulih.'))),
-    const SizedBox(height:12),for(final f in modules)Card(child:ListTile(onTap:()=>switchTo(f.route),leading:CircleAvatar(backgroundColor:sky,child:Icon(iconFor(f.route),color:blue)),title:Text(f.title,style:const TextStyle(fontWeight:FontWeight.w600,fontSize:13.5)),subtitle:Text(f.connected?f.description:'${f.description} • Modul belum terintegrasi',style:const TextStyle(fontSize:11.5)),trailing:const Icon(Icons.chevron_right))),
-    const SizedBox(height:22),const _PageCopyright(),
+  Widget menuPage()=>ListView(padding:const EdgeInsets.fromLTRB(15,16,15,24),children:[
+    const Text('Menu Layanan',style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w700)),
+    const SizedBox(height:4),
+    Text('Pilih layanan sesuai akses $roleLabel',
+     style:const TextStyle(color:Colors.blueGrey,fontSize:12)),
+    const SizedBox(height:14),
+    if(!permissionsOk)const Card(child:ListTile(
+     leading:Icon(Icons.warning_amber_rounded,color:Colors.orange),
+     title:Text('Izin server belum berhasil dimuat'),
+     subtitle:Text('Menu khusus disembunyikan sampai koneksi pulih.'))),
+    Container(padding:const EdgeInsets.symmetric(horizontal:12),
+     decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14),
+      border:Border.all(color:CikokoDesign.outline)),
+     child:const Row(children:[
+      Icon(Icons.search,color:blue,size:20),SizedBox(width:10),
+      Expanded(child:Padding(padding:EdgeInsets.symmetric(vertical:15),
+       child:Text('Jelajahi layanan dan fitur',
+        style:TextStyle(color:CikokoDesign.muted,fontSize:12))),
+     ])),
+    const SizedBox(height:14),
+    LayoutBuilder(builder:(context,constraints)=>GridView.builder(
+     shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),
+     itemCount:modules.length,
+     gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount:constraints.maxWidth>700?4:2,
+      mainAxisSpacing:10,crossAxisSpacing:10,mainAxisExtent:103),
+     itemBuilder:(context,i){
+      final f=modules[i];
+      const colors=[Color(0xFF8653D7),Color(0xFFED6A38),
+       Color(0xFF2187DB),Color(0xFF17A983),Color(0xFFE3A12A),Color(0xFFB857CB)];
+      final accent=colors[i%colors.length];
+      return Material(color:Colors.white,borderRadius:BorderRadius.circular(15),
+       child:InkWell(onTap:()=>switchTo(f.route),borderRadius:BorderRadius.circular(15),
+        child:Container(
+         padding:const EdgeInsets.all(11),
+         decoration:BoxDecoration(borderRadius:BorderRadius.circular(15),
+          border:Border.all(color:CikokoDesign.outline)),
+         child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+          Container(width:36,height:36,
+           decoration:BoxDecoration(color:accent.withValues(alpha:.12),
+            borderRadius:BorderRadius.circular(10)),
+           child:Icon(iconFor(f.route),size:21,color:accent)),
+          const SizedBox(height:8),
+          Text(f.title,maxLines:2,overflow:TextOverflow.ellipsis,
+           textAlign:TextAlign.center,
+           style:const TextStyle(color:navy,fontSize:11.5,
+            fontWeight:FontWeight.w500,height:1.2)),
+         ]))),
+      );
+     })),
+    const SizedBox(height:20),const _PageCopyright(),
   ]);
   Future<void> showOfficeProfile() async {
     await showModalBottomSheet<void>(context:context,isScrollControlled:true,
