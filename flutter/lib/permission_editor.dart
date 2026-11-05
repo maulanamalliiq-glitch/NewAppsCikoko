@@ -33,7 +33,7 @@ class _RolePermissionPageState extends State<RolePermissionPage> {
    const SizedBox(height:13),
    DropdownButtonFormField<String>(initialValue:role,decoration:const InputDecoration(labelText:'Pilih role'),items:[for(final e in roles.entries)if(e.key!='admin')DropdownMenuItem(value:e.key,child:Text('${e.value}'))],onChanged:busy?null:(r){if(r!=null)setState(()=>role=r);}),
    const SizedBox(height:8),for(final key in keys)Card(child:SwitchListTile(dense:true,title:Text(key.replaceAll(':',' / ').replaceAll('_',' ')),value:allowed(key),onChanged:busy?null:(v)=>change(key,v))),
-   const SizedBox(height:18),
+   const SizedBox(height:18),const CikokoPageSignature(),
   ]);
  }
 }
