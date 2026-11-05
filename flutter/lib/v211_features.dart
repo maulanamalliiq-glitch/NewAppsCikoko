@@ -1,3 +1,4 @@
+import 'app_settings.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
@@ -378,6 +379,12 @@ class _CivicProfileState extends State<CivicProfilePage>{
        onTap:()=>setState(()=>editing=true)),
       profileRow(Icons.photo_camera_outlined,'Ganti foto profil',
        onTap:uploadAvatar),
+      profileRow(Icons.dark_mode_outlined,'Tema tampilan',
+       subtitle:CikokoSettings.themeMode.value==ThemeMode.dark?'Gelap':'Terang',
+       onTap:(){CikokoSettings.toggleTheme();setState((){});}),
+      profileRow(Icons.language_outlined,'Bahasa aplikasi',
+       subtitle:CikokoSettings.isEnglish?'English':'Bahasa Indonesia',
+       onTap:(){CikokoSettings.toggleLanguage();setState((){});}),
      ]),
      const SizedBox(height:12),
      group([
