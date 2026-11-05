@@ -344,10 +344,11 @@ class _CivicProfileState extends State<CivicProfilePage>{
       const SizedBox(height:18),
       Row(children:[
        Expanded(child:_ProfileQuickAction(
-        icon:verified?Icons.verified_rounded:Icons.verified_user_outlined,
-        iconColor:verified?const Color(0xFF119A69):null,
+        icon:complete?Icons.check_circle_rounded:Icons.verified_user_outlined,
+        iconColor:complete?const Color(0xFF0C9657):null,
+        highlighted:complete,
         title:'Identitas Akun',
-        detail:verified?'Terverifikasi':complete?'Menunggu verifikasi':'Lengkapi profil',
+        detail:verified?'Terverifikasi':complete?'Data lengkap':'Lengkapi profil',
         onTap:()=>showPersonalInfo(row,isResident))),
        const SizedBox(width:10),
        Expanded(child:_ProfileQuickAction(
@@ -430,24 +431,47 @@ class _CivicProfileState extends State<CivicProfilePage>{
 }
 
 class _ProfileQuickAction extends StatelessWidget{
- final IconData icon;final Color? iconColor;final String title,detail;final VoidCallback onTap;
- const _ProfileQuickAction({required this.icon,this.iconColor,required this.title,
-  required this.detail,required this.onTap});
+ final IconData icon;
+ final Color? iconColor;
+ final String title,detail;
+ final VoidCallback onTap;
+ final bool highlighted;
+ const _ProfileQuickAction({
+  required this.icon,this.iconColor,required this.title,required this.detail,
+  required this.onTap,this.highlighted=false});
  @override Widget build(BuildContext context)=>Material(
-  color:Colors.white,borderRadius:BorderRadius.circular(13),
-  child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(13),
-   child:Padding(padding:const EdgeInsets.all(11),child:Row(children:[
-    Icon(icon,color:iconColor??const Color(0xFF2375D3),size:23),
-    const SizedBox(width:8),
-    Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-     Text(title,maxLines:1,overflow:TextOverflow.ellipsis,
-      style:const TextStyle(fontSize:11.5,color:civicNavy,fontWeight:FontWeight.w600)),
-     const SizedBox(height:3),
-     Text(detail,maxLines:1,overflow:TextOverflow.ellipsis,
-      style:const TextStyle(fontSize:10.5,color:Colors.blueGrey)),
-    ])),
-    const Icon(Icons.chevron_right_rounded,size:16,color:Colors.blueGrey),
-   ]))),
+  color:highlighted?const Color(0xFFDAFAE6):Colors.white,
+  borderRadius:BorderRadius.circular(14),
+  child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(14),
+   child:Container(
+    constraints:const BoxConstraints(minHeight:73),
+    decoration:BoxDecoration(borderRadius:BorderRadius.circular(14),
+      border:Border.all(color:highlighted?const Color(0xFF20BB70):CikokoPalette.border,
+        width:highlighted?1.6:.65)),
+    padding:const EdgeInsets.all(9),
+    child:Row(children:[
+     Container(width:35,height:35,
+       decoration:BoxDecoration(color:highlighted?Colors.white:
+        const Color(0xFFE8F3FF),borderRadius:BorderRadius.circular(11)),
+       child:Icon(icon,
+        color:iconColor??CikokoPalette.blue,
+        size:highlighted?27:22)),
+     const SizedBox(width:7),
+     Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Text(title,maxLines:1,overflow:TextOverflow.ellipsis,
+       style:TextStyle(fontSize:11.3,
+        color:highlighted?const Color(0xFF10643B):civicNavy,
+        fontWeight:FontWeight.w800)),
+      const SizedBox(height:4),
+      Text(detail,maxLines:1,overflow:TextOverflow.ellipsis,
+       style:TextStyle(fontSize:10.5,
+        color:highlighted?const Color(0xFF13834C):Colors.blueGrey,
+        fontWeight:highlighted?FontWeight.w700:FontWeight.w400)),
+     ])),
+     Icon(Icons.chevron_right_rounded,size:16,
+      color:highlighted?const Color(0xFF098B4D):Colors.blueGrey),
+    ]),
+   ))),
  );
 }
 
