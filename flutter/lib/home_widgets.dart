@@ -198,6 +198,76 @@ class _PremiumQuickAction extends StatelessWidget {
   );
 }
 
+/// Konsisten untuk semua akun petugas tanpa mengubah izin atau endpoint.
+class CikokoStaffHero extends StatelessWidget {
+  final String roleName;
+  final VoidCallback onManagement;
+  final VoidCallback onServices;
+  const CikokoStaffHero({super.key, required this.roleName,
+    required this.onManagement, required this.onServices});
+
+  @override
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(22),
+    child: SizedBox(
+      height: 208,
+      width: double.infinity,
+      child: Stack(fit: StackFit.expand, children: [
+        Image.asset('assets/kantor-cikoko.jpg', fit: BoxFit.cover),
+        const DecoratedBox(decoration: BoxDecoration(
+          gradient: LinearGradient(begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xF008326A), Color(0xD0115BA3), Color(0x95008BDD)]))),
+        Padding(
+          padding: const EdgeInsets.all(17),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Row(children: [
+              Icon(Icons.verified_user_rounded, color: Color(0xFFFFD27B), size: 18),
+              SizedBox(width: 7),
+              Expanded(child: Text('PUSAT PELAYANAN KELURAHAN',
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.white, fontSize: 10.5,
+                  letterSpacing: .7, fontWeight: FontWeight.w800))),
+            ]),
+            const SizedBox(height: 12),
+            Text(roleName, maxLines: 2, overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white,
+                fontSize: 23, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 5),
+            const Text('Kelola tugas dan pelayanan warga secara efisien.',
+              style: TextStyle(color: Color(0xFFE7F3FF), fontSize: 12)),
+            const Spacer(),
+            Row(children: [
+              Expanded(child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white, foregroundColor: homeNavy,
+                  minimumSize: const Size(0, 39),
+                  padding: const EdgeInsets.symmetric(horizontal: 7)),
+                onPressed: onManagement,
+                icon: const Icon(Icons.dashboard_customize_outlined, size: 17),
+                label: const Text('Kelola Tugas',
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)))),
+              const SizedBox(width: 9),
+              Expanded(child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 39),
+                  side: const BorderSide(color: Colors.white70),
+                  padding: const EdgeInsets.symmetric(horizontal: 7)),
+                onPressed: onServices,
+                icon: const Icon(Icons.description_outlined, size: 17),
+                label: const Text('Layanan',
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)))),
+            ]),
+          ]),
+        ),
+      ]),
+    ),
+  );
+}
+
 /// Kategori pelayanan pada website, diterjemahkan menjadi kartu Flutter.
 class CikokoServiceTile extends StatelessWidget {
   final String title;
