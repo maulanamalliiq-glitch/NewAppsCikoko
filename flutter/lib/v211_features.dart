@@ -329,11 +329,11 @@ class _CivicProfileState extends State<CivicProfilePage>{
    Widget profileRow(IconData icon,String label,{VoidCallback? onTap,Color? color,String? subtitle}){
     return ListTile(
      contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:3),
-     leading:Icon(icon,color:color??const Color(0xFF5B719A),size:23),
-     title:Text(label,style:TextStyle(color:color??const Color(0xFF25344A),fontSize:14)),
+     leading:Icon(icon,color:color??Theme.of(context).colorScheme.primary,size:23),
+     title:Text(label,style:TextStyle(color:color??Theme.of(context).colorScheme.onSurface,fontSize:14)),
      subtitle:subtitle==null?null:Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,
-      style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
-     trailing:const Icon(Icons.chevron_right_rounded,color:Color(0xFF8D9BAC),size:20),
+      style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),
+     trailing:Icon(Icons.chevron_right_rounded,color:Theme.of(context).colorScheme.onSurfaceVariant,size:20),
      onTap:onTap,
     );
    }
