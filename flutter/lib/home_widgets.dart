@@ -81,121 +81,91 @@ class CikokoResidentHero extends StatelessWidget {
     required this.onStatus,required this.onAgenda,required this.onAspirations});
 
   @override
-  Widget build(BuildContext context) => Column(children: [
-    ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: SizedBox(
-        height: 224,
-        width: double.infinity,
-        child: Stack(fit: StackFit.expand, children: [
-          Image.asset('assets/kantor-cikoko.jpg', fit: BoxFit.cover,
-            alignment: const Alignment(0, -.12)),
-          const DecoratedBox(decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft, end: Alignment.bottomRight,
-              colors: [Color(0xE9093678), Color(0xB30861B5), Color(0x5D009FE8)],
-              stops: [0, .62, 1],
-            ),
-          )),
-          Positioned(right: -45, bottom: -85,
-            child: Container(width: 210, height: 210,
-              decoration: BoxDecoration(shape: BoxShape.circle,
-                border: Border.all(color: Colors.white24, width: 35)))),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(18, 17, 18, 16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Row(children: [
-                Icon(Icons.location_city_rounded, color: Color(0xFFFFD479), size: 18),
-                SizedBox(width: 7),
-                Expanded(child: Text('LAYANAN DIGITAL KELURAHAN CIKOKO',
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.white, fontSize: 10,
-                    fontWeight: FontWeight.w800, letterSpacing: .8))),
-              ]),
-              const SizedBox(height: 14),
-              Text('Halo, ${name.trim().isEmpty ? 'Warga Cikoko' : name} 👋',
-                maxLines: 2, overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.white,
-                  fontSize: 23, fontWeight: FontWeight.w800, height: 1.15)),
-              const SizedBox(height: 5),
-              const Text('Selamat datang di Cikoko Smart',
-                style: TextStyle(color: Color(0xFFE6F2FF), fontSize: 12.5)),
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .96),
-                  borderRadius: BorderRadius.circular(14)),
-                child: Row(children: [
-                  Image.asset('assets/logo.png', width: 36, height: 36),
-                  const SizedBox(width: 10),
-                  const Expanded(child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Kelurahan Cikoko', maxLines: 1,
-                        style: TextStyle(color: homeNavy, fontSize: 13,
-                          fontWeight: FontWeight.w800)),
-                      Text('Kecamatan Pancoran · Jakarta Selatan',
-                        maxLines: 1, overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: homeMuted, fontSize: 10)),
-                    ])),
-                  const Icon(Icons.verified_rounded, color: homeBlue, size: 20),
-                ]),
-              ),
-            ]),
-          ),
-        ]),
-      ),
-    ),
-    const SizedBox(height: 14),
-    Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
-      decoration: BoxDecoration(color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: homeBorder)),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(child: _PremiumQuickAction(
-          icon: Icons.description_outlined, title: 'Ajukan Surat', onTap: onService)),
-        Expanded(child: _PremiumQuickAction(
-          icon: Icons.manage_search_rounded, title: 'Cek Status', onTap: onStatus)),
-        Expanded(child: _PremiumQuickAction(
-          icon: Icons.calendar_month_outlined, title: 'Agenda', onTap: onAgenda)),
-        Expanded(child: _PremiumQuickAction(
-          icon: Icons.campaign_outlined, title: 'Aspirasi', onTap: onAspirations)),
-      ]),
-    ),
-  ]);
+  Widget build(BuildContext context) => Column(
+   crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Padding(padding:const EdgeInsets.fromLTRB(3,5,3,13),
+     child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Text('Hai, ${name.trim().isEmpty ? 'Warga Cikoko' : name}',
+       maxLines:2,overflow:TextOverflow.ellipsis,
+       style:const TextStyle(color:homeNavy,fontSize:23,fontWeight:FontWeight.w700)),
+      const SizedBox(height:3),
+      const Text('Selamat datang di Cikoko SmartAPP',
+       style:TextStyle(color:homeMuted,fontSize:12)),
+     ])),
+    Container(height:126,width:double.infinity,
+     decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),
+      gradient:const LinearGradient(colors:[Color(0xFF0D48A5),Color(0xFF177FE9)]),
+      boxShadow:[BoxShadow(color:homeBlue.withValues(alpha:.14),blurRadius:14,offset:const Offset(0,5))]),
+     child:Stack(children:[
+      Positioned(right:-14,top:-26,child:Icon(Icons.location_city_rounded,
+       size:158,color:Colors.white.withValues(alpha:.13))),
+      Padding(padding:const EdgeInsets.all(16),
+       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        const Row(children:[Icon(Icons.place_outlined,size:14,color:Color(0xFFFFCF67)),
+         SizedBox(width:5),Text('Cikoko, Pancoran · Jakarta Selatan',
+          style:TextStyle(color:Colors.white,fontSize:11,fontWeight:FontWeight.w500))]),
+        const Spacer(),
+        const Text('Layanan Digital Cikoko SmartAPP',
+         style:TextStyle(color:Colors.white,fontSize:17,fontWeight:FontWeight.w600)),
+        const SizedBox(height:5),
+        const Text('Cepat, mudah, dan terintegrasi untuk warga',
+         style:TextStyle(color:Color(0xFFD9EBFF),fontSize:11)),
+       ])),
+     ])),
+    const SizedBox(height:17),
+    GridView.count(crossAxisCount:4,shrinkWrap:true,
+     physics:const NeverScrollableScrollPhysics(),mainAxisSpacing:10,
+     crossAxisSpacing:7,childAspectRatio:.9,children:[
+      _PremiumQuickAction(icon:Icons.description_outlined,title:'Layanan',onTap:onService,accent:const Color(0xFF8B51D7)),
+      _PremiumQuickAction(icon:Icons.send_outlined,title:'Kirim Laporan',onTap:onAspirations,accent:const Color(0xFFFF9B22)),
+      _PremiumQuickAction(icon:Icons.newspaper_outlined,title:'Info & Berita',onTap:onAgenda,accent:const Color(0xFFB54BD9)),
+      _PremiumQuickAction(icon:Icons.auto_awesome_outlined,title:'Inovasi',onTap:onAgenda,accent:const Color(0xFF35AD5B)),
+      _PremiumQuickAction(icon:Icons.calendar_month_outlined,title:'Agenda',onTap:onAgenda,accent:const Color(0xFFF49A23)),
+      _PremiumQuickAction(icon:Icons.manage_search_rounded,title:'Cek Status',onTap:onStatus,accent:const Color(0xFF2376D5)),
+      _PremiumQuickAction(icon:Icons.map_outlined,title:'Wilayah',onTap:onService,accent:const Color(0xFF14A99D)),
+      _PremiumQuickAction(icon:Icons.support_agent_outlined,title:'Bantuan',onTap:onAspirations,accent:const Color(0xFF9255D4)),
+     ]),
+    const SizedBox(height:13),
+    Material(color:const Color(0xFFE4F1FF),borderRadius:BorderRadius.circular(15),
+     child:InkWell(onTap:onService,borderRadius:BorderRadius.circular(15),
+      child:Padding(padding:const EdgeInsets.all(14),
+       child:Row(children:[
+        Container(width:43,height:43,decoration:BoxDecoration(
+         color:homeBlue,borderRadius:BorderRadius.circular(12)),
+         child:const Icon(Icons.verified_user_outlined,color:Colors.white,size:25)),
+        const SizedBox(width:12),
+        const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+         Text('Layanan Cepat',style:TextStyle(color:homeNavy,fontSize:14,fontWeight:FontWeight.w600)),
+         SizedBox(height:3),
+         Text('Urus administrasi lebih mudah dan cepat',
+          style:TextStyle(color:homeMuted,fontSize:10.5)),
+        ])),
+        const Icon(Icons.chevron_right_rounded,color:homeBlue),
+       ])))),
+   ]);
+
 }
 
 class _PremiumQuickAction extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  const _PremiumQuickAction({required this.icon, required this.title, required this.onTap});
-
+  final Color accent;
+  const _PremiumQuickAction({required this.icon,required this.title,
+   required this.onTap,this.accent=homeBlue});
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.transparent,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 48, height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE9F2FF), shape: BoxShape.circle),
-            child: Icon(icon, color: homeBlue, size: 25)),
-          const SizedBox(height: 8),
-          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: homeNavy, fontSize: 10.5,
-              fontWeight: FontWeight.w700, height: 1.2)),
-        ]),
-      ),
-    ),
-  );
+  Widget build(BuildContext context)=>Material(color:Colors.transparent,
+   child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(12),
+    child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+     Container(width:43,height:43,
+      decoration:BoxDecoration(color:accent.withValues(alpha:.13),
+       borderRadius:BorderRadius.circular(13)),
+      child:Icon(icon,color:accent,size:24)),
+     const SizedBox(height:7),
+     Text(title,maxLines:2,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,
+      style:const TextStyle(color:homeNavy,fontSize:10.3,fontWeight:FontWeight.w500,height:1.2)),
+    ])));
+
 }
 
 /// Konsisten untuk semua akun petugas tanpa mengubah izin atau endpoint.
