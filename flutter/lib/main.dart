@@ -82,7 +82,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
     child:ConstrainedBox(constraints:BoxConstraints(minHeight:box.maxHeight),
      child:Column(children:[
       SizedBox(height:220,width:double.infinity,child:Stack(fit:StackFit.expand,children:[
-       Image.asset('assets/kantor-cikoko.jpg',fit:BoxFit.cover),
+       const CikokoCityBackdrop(),
        const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(
         begin:Alignment.topCenter,end:Alignment.bottomCenter,
         colors:[Color(0x27104B98),Color(0xAB0D57B3),Color(0xFF0B4D9D)]))),
@@ -321,8 +321,8 @@ class _HomeState extends State<HomePage> {
     if(leave==true&&mounted){SystemNavigator.pop();}
   }
   @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
-    appBar:AppBar(
-      title:Row(children:[const Logo(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Kelurahan Cikoko',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16.5,fontWeight:FontWeight.w800,color:navy)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.5,color:Colors.blueGrey))]))]),
+    appBar:guest && section=='Dashboard'?null:AppBar(
+      title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:navy)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.5,color:Colors.blueGrey))]))]),
       actions:[IconButton(tooltip:'Notifikasi',onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
     ),
     drawer:Drawer(child:CikokoStructuredDrawer(
@@ -343,10 +343,8 @@ class _HomeState extends State<HomePage> {
       },
     )),
     body:loading?const Center(child:CircularProgressIndicator()):
-      DecoratedBox(decoration:const BoxDecoration(gradient:LinearGradient(
-        begin:Alignment.topCenter,end:Alignment.bottomCenter,
-        colors:[Color(0xFFEFF6FF),Color(0xFFF6F8FD),Color(0xFFF7FAFF)],
-        stops:[0,.30,1])),child:_page()),
+      SafeArea(top:guest && section=='Dashboard',
+       child:CikokoPremiumCanvas(child:_page())),
     bottomNavigationBar:NavigationBar(height:67,selectedIndex:nav,labelBehavior:NavigationDestinationLabelBehavior.alwaysShow,onDestinationSelected:selectNav,destinations:[
       const NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:'Menu'),
       const NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:'Berita'),
