@@ -73,19 +73,49 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
   }
   Future<String?> pickLogo()async{
     try{
-      final photo=await ImagePicker().pickImage(source:ImageSource.gallery,imageQuality:78,maxWidth:720,maxHeight:720);
+      if(!widget.admin){
+        throw ApiError('Hanya Admin Utama yang berwenang mengganti logo.');
+      }
+      final photo=await ImagePicker().pickImage(
+        source:ImageSource.gallery,imageQuality:78,maxWidth:720,maxHeight:720);
       if(photo==null)return null;
       final bytes=await photo.readAsBytes();
-      if(bytes.length>2*1024*1024){_message('Logo maksimal 2 MB. Pilih gambar lebih kecil.');return null;}
-      final uri=Uri.parse('${CikokoApi.root}?action=integrated_services_logo_upload');
-      final request=http.MultipartRequest('POST',uri);
-      request.headers.addAll(widget.api.authHeaders());
-      request.files.add(http.MultipartFile.fromBytes('logo',bytes,filename:photo.name));
-      final response=await http.Response.fromStream(await request.send().timeout(const Duration(seconds:40)));
-      final data=jsonDecode(utf8.decode(response.bodyBytes)) as Map<String,dynamic>;
-      if(response.statusCode!=200||data['ok']!=true)throw Exception('${data['error']??'Upload gagal'}');
-      return '${data['url']??''}';
-    }catch(_){_message('Logo belum berhasil diunggah. Pastikan API upload logo sudah tersedia.');return null;}
+      if(bytes.isEmpty||bytes.length>2*1024*1024){
+        throw ApiError('Logo maksimal 2 MB. Pilih JPG, PNG atau WebP yang lebih kecil.');
+      }
+      final uri=Uri.parse(CikokoApi.root+'?action=integrated_services_logo_upload');
+      final request=http.MultipartRequest('POST',uri)
+        ..headers.addAll(widget.api.authHeaders())
+        ..files.add(http.MultipartFile.fromBytes(
+          'logo',bytes,filename:photo.name));
+      final streamed=await request.send().timeout(const Duration(seconds:45));
+      final response=await http.Response.fromStream(streamed);
+      Map<String,dynamic> data;
+      try{
+        data=Map<String,dynamic>.from(
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map);
+      }catch(_){
+        throw ApiError(response.statusCode==404
+          ?'API unggah logo belum tersedia pada hosting. Admin perlu memasang patch backend terbaru.'
+          :'Respons unggah logo tidak valid (HTTP '+response.statusCode.toString()+').');
+      }
+      if(response.statusCode<200||response.statusCode>=300||data['ok']!=true){
+        final msg=(data['error']??'Unggah logo ditolak').toString();
+        throw ApiError(response.statusCode==404
+          ?'API unggah logo belum aktif di server. Pasang pembaruan backend terlebih dahulu.'
+          :msg+' (HTTP '+response.statusCode.toString()+')');
+      }
+      final uploaded=(data['url']??'').toString().trim();
+      final parsed=Uri.tryParse(uploaded);
+      if(parsed==null||parsed.scheme!='https'||parsed.host.isEmpty){
+        throw ApiError('Server tidak mengirim tautan HTTPS logo yang valid.');
+      }
+      if(mounted)_message('Logo berhasil diunggah. Simpan layanan untuk menerapkan.');
+      return uploaded;
+    }catch(e){
+      if(mounted)_message(cikokoFormalMessage(e));
+      return null;
+    }
   }
   Future<void> edit([Map<String,dynamic>? old])async{
     final title=TextEditingController(text:'${old?['title']??''}');
