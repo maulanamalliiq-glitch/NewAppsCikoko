@@ -226,7 +226,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
  Future<void> save()async{if(saving)return;setState(()=>saving=true);try{
   await widget.api.call('v211_profile_update',body:{for(final k in ['name','phone','email','address','nik'])k:fields[k]!.text.trim(),if(widget.api.profile?['role']=='warga') ...{'rt':fields['rt']!.text.trim(),'rw':fields['rw']!.text.trim(),'current_password':currentPassword.text}});
   widget.api.profile?['name']=fields['name']!.text.trim();
-  widget.api.profile?['rt']=fields['rt']!.text.trim().padLeft(2,'0');widget.api.profile?['rw']=fields['rw']!.text.trim().padLeft(2,'0');
+  if(isResident){widget.api.profile?['rt']=fields['rt']!.text.trim().padLeft(2,'0');widget.api.profile?['rw']=fields['rw']!.text.trim().padLeft(2,'0');}
   currentPassword.clear();if(mounted){civicMessage(context,'Perubahan profil berhasil disimpan.');setState((){editing=false;pending=loadProfile();});}
  }catch(_){if(mounted)civicMessage(context,'Perubahan profil belum berhasil disimpan. Silakan periksa kembali isian Anda.');}finally{if(mounted)setState(()=>saving=false);}}
  void showPersonalInfo(Map<String,dynamic> row,bool isResident){
@@ -286,8 +286,16 @@ class _CivicProfileState extends State<CivicProfilePage>{
    final displayName=fields['name']!.text.isNotEmpty?fields['name']!.text:'Pengguna Cikoko';
    final photo=(row['has_photo']==true||avatarReady);
    final requiredKeys=<String>['name','phone','email','address','nik',if(isResident)...['rt','rw']];
-   final complete=requiredKeys.every((key)=>(row[key]??'').toString().trim().isNotEmpty);
-   final verified=complete&&(row['verified']==true||row['is_verified']==true||row['verification_status']=='verified');
+   bool hasValidValue(String key){
+    final value=(row[key]??'').toString().trim();
+    if(key=='rt'||key=='rw'){
+      final number=int.tryParse(value);
+      return number!=null&&number>=1&&number<=99;
+    }
+    return value.isNotEmpty;
+   }
+   final complete=requiredKeys.every(hasValidValue);
+   final verified=s.data?['offline']!=true&&complete&&(row['verified']==true||row['is_verified']==true||row['verification_status']=='verified');
    Widget profileRow(IconData icon,String label,{VoidCallback? onTap,Color? color,String? subtitle}){
     return ListTile(
      contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:3),
@@ -348,7 +356,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
         iconColor:complete?const Color(0xFF0C9657):null,
         highlighted:complete,
         title:'Identitas Akun',
-        detail:verified?'Terverifikasi':complete?'Data lengkap':'Lengkapi profil',
+        detail:verified?'Terverifikasi':complete?'Menunggu verifikasi':'Lengkapi profil',
         onTap:()=>showPersonalInfo(row,isResident))),
        const SizedBox(width:10),
        Expanded(child:_ProfileQuickAction(
