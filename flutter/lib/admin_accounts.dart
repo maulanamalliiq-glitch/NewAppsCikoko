@@ -34,7 +34,9 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
   String? error;
   bool busy = false;
   bool loading = true;
-  bool showForm = true;
+  bool showForm = false;
+  String accountQuery = '';
+  String accountRoleFilter = 'all';
 
   bool get needsRt => selectedRole == 'rt' || selectedRole == 'bendahara_rt';
   bool get needsRw => needsRt ||
@@ -266,11 +268,60 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
           IconButton(tooltip: 'Muat ulang', onPressed: load,
               icon: const Icon(Icons.refresh)),
         ]),
+        const SizedBox(height: 8),
+        TextField(
+          key: const Key('admin_account_search'),
+          decoration: const InputDecoration(
+            labelText: 'Cari akun petugas',
+            hintText: 'Nama atau username',
+            prefixIcon: Icon(Icons.search_rounded),
+          ),
+          onChanged: (value) => setState(() => accountQuery = value.trim().toLowerCase()),
+        ),
+        const SizedBox(height: 10),
+        if (!widget.bendaharaOnly)
+          DropdownButtonFormField<String>(
+            key: const Key('admin_account_role_filter'),
+            initialValue: accountRoleFilter,
+            isExpanded: true,
+            decoration: decoration('Filter berdasarkan peran'),
+            items: [
+              const DropdownMenuItem(value: 'all', child: Text('Semua peran')),
+              ...roles.entries.map((e) => DropdownMenuItem(
+                value: e.key,
+                child: Text(e.value, overflow: TextOverflow.ellipsis),
+              )),
+            ],
+            onChanged: (value) => setState(() => accountRoleFilter = value ?? 'all'),
+          ),
+        const SizedBox(height: 12),
+        const Text('Pilih akun untuk melihat informasi. Perubahan data akun '
+            'hanya tersedia jika didukung API dan hak akses server.',
+            style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
+        const SizedBox(height: 8),
+        if (accounts.isNotEmpty && !accounts.any((item) {
+          final matchesText = accountQuery.isEmpty ||
+              (item['name'] ?? '').toString().toLowerCase().contains(accountQuery) ||
+              (item['username'] ?? '').toString().toLowerCase().contains(accountQuery);
+          return matchesText && (widget.bendaharaOnly ||
+              accountRoleFilter == 'all' || item['role'] == accountRoleFilter);
+        }))
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Text('Tidak ada akun yang sesuai pencarian atau filter.'),
+          ),
         if (accounts.isEmpty)
           Text(widget.bendaharaOnly
               ? 'Belum ada akun Bendahara RT/RW yang terdaftar.'
               : 'Belum ada akun petugas.'),
-        for (final account in accounts)
+        for (final account in accounts.where((item) {
+          final matchesText = accountQuery.isEmpty ||
+              (item['name'] ?? '').toString().toLowerCase().contains(accountQuery) ||
+              (item['username'] ?? '').toString().toLowerCase().contains(accountQuery);
+          final matchesRole = widget.bendaharaOnly ||
+              accountRoleFilter == 'all' || item['role'] == accountRoleFilter;
+          return matchesText && matchesRole;
+        }))
           Card(child: ListTile(
             dense: true,
             leading: Icon(account['active'] == true
