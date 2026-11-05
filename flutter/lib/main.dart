@@ -77,7 +77,6 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
    final title = signup ? 'Daftar Akun Warga' : 'Masuk ke Cikoko SmartAPP';
    return Scaffold(
      appBar: AppBar(title: const Text('Cikoko SmartAPP'), backgroundColor: pale),
-     bottomNavigationBar:const CikokoCopyrightFooter(),
      body: Center(
        child: SingleChildScrollView(
          padding: const EdgeInsets.all(18),
@@ -157,6 +156,9 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
                    TextButton(onPressed: busy ? null : () => setState(() => signup = !signup), child: Text(signup ? 'Sudah punya akun? Login' : 'Daftar Akun Warga →')),
                    const Divider(),
                    const Text('Data pribadi diproses untuk pelayanan Kelurahan Cikoko.', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                   const SizedBox(height:18),
+                   const Center(child:Text('Copyright © Cikoko Smart',
+                     style:TextStyle(fontSize:10.5,color:CikokoDesign.muted))),
                  ],
                ),
              ),
@@ -172,6 +174,7 @@ void notify(BuildContext c,String text,{bool error=false}){ScaffoldMessenger.of(
 class HomePage extends StatefulWidget{final VoidCallback onLogout,onAuthenticated;const HomePage({super.key,required this.onLogout,required this.onAuthenticated});@override State<HomePage> createState()=>_HomeState();}
 class _HomeState extends State<HomePage> {
   String section='Dashboard';
+  String menuQuery='';
   int nav=2;
   List<dynamic> items=[],events=[];
   List<Map<String,dynamic>> activeServices=cikokoDefaultIntegratedServices();
@@ -385,7 +388,12 @@ class _HomeState extends State<HomePage> {
     default: return featureUnavailable(section);
   }}
   Widget featureUnavailable(String name) => Center(child:Padding(padding:const EdgeInsets.all(22),child:Card(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.construction_outlined,size:44,color:blue),const SizedBox(height:16),Text(name,style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:10),const Text('Halaman ini tercantum dalam rancangan role, tetapi modul data dan API belum tersedia. Tidak ada perubahan data yang dilakukan.',textAlign:TextAlign.center),const SizedBox(height:18),FilledButton(onPressed:()=>switchTo('Dashboard'),child:const Text('Kembali ke Beranda'))])))));
-  Widget menuPage()=>ListView(padding:const EdgeInsets.fromLTRB(15,16,15,24),children:[
+  Widget menuPage(){
+    final query=menuQuery.trim().toLowerCase();
+    final filtered=modules.where((feature)=>query.isEmpty||
+      feature.title.toLowerCase().contains(query)||
+      feature.description.toLowerCase().contains(query)).toList();
+    return ListView(padding:const EdgeInsets.fromLTRB(15,16,15,24),children:[
     const Text('Menu Layanan',style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w700)),
     const SizedBox(height:4),
     Text('Pilih layanan sesuai akses $roleLabel',
@@ -395,24 +403,25 @@ class _HomeState extends State<HomePage> {
      leading:Icon(Icons.warning_amber_rounded,color:Colors.orange),
      title:Text('Izin server belum berhasil dimuat'),
      subtitle:Text('Menu khusus disembunyikan sampai koneksi pulih.'))),
-    Container(padding:const EdgeInsets.symmetric(horizontal:12),
-     decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(14),
-      border:Border.all(color:CikokoDesign.outline)),
-     child:const Row(children:[
-      Icon(Icons.search,color:blue,size:20),SizedBox(width:10),
-      Expanded(child:Padding(padding:EdgeInsets.symmetric(vertical:15),
-       child:Text('Jelajahi layanan dan fitur',
+    TextField(
+      onChanged:(value)=>setState(()=>menuQuery=value),
+      decoration:const InputDecoration(
+        hintText:'Cari layanan dan fitur...',
+        prefixIcon:Icon(Icons.search_rounded,size:21),
+        filled:true,fillColor:Colors.white)),
+    if(filtered.isEmpty)const Padding(
+      padding:EdgeInsets.symmetric(vertical:18),
+      child:Center(child:Text('Layanan tidak ditemukan.',
         style:TextStyle(color:CikokoDesign.muted,fontSize:12)))),
-     ])),
     const SizedBox(height:14),
     LayoutBuilder(builder:(context,constraints)=>GridView.builder(
      shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),
-     itemCount:modules.length,
+     itemCount:filtered.length,
      gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(
       crossAxisCount:constraints.maxWidth>700?4:2,
       mainAxisSpacing:10,crossAxisSpacing:10,mainAxisExtent:103),
      itemBuilder:(context,i){
-      final f=modules[i];
+      final f=filtered[i];
       const colors=[Color(0xFF8653D7),Color(0xFFED6A38),
        Color(0xFF2187DB),Color(0xFF17A983),Color(0xFFE3A12A),Color(0xFFB857CB)];
       final accent=colors[i%colors.length];
@@ -437,6 +446,7 @@ class _HomeState extends State<HomePage> {
      })),
     const SizedBox(height:20),const _PageCopyright(),
   ]);
+  }
   Future<void> showOfficeProfile() async {
     await showModalBottomSheet<void>(context:context,isScrollControlled:true,
       showDragHandle:true,builder:(sheetContext)=>SafeArea(child:Padding(
