@@ -1,3 +1,4 @@
+import 'profile_status.dart';
 import 'app_settings.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -226,21 +227,47 @@ class _CivicProfileState extends State<CivicProfilePage>{
  @override void initState(){super.initState();pending=loadProfile();}
  @override void dispose(){for(final c in fields.values){c.dispose();}currentPassword.dispose();super.dispose();}
  void fill(Map<String,dynamic> row){for(final k in fields.keys){final raw='${row[k]??''}';if(k=='rt'||k=='rw'){final n=int.tryParse(raw);fields[k]!.text=n==null?'':n.toString().padLeft(2,'0');}else{fields[k]!.text=raw;}}}
- Future<void> save()async{if(saving)return;
-   final isResident=widget.api.profile?['role']=='warga';
-   if(isResident){
-    final rt=int.tryParse(fields['rt']!.text.trim());
-    final rw=int.tryParse(fields['rw']!.text.trim());
-    if(rt==null||rw==null||rt<1||rt>99||rw<1||rw>99){
-     civicMessage(context,'RT dan RW harus berisi angka 01 sampai 99.');return;
-    }
+ Future<void> save()async{
+  if(saving)return;
+  final isResident=widget.api.profile?['role']=='warga';
+  final rawRt=fields['rt']!.text.trim(),rawRw=fields['rw']!.text.trim();
+  if(isResident&&(rawRt.isNotEmpty||rawRw.isNotEmpty)&&
+     (!cikokoValidRtRw(rawRt)||!cikokoValidRtRw(rawRw))){
+   civicMessage(context,'RT dan RW harus diisi bersamaan dengan angka 01 sampai 99.');
+   return;
+  }
+  final oldRt=cikokoNormalizeRtRw(widget.api.profile?['rt']);
+  final oldRw=cikokoNormalizeRtRw(widget.api.profile?['rw']);
+  if(isResident&&(cikokoNormalizeRtRw(rawRt)!=oldRt||
+     cikokoNormalizeRtRw(rawRw)!=oldRw)&&currentPassword.text.isEmpty){
+   civicMessage(context,'Masukkan password akun untuk perubahan RT/RW.');
+   return;
+  }
+  setState(()=>saving=true);
+  try{
+   await widget.api.call('v211_profile_update',body:{
+    for(final key in ['name','phone','email','address','nik'])
+     key:fields[key]!.text.trim(),
+    if(isResident)...{'rt':rawRt,'rw':rawRw,
+     'current_password':currentPassword.text},
+   });
+   // The legacy server acknowledged saves but silently discarded RT/RW.
+   // Confirm the actual stored state before marking the profile complete.
+   final confirmed=await widget.api.call('v211_profile');
+   final saved=Map<String,dynamic>.from(confirmed['user'] as Map? ?? {});
+   if(isResident&&(cikokoNormalizeRtRw(saved['rt'])!=cikokoNormalizeRtRw(rawRt)||
+      cikokoNormalizeRtRw(saved['rw'])!=cikokoNormalizeRtRw(rawRw))){
+    throw ApiError('RT/RW belum tersimpan di server. Pembaruan API profil diperlukan.');
    }
-   setState(()=>saving=true);try{
-  await widget.api.call('v211_profile_update',body:{for(final k in ['name','phone','email','address','nik'])k:fields[k]!.text.trim(),if(widget.api.profile?['role']=='warga') ...{'rt':fields['rt']!.text.trim(),'rw':fields['rw']!.text.trim(),'current_password':currentPassword.text}});
-  widget.api.profile?['name']=fields['name']!.text.trim();
-  if(isResident){widget.api.profile?['rt']=fields['rt']!.text.trim().padLeft(2,'0');widget.api.profile?['rw']=fields['rw']!.text.trim().padLeft(2,'0');}
-  currentPassword.clear();if(mounted){civicMessage(context,'Perubahan profil berhasil disimpan.');setState((){editing=false;pending=loadProfile();});}
- }catch(_){if(mounted)civicMessage(context,'Perubahan profil belum berhasil disimpan. Silakan periksa kembali isian Anda.');}finally{if(mounted)setState(()=>saving=false);}}
+   widget.api.profile={...?widget.api.profile,...saved};
+   currentPassword.clear();
+   if(mounted){
+    setState((){editing=false;pending=Future.value(confirmed);});
+    civicMessage(context,'Perubahan profil berhasil disimpan di server.');
+   }
+  }catch(e){if(mounted)civicMessage(context,cikokoFormalMessage(e));}
+  finally{if(mounted)setState(()=>saving=false);}
+ }
  void showPersonalInfo(Map<String,dynamic> row,bool isResident){
   final entries=<String,String>{
    'name':'Nama lengkap','username':'Username','phone':'Nomor HP',
@@ -291,22 +318,13 @@ class _CivicProfileState extends State<CivicProfilePage>{
     icon:const Icon(Icons.refresh),label:const Text('Muat ulang profil')));
    if(!s.hasData)return const Center(child:CircularProgressIndicator());
    final row=Map<String,dynamic>.from(s.data?['user']??{});
-   if(!editing&&fields['name']!.text.isEmpty)fill(row);
+   if(!editing)fill(row);
    final role=(widget.api.profile?['role']??'warga').toString();
    final isResident=role=='warga';
    final photoUrl='${CikokoApi.root.replaceFirst('index.php','v211.php')}?action=v211_profile_photo&v=$imageVersion';
    final displayName=fields['name']!.text.isNotEmpty?fields['name']!.text:'Pengguna Cikoko';
    final photo=(row['has_photo']==true||avatarReady);
-   final requiredKeys=<String>['name','phone','email','address','nik',if(isResident)...['rt','rw']];
-   bool hasValidValue(String key){
-    final value=(row[key]??'').toString().trim();
-    if(key=='rt'||key=='rw'){
-      final number=int.tryParse(value);
-      return number!=null&&number>=1&&number<=99;
-    }
-    return value.isNotEmpty;
-   }
-   final complete=requiredKeys.every(hasValidValue);
+   final complete=cikokoProfileIsComplete(row,isResident:isResident);
    final verified=s.data?['offline']!=true&&complete&&(row['verified']==true||row['is_verified']==true||row['verification_status']=='verified');
    Widget profileRow(IconData icon,String label,{VoidCallback? onTap,Color? color,String? subtitle}){
     return ListTile(
@@ -320,8 +338,8 @@ class _CivicProfileState extends State<CivicProfilePage>{
     );
    }
    Widget group(List<Widget> children)=>Container(
-    decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16),
-     border:Border.all(color:const Color(0xFFE5EAF2))),
+    decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(16),
+     border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
     child:Column(children:[
      for(var i=0;i<children.length;i++)...[
       if(i>0)const Divider(height:1,indent:56,endIndent:15),
@@ -332,21 +350,23 @@ class _CivicProfileState extends State<CivicProfilePage>{
     Container(
      padding:const EdgeInsets.fromLTRB(16,22,16,17),
      decoration:BoxDecoration(
-      gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
-       colors:[Color(0xFFFFFFFF),Color(0xFFE8F1FF),Color(0xFFDCEBFF)]),
+      gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+       colors:Theme.of(context).brightness==Brightness.dark
+        ?const [Color(0xFF173455),Color(0xFF152940),Color(0xFF111E30)]
+        :const [Color(0xFFFFFFFF),Color(0xFFE8F1FF),Color(0xFFDCEBFF)]),
       borderRadius:BorderRadius.circular(20),
       border:Border.all(color:const Color(0xFFE0EAF8))),
      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[
        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Text('Hai, $displayName',maxLines:2,overflow:TextOverflow.ellipsis,
-         style:const TextStyle(fontSize:21,fontWeight:FontWeight.w600,color:civicNavy)),
+         style:TextStyle(fontSize:21,fontWeight:FontWeight.w700,color:Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height:7),
         Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),
-         decoration:BoxDecoration(color:Colors.white.withValues(alpha:.85),
+         decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface.withValues(alpha:.85),
           borderRadius:BorderRadius.circular(8)),
          child:Text(isResident?'Akun Warga':'Akun ${role.replaceAll('_',' ').toUpperCase()}',
-          style:const TextStyle(fontSize:11,color:Color(0xFF536B88)))),
+          style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant))),
        ])),
        const SizedBox(width:12),
        Stack(clipBehavior:Clip.none,children:[
@@ -367,8 +387,8 @@ class _CivicProfileState extends State<CivicProfilePage>{
         icon:complete?Icons.check_circle_rounded:Icons.verified_user_outlined,
         iconColor:complete?const Color(0xFF0C9657):null,
         highlighted:complete,
-        title:'Identitas Akun',
-        detail:verified?'Terverifikasi':complete?'Menunggu verifikasi':'Lengkapi profil',
+        title:CikokoSettings.tr('Identitas Akun','Account Identity'),
+        detail:verified?CikokoSettings.tr('Terverifikasi','Verified'):complete?CikokoSettings.tr('Data lengkap','Complete'):isResident?CikokoSettings.tr('Lengkapi RT/RW','Complete RT/RW'):CikokoSettings.tr('Lengkapi profil','Complete profile'),
         onTap:()=>showPersonalInfo(row,isResident))),
        const SizedBox(width:10),
        Expanded(child:_ProfileQuickAction(
