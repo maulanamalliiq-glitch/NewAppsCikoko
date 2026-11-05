@@ -1,3 +1,4 @@
+import 'event_scope.dart';
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -19,6 +20,7 @@ class PushService {
   final local=FlutterLocalNotificationsPlugin();
   StreamSubscription<String>? refresh;
   StreamSubscription<RemoteMessage>? incoming;
+  StreamSubscription<RemoteMessage>? opened;
   final Set<String> _seenEventIds={};
   bool _seeded=false;
   bool _initialized=false;
@@ -43,6 +45,7 @@ class PushService {
       if(t!=null)await register(t);
       refresh=FirebaseMessaging.instance.onTokenRefresh.listen(register);
       incoming=FirebaseMessaging.onMessage.listen((m) async {
+        if(api.token==null || !cikokoPushBelongsToAccount(m.data,api.profile?['id']))return;
         final id=m.data['event_id'];
         if(id is String && id.isNotEmpty){_seenEventIds.add(id);}
         final n=m.notification;
@@ -54,9 +57,13 @@ class PushService {
         }
         onRefresh();
       });
-      FirebaseMessaging.onMessageOpenedApp.listen((message){onOpen?.call(message);onRefresh();});
+      opened=FirebaseMessaging.onMessageOpenedApp.listen((message){
+        if(api.token!=null && cikokoPushBelongsToAccount(message.data,api.profile?['id'])){
+          onOpen?.call(message);onRefresh();
+        }
+      });
       final initial=await FirebaseMessaging.instance.getInitialMessage();
-      if(initial!=null)onOpen?.call(initial);
+      if(initial!=null && api.token!=null && cikokoPushBelongsToAccount(initial.data,api.profile?['id']))onOpen?.call(initial);
     }catch(_){ /* Server polling still works while application is open. */ }
   }
   // Cadangan saat aplikasi aktif: notifikasi baru dari polling API tetap tampil.
@@ -76,6 +83,24 @@ class PushService {
       }catch(_){ }
     }
   }
-  Future<void> register(String token) async {if(api.token!=null){try{await api.call('device',body:{'fcm_token':token});}catch(_){}}}
-  void dispose(){refresh?.cancel();incoming?.cancel();}
+  Future<void> register(String token) async {
+    if(api.token!=null){try{await api.call('device',body:{'fcm_token':token});}catch(_){}}
+  }
+
+  /// Remove the account/device association before switching users. Deleting
+  /// the Firebase token also invalidates delayed push delivery to old sessions.
+  Future<void> unregisterDevice() async {
+    try {
+      final currentToken=await FirebaseMessaging.instance.getToken();
+      if(currentToken!=null && api.token!=null){
+        await api.call('device_unregister',body:{'fcm_token':currentToken});
+      }
+    } catch (_) {
+      // Server upgrades and offline logout must remain possible.
+    }
+    try{await FirebaseMessaging.instance.deleteToken();}catch(_){}
+    try{await local.cancelAll();}catch(_){}
+  }
+  void dispose(){refresh?.cancel();incoming?.cancel();opened?.cancel();}
+
 }
