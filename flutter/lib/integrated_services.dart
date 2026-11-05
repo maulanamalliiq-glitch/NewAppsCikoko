@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'api.dart';
 
@@ -67,12 +70,29 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
     }catch(_){_message('Perubahan belum dapat disimpan. Periksa koneksi atau pengaturan layanan.');}
     finally{if(mounted)setState(()=>saving=false);}
   }
+  Future<String?> pickLogo()async{
+    try{
+      final photo=await ImagePicker().pickImage(source:ImageSource.gallery,imageQuality:78,maxWidth:720,maxHeight:720);
+      if(photo==null)return null;
+      final bytes=await photo.readAsBytes();
+      if(bytes.length>2*1024*1024){_message('Logo maksimal 2 MB. Pilih gambar lebih kecil.');return null;}
+      final uri=Uri.parse('${CikokoApi.root}?action=integrated_services_logo_upload');
+      final request=http.MultipartRequest('POST',uri);
+      request.headers.addAll(widget.api.authHeaders());
+      request.files.add(http.MultipartFile.fromBytes('logo',bytes,filename:photo.name));
+      final response=await http.Response.fromStream(await request.send().timeout(const Duration(seconds:40)));
+      final data=jsonDecode(utf8.decode(response.bodyBytes)) as Map<String,dynamic>;
+      if(response.statusCode!=200||data['ok']!=true)throw Exception('${data['error']??'Upload gagal'}');
+      return '${data['url']??''}';
+    }catch(_){_message('Logo belum berhasil diunggah. Pastikan API upload logo sudah tersedia.');return null;}
+  }
   Future<void> edit([Map<String,dynamic>? old])async{
     final title=TextEditingController(text:'${old?['title']??''}');
     final desc=TextEditingController(text:'${old?['description']??''}');
     final logo=TextEditingController(text:'${old?['logo_url']??''}');
     final link=TextEditingController(text:'${old?['url']??''}');
     bool active=old?['active']!=false;
+    bool uploading=false;
     final form=GlobalKey<FormState>();
     try{
       final updated=await showDialog<Map<String,dynamic>>(context:context,builder:(c)=>StatefulBuilder(builder:(ctx,change)=>AlertDialog(
@@ -81,8 +101,23 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
           TextFormField(controller:title,decoration:const InputDecoration(labelText:'Judul layanan'),maxLength:80,
               validator:(v)=>(v??'').trim().isEmpty?'Judul wajib diisi':null),
           TextFormField(controller:desc,decoration:const InputDecoration(labelText:'Keterangan'),maxLines:3,maxLength:300),
-          TextFormField(controller:logo,decoration:const InputDecoration(labelText:'URL logo HTTPS (opsional)'),keyboardType:TextInputType.url,
-              validator:(v){final x=(v??'').trim();return x.isNotEmpty&&(Uri.tryParse(x)?.scheme!='https')?'Gunakan alamat HTTPS':null;}),
+          OutlinedButton.icon(
+            onPressed:uploading?null:()async{
+              change(()=>uploading=true);
+              final uploaded=await pickLogo();
+              if(ctx.mounted)change((){
+                if(uploaded!=null)logo.text=uploaded;
+                uploading=false;
+              });
+            },
+            icon:Icon(uploading?Icons.hourglass_top:Icons.photo_library_outlined),
+            label:Text(uploading?'Mengunggah logo...':'Pilih Logo dari Galeri'),
+          ),
+          if(logo.text.isNotEmpty)Padding(
+            padding:const EdgeInsets.symmetric(vertical:8),
+            child:Image.network(logo.text,height:64,width:64,fit:BoxFit.contain,
+              errorBuilder:(_,__,___)=>const Icon(Icons.image_not_supported_outlined)),
+          ),
           TextFormField(controller:link,decoration:const InputDecoration(labelText:'Link Lihat Selengkapnya (HTTPS)'),keyboardType:TextInputType.url,
               validator:(v){final x=(v??'').trim();return x.isNotEmpty&&(Uri.tryParse(x)?.scheme!='https')?'Gunakan alamat HTTPS':null;}),
           SwitchListTile(contentPadding:EdgeInsets.zero,title:const Text('Tampilkan kepada warga'),value:active,onChanged:(v)=>change(()=>active=v)),
@@ -132,25 +167,25 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
       if(widget.admin)Padding(padding:const EdgeInsets.symmetric(vertical:10),child:FilledButton.icon(
         onPressed:saving?null:()=>edit(),icon:const Icon(Icons.add),label:const Text('Tambah Layanan'))),
       if(loading)const LinearProgressIndicator(),
-      for(final entry in visible)Card(child:Padding(padding:const EdgeInsets.all(8),child:Row(children:[
-        SizedBox(width:56,height:56,child:Center(child:logoFor(entry))),
+      for(final entry in visible)Card(child:InkWell(
+        borderRadius:BorderRadius.circular(14),
+        onTap:widget.admin?null:()=>openLink('${entry['url']??''}'),
+        child:Padding(padding:const EdgeInsets.symmetric(horizontal:12,vertical:8),child:Row(children:[
+        SizedBox(width:44,height:44,child:Center(child:logoFor(entry))),
         const SizedBox(width:6),
         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
           Text('${entry['title']??''}',style:const TextStyle(fontSize:13.5,fontWeight:FontWeight.w700,color:_ink)),
-          Text('${entry['description']??''}',style:const TextStyle(fontSize:11,color:Colors.blueGrey),maxLines:3),
-          if(!widget.admin)TextButton.icon(
-            onPressed:()=>openLink('${entry['url']??''}'),
-            icon:const Icon(Icons.open_in_new,size:14),
-            label:const Text('Lihat Selengkapnya')),
+          Text('${entry['description']??''}',style:const TextStyle(fontSize:11,color:Colors.blueGrey),maxLines:1,overflow:TextOverflow.ellipsis),
           if(widget.admin)Text(entry['active']==false?'Disembunyikan':'Aktif',
             style:const TextStyle(fontSize:10,color:Colors.blueGrey)),
         ])),
+        if(!widget.admin)const Icon(Icons.chevron_right_rounded,color:_accent,size:20),
         if(widget.admin)PopupMenuButton<String>(enabled:!saving,onSelected:(v)=>v=='edit'?edit(entry):remove(entry),
           itemBuilder:(_)=>const [
             PopupMenuItem(value:'edit',child:Text('Edit')),
             PopupMenuItem(value:'remove',child:Text('Hapus')),
           ])
-      ]))),
+      ])))),
       if(visible.isEmpty&&!loading)const Center(child:Padding(padding:EdgeInsets.all(20),
         child:Text('Belum ada layanan yang tersedia.'))),
     ]));
