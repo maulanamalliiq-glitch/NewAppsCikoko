@@ -40,6 +40,92 @@ class _CikokoMarkPainter extends CustomPainter {
   @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
 }
 
+
+class CikokoGuestHero extends StatelessWidget {
+ final VoidCallback onLogin,onRegister,onServices,onNews,onInnovations,onAbout;
+ const CikokoGuestHero({super.key,required this.onLogin,required this.onRegister,
+  required this.onServices,required this.onNews,required this.onInnovations,
+  required this.onAbout});
+ @override Widget build(BuildContext context)=>Column(children:[
+   Container(height:232,width:double.infinity,clipBehavior:Clip.antiAlias,
+    decoration:BoxDecoration(borderRadius:BorderRadius.circular(21)),
+    child:Stack(fit:StackFit.expand,children:[
+      Image.asset('assets/kantor-cikoko.jpg',fit:BoxFit.cover),
+      const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(
+        begin:Alignment.topCenter,end:Alignment.bottomCenter,
+        colors:[Color(0x4C0F6DBD),Color(0xE50B448F)]))),
+      Positioned(top:22,left:15,child:Container(
+       padding:const EdgeInsets.symmetric(horizontal:9,vertical:5),
+       decoration:BoxDecoration(color:Colors.white.withValues(alpha:.85),
+        borderRadius:BorderRadius.circular(8)),
+       child:const Text('KELURAHAN CIKOKO · PANCORAN',
+        style:TextStyle(fontSize:9,color:CikokoPalette.navy,fontWeight:FontWeight.w600)))),
+      Positioned(left:16,right:16,bottom:22,child:Row(children:[
+       Container(width:64,height:64,decoration:BoxDecoration(
+         color:Colors.white,borderRadius:BorderRadius.circular(18)),
+        child:const Center(child:CikokoBrandMark(size:50))),
+       const SizedBox(width:12),
+       const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Text('Cikoko\nSmartAPP',style:TextStyle(
+          color:Colors.white,fontSize:26,fontWeight:FontWeight.w700,
+          height:1.02)),
+        SizedBox(height:5),
+        Text('Layanan Digital Kelurahan Cikoko',
+         style:TextStyle(color:Color(0xFFEAF3FF),fontSize:11)),
+       ])),
+      ])),
+    ])),
+   const SizedBox(height:12),
+   Container(padding:const EdgeInsets.all(13),
+    decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18),
+     border:Border.all(color:CikokoPalette.border)),
+    child:GridView.count(crossAxisCount:2,mainAxisSpacing:10,crossAxisSpacing:10,
+     childAspectRatio:2.35,shrinkWrap:true,
+     physics:const NeverScrollableScrollPhysics(),children:[
+      _GuestFeature(title:'Profil Kelurahan',subtitle:'Tentang Cikoko',
+       icon:Icons.account_balance_outlined,color:CikokoPalette.green,onTap:onAbout),
+      _GuestFeature(title:'Layanan Publik',subtitle:'Lihat layanan',
+       icon:Icons.widgets_outlined,color:CikokoPalette.orange,onTap:onServices),
+      _GuestFeature(title:'Berita & Informasi',subtitle:'Kegiatan terbaru',
+       icon:Icons.newspaper_outlined,color:CikokoPalette.blue,onTap:onNews),
+      _GuestFeature(title:'Inovasi Cikoko',subtitle:'Program unggulan',
+       icon:Icons.lightbulb_outline,color:const Color(0xFF28A45B),
+       onTap:onInnovations),
+     ])),
+   const SizedBox(height:12),
+   SizedBox(height:45,width:double.infinity,child:FilledButton(
+    onPressed:onLogin,child:const Text('Masuk ke Akun'))),
+   const SizedBox(height:8),
+   SizedBox(height:43,width:double.infinity,child:OutlinedButton(
+    onPressed:onRegister,child:const Text('Daftar Akun Warga'))),
+ ]);
+}
+class _GuestFeature extends StatelessWidget {
+ final String title,subtitle;
+ final IconData icon;
+ final Color color;
+ final VoidCallback onTap;
+ const _GuestFeature({required this.title,required this.subtitle,
+  required this.icon,required this.color,required this.onTap});
+ @override Widget build(BuildContext context)=>Material(
+  color:const Color(0xFFF8FAFD),borderRadius:BorderRadius.circular(12),
+  child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(12),
+   child:Padding(padding:const EdgeInsets.all(8),child:Row(children:[
+    Container(width:32,height:34,decoration:BoxDecoration(
+      color:color.withValues(alpha:.13),borderRadius:BorderRadius.circular(10)),
+     child:Icon(icon,color:color,size:19)),
+    const SizedBox(width:7),
+    Expanded(child:Column(mainAxisAlignment:MainAxisAlignment.center,
+     crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Text(title,maxLines:1,overflow:TextOverflow.ellipsis,
+       style:const TextStyle(fontSize:10.5,fontWeight:FontWeight.w600,
+        color:CikokoPalette.navy)),
+      Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,
+       style:const TextStyle(fontSize:9.5,color:CikokoPalette.muted)),
+    ])),
+   ]))));
+}
+
 class CikokoPremiumHeader extends StatelessWidget {
   final String title,subtitle;
   final IconData icon;
