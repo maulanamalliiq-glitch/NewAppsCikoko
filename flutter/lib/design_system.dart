@@ -36,7 +36,10 @@ abstract final class CikokoDesign {
       primaryColor: royal,
       scaffoldBackgroundColor: canvas,
       splashFactory: InkRipple.splashFactory,
-      visualDensity: VisualDensity.standard,
+      visualDensity: VisualDensity.compact,
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.android: PredictiveBackPageTransitionsBuilder(),
+      }),
       appBarTheme: const AppBarTheme(
         backgroundColor: canvas,
         foregroundColor: navy,
@@ -119,6 +122,7 @@ abstract final class CikokoDesign {
         labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: ink),
       ),
       listTileTheme: const ListTileThemeData(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
         iconColor: royal,
         textColor: ink,
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 3),
@@ -127,6 +131,13 @@ abstract final class CikokoDesign {
         style: IconButton.styleFrom(foregroundColor: navy),
       ),
       dividerTheme: const DividerThemeData(color: outline, thickness: .8),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(color: royal),
+      tabBarTheme: const TabBarThemeData(
+        labelColor: royal,
+        unselectedLabelColor: muted,
+        indicatorColor: royal,
+        dividerColor: outline,
+      ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: royal,
