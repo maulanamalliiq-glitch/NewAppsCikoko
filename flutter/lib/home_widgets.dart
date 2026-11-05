@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 
 const Color homeNavy = Color(0xff10375f);
@@ -94,25 +97,16 @@ class CikokoResidentHero extends StatelessWidget {
       const Text('Selamat datang di Cikoko SmartAPP',
        style:TextStyle(color:homeMuted,fontSize:12)),
      ])),
-    Container(height:126,width:double.infinity,
+    Container(height:143,width:double.infinity,
      decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),
-      gradient:const LinearGradient(colors:[Color(0xFF0D48A5),Color(0xFF177FE9)]),
+      gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+       colors:[Color(0xFF0D48A5),Color(0xFF2288ED)]),
       boxShadow:[BoxShadow(color:homeBlue.withValues(alpha:.14),blurRadius:14,offset:const Offset(0,5))]),
      child:Stack(children:[
-      Positioned(right:-14,top:-26,child:Icon(Icons.location_city_rounded,
-       size:158,color:Colors.white.withValues(alpha:.13))),
-      Padding(padding:const EdgeInsets.all(16),
-       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        const Row(children:[Icon(Icons.place_outlined,size:14,color:Color(0xFFFFCF67)),
-         SizedBox(width:5),Text('Cikoko, Pancoran · Jakarta Selatan',
-          style:TextStyle(color:Colors.white,fontSize:11,fontWeight:FontWeight.w500))]),
-        const Spacer(),
-        const Text('Layanan Digital Cikoko SmartAPP',
-         style:TextStyle(color:Colors.white,fontSize:17,fontWeight:FontWeight.w600)),
-        const SizedBox(height:5),
-        const Text('Cepat, mudah, dan terintegrasi untuk warga',
-         style:TextStyle(color:Color(0xFFD9EBFF),fontSize:11)),
-       ])),
+      Positioned(right:-15,bottom:-44,child:Icon(Icons.cloud_rounded,
+       size:173,color:Colors.white.withValues(alpha:.10))),
+      const Padding(padding:EdgeInsets.fromLTRB(16,12,16,12),
+       child:CikokoLiveWeather()),
      ])),
     const SizedBox(height:17),
     GridView.count(crossAxisCount:4,shrinkWrap:true,
@@ -146,6 +140,103 @@ class CikokoResidentHero extends StatelessWidget {
        ])))),
    ]);
 
+}
+
+/// Weather is fetched at runtime; no demo temperature is shown as live data.
+class CikokoLiveWeather extends StatefulWidget {
+ const CikokoLiveWeather({super.key});
+ @override State<CikokoLiveWeather> createState()=>_CikokoLiveWeatherState();
+}
+class _CikokoLiveWeatherState extends State<CikokoLiveWeather> {
+ late Future<Map<String,dynamic>> pending;
+ Timer? refreshTimer;
+ @override void initState(){
+  super.initState();
+  pending=fetch();
+  refreshTimer=Timer.periodic(const Duration(minutes:15),(_){
+    if(mounted)setState(()=>pending=fetch());
+  });
+ }
+ @override void dispose(){refreshTimer?.cancel();super.dispose();}
+ Future<Map<String,dynamic>> fetch() async {
+  final uri=Uri.parse('https://api.open-meteo.com/v1/forecast'
+    '?latitude=-6.243&longitude=106.846'
+    '&current=temperature_2m,weather_code,relative_humidity_2m'
+    '&timezone=Asia%2FJakarta');
+  final response=await http.get(uri).timeout(const Duration(seconds:12));
+  if(response.statusCode!=200)throw const FormatException('Layanan cuaca tidak tersedia');
+  final data=jsonDecode(utf8.decode(response.bodyBytes));
+  if(data is! Map||data['current'] is! Map)throw const FormatException('Data cuaca tidak lengkap');
+  final now=Map<String,dynamic>.from(data['current'] as Map);
+  if(now['temperature_2m'] is! num)throw const FormatException('Suhu belum tersedia');
+  return now;
+ }
+ String description(int code){
+  if(code==0)return 'Cerah';
+  if(code<=3)return 'Cerah Berawan';
+  if(code<=48)return 'Berkabut';
+  if(code<=67)return 'Hujan';
+  if(code<=77)return 'Berawan';
+  if(code<=82)return 'Hujan';
+  if(code<=86)return 'Hujan';
+  if(code>=95)return 'Badai Petir';
+  return 'Berawan';
+ }
+ IconData symbol(int code){
+  if(code==0)return Icons.wb_sunny_rounded;
+  if(code<=3)return Icons.wb_cloudy_rounded;
+  if(code>=95)return Icons.thunderstorm_rounded;
+  if(code>=51&&code<=86)return Icons.water_drop_rounded;
+  return Icons.cloud_rounded;
+ }
+ @override Widget build(BuildContext context)=>FutureBuilder<Map<String,dynamic>>(
+  future:pending,builder:(ctx,s){
+   final loaded=s.hasData;
+   final value=s.data;
+   final temp=value?['temperature_2m'];
+   final code=(value?['weather_code'] is num)
+    ?(value!['weather_code'] as num).toInt():2;
+   final time='${value?['time']??''}';
+   return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    const Row(children:[
+     Icon(Icons.place_outlined,size:15,color:Color(0xFFFFD56D)),
+     SizedBox(width:5),
+     Text('Cikoko, Pancoran',style:TextStyle(color:Colors.white,
+      fontSize:11.5,fontWeight:FontWeight.w700)),
+    ]),
+    const Spacer(),
+    Row(crossAxisAlignment:CrossAxisAlignment.center,children:[
+     Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      if(loaded)...[
+       Text('${(temp as num).toStringAsFixed(0)}°C',
+        style:const TextStyle(fontSize:33,color:Colors.white,
+         height:1,fontWeight:FontWeight.w900)),
+       const SizedBox(height:4),
+       Text(description(code),style:const TextStyle(
+        fontSize:11.5,color:Colors.white,fontWeight:FontWeight.w600)),
+      ] else ...[
+       Text(s.hasError?'Cuaca tidak tersedia':'Memuat cuaca...',
+        style:const TextStyle(fontSize:15,color:Colors.white,
+         fontWeight:FontWeight.w700)),
+       const SizedBox(height:4),
+       const Text('Data aktual, bukan suhu contoh',
+        style:TextStyle(fontSize:10,color:Color(0xFFE2F3FF))),
+      ],
+     ])),
+     Icon(loaded?symbol(code):Icons.cloud_outlined,size:52,
+      color:const Color(0xFFFFE398)),
+    ]),
+    const SizedBox(height:7),
+    Row(children:[
+     Expanded(child:Text(loaded&&time.length>=16
+      ?'Diperbarui ${time.substring(11,16)} WIB • Open-Meteo'
+      :'Sumber: Open-Meteo',
+      style:const TextStyle(fontSize:9,color:Color(0xFFD5ECFF)))),
+     InkWell(onTap:()=>setState(()=>pending=fetch()),
+      child:const Icon(Icons.refresh_rounded,color:Colors.white,size:19)),
+    ]),
+   ]);
+  });
 }
 
 class _PremiumQuickAction extends StatelessWidget {
