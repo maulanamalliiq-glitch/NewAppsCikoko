@@ -184,7 +184,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
        child:Text('Copyright © Cikoko Smart',
         style:TextStyle(color:CikokoPalette.muted,fontSize:10.5))),
      ])),
-    )))),
+    ))),
   );
  }
 
