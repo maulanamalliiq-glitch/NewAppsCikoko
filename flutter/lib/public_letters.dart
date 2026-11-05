@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'api.dart';
 
 /// Public read-only view: deliberately consumes only reference, kind and
@@ -66,13 +67,12 @@ class _PublicLetterStatusState extends State<PublicLetterStatusSheet>{
     ));
   }
   @override Widget build(BuildContext context)=>Column(children:[
-    Padding(padding:const EdgeInsets.fromLTRB(18,12,10,2),child:Row(children:[
-      const Icon(Icons.fact_check_outlined,color:Color(0xff226fda)),
-      const SizedBox(width:8),
-      const Expanded(child:Text('Status Pelayanan Surat',
-        style:TextStyle(fontWeight:FontWeight.w800,fontSize:17,color:brand))),
-      IconButton(onPressed:()=>Navigator.pop(context),icon:const Icon(Icons.close)),
-    ])),
+    Padding(padding:const EdgeInsets.fromLTRB(12,10,12,8),
+      child:CikokoPremiumHeader(title:'Status Pelayanan Surat',
+        subtitle:'Pantau setiap tahap pengajuan secara transparan.',
+        icon:Icons.fact_check_outlined,
+        trailing:IconButton(tooltip:'Tutup',onPressed:()=>Navigator.pop(context),
+          icon:const Icon(Icons.close_rounded,color:Colors.white)))),
     const Divider(height:3),
     SizedBox(height:48,child:ListView(scrollDirection:Axis.horizontal,
       padding:const EdgeInsets.symmetric(horizontal:12),
