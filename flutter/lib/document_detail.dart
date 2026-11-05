@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'api.dart';
@@ -103,7 +104,12 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
   Widget pair(String label,dynamic val)=>Padding(padding:const EdgeInsets.symmetric(vertical:5),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(fontSize:11,color:Colors.blueGrey)),Text(v(val),style:const TextStyle(fontWeight:FontWeight.w500,fontSize:13))]));
   Widget section(String text)=>Padding(padding:const EdgeInsets.fromLTRB(0,16,0,8),child:Text(text,style:const TextStyle(fontSize:16,fontWeight:FontWeight.bold,color:Color(0xff123d65))));
   @override Widget build(BuildContext context)=>Column(children:[
-    Padding(padding:const EdgeInsets.fromLTRB(18,12,12,6),child:Row(children:[const Icon(Icons.description_outlined,color:Color(0xff226fda)),const SizedBox(width:8),const Expanded(child:Text('Detail & Progres Pengajuan',style:TextStyle(fontWeight:FontWeight.w800,fontSize:18))),IconButton(icon:const Icon(Icons.close),onPressed:()=>Navigator.pop(context))])),
+    Padding(padding:const EdgeInsets.fromLTRB(12,12,12,7),
+      child:CikokoPremiumHeader(title:'Detail & Progres Pengajuan',
+        subtitle:'Pantau status dan kelengkapan dokumen.',
+        icon:Icons.description_outlined,
+        trailing:IconButton(tooltip:'Tutup',onPressed:()=>Navigator.pop(context),
+          icon:const Icon(Icons.close_rounded,color:Colors.white)))),
     const Divider(height:2),
     Expanded(child:FutureBuilder<Map<String,dynamic>>(future:request,builder:(ctx,s){
       if(s.hasError)return Center(child:Padding(padding:const EdgeInsets.all(16),child:Text('Detail belum bisa dibuka: ${s.error}',textAlign:TextAlign.center)));
