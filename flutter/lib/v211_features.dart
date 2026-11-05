@@ -460,7 +460,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
      ]),
     ]else...[
      Row(children:[
-      const Expanded(child:Text(CikokoSettings.tr('Edit Informasi Profil','Edit Profile'),style:TextStyle(
+      Expanded(child:Text(CikokoSettings.tr('Edit Informasi Profil','Edit Profile'),style:TextStyle(
        fontSize:16,fontWeight:FontWeight.w600,color:civicNavy))),
       TextButton.icon(onPressed:(){fill(row);setState(()=>editing=false);},
        icon:const Icon(Icons.close,size:17),label:const Text('Tutup')),
