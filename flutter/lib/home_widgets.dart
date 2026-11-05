@@ -275,7 +275,7 @@ class _StaffAction extends StatelessWidget {
      ])),
     ])),
   ));
-
+}
 
 /// Kategori pelayanan pada website, diterjemahkan menjadi kartu Flutter.
 class CikokoServiceTile extends StatelessWidget {
