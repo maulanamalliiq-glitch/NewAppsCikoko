@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'api.dart';
 class CikokoProfileEditor extends StatefulWidget {
  final CikokoApi api;
@@ -21,6 +22,10 @@ class _State extends State<CikokoProfileEditor> {
  final p=widget.api.profile??{};
  final initial=(name.text.trim().isEmpty?'C':name.text.trim().substring(0,1)).toUpperCase();
  return ListView(padding:const EdgeInsets.all(14),children:[
+  const CikokoPremiumHeader(title:'Informasi Akun',
+   subtitle:'Perbarui data kontak dan identitas Anda.',
+   icon:Icons.manage_accounts_outlined),
+  const SizedBox(height:11),
   Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(children:[CircleAvatar(radius:35,backgroundColor:const Color(0xffe9f2fc),child:Text(initial,style:const TextStyle(fontSize:25,fontWeight:FontWeight.bold,color:Color(0xff12375d)))),const SizedBox(height:8),Text('${p['name']??''}',style:Theme.of(context).textTheme.titleMedium),Text('@${p['username']??''}',style:Theme.of(context).textTheme.bodySmall)]))),
   const SizedBox(height:10),
   Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
@@ -30,6 +35,7 @@ class _State extends State<CikokoProfileEditor> {
    if(feedback.isNotEmpty)Padding(padding:const EdgeInsets.only(bottom:10),child:Text(feedback)),
    FilledButton.icon(onPressed:busy?null:save,icon:const Icon(Icons.save_outlined),label:Text(busy?'Menyimpan...':'Simpan Perubahan')),
   ]))),
+  const CikokoPageSignature(),
  ]);
  }
 }
