@@ -1036,7 +1036,7 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
        'document_format':'split_v1'};
      late final Map<String,dynamic> response;
      if(staged){
-       // Shared hosting may limit each POST to 20 files. Send 8 per request.
+       // Shared hosting may limit each POST to 20 files. Send one compressed document per request.
        final random=Random.secure();
        final draftKey=List.generate(16,
          (_)=>random.nextInt(256).toRadixString(16).padLeft(2,'0')).join();
@@ -1044,7 +1044,7 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
          for(final entry in mainPhotos.entries)
             for(final path in entry.value)MapEntry(entry.key,path),
        ];
-       const batchSize=8;
+       const batchSize=1;
        final steps=(photos.length+batchSize-1)~/batchSize;
        for(var i=0;i<photos.length;i+=batchSize){
          final chunk=photos.skip(i).take(batchSize);
