@@ -405,6 +405,7 @@ class _RtRwOfficerManagerState extends State<RtRwOfficerManager> {
           trailing: const Icon(Icons.edit_location_alt_outlined),
           onTap: () => edit(officer),
         )),
+        const CikokoPageSignature(),
       ]);
     },
   );
