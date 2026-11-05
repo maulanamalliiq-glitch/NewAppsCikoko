@@ -11,7 +11,7 @@ Future<void> showCikokoDocument(BuildContext context, CikokoApi api, {required i
   return showModalBottomSheet<void>(
     context:context,isScrollControlled:true,useSafeArea:true,backgroundColor:Colors.white,
     shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(22))),
-    builder:(ctx)=>SizedBox(height:MediaQuery.sizeOf(ctx).height*.86,
+    builder:(ctx)=>SizedBox(height:MediaQuery.sizeOf(ctx).height*.90,
       child:DocumentDetailSheet(api:api,id:id,kind:kind,reference:reference,onChanged:onChanged)),
   );
 }
@@ -127,7 +127,7 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
       final witnessInCorrection=missingWitnesses.keys.any(pendingCodes.contains);
       final stages=['masuk','proses','selesai'];
       final step=status=='selesai'?3:status=='masuk'?1:2;
-      return ListView(padding:const EdgeInsets.fromLTRB(16,10,16,24),children:[
+      return ListView(padding:EdgeInsets.fromLTRB(16,10,16,MediaQuery.viewPaddingOf(context).bottom+42),children:[
         Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:const Color(0xfff2f7ff),borderRadius:BorderRadius.circular(14)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
           Text(isWaris?'Surat Ahli Waris':'Laporan Kegiatan',style:const TextStyle(fontSize:16,fontWeight:FontWeight.bold)),
           Text(v(detail['reference_no']??detail['id']),style:const TextStyle(fontSize:12,color:Colors.blueGrey)),
@@ -175,9 +175,10 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
           if(canReview&&status!='selesai'&&status!='ditolak')...[
             section('Minta Perbaikan kepada Warga'),
             const Text('Pilih persyaratan yang perlu diunggah ulang. Warga akan mendapat notifikasi.',style:TextStyle(fontSize:12,color:Colors.blueGrey)),
-            Wrap(spacing:5,runSpacing:5,children:[for(final entry in labels.entries)FilterChip(label:Text(entry.value.toString(),style:const TextStyle(fontSize:11)),selected:selected.contains(entry.key),onSelected:(yes)=>setState((){if(yes){selected.add(entry.key);}else{selected.remove(entry.key);}}))]),
+            Wrap(spacing:6,runSpacing:0,children:[for(final entry in labels.entries)FilterChip(visualDensity:VisualDensity.compact,materialTapTargetSize:MaterialTapTargetSize.shrinkWrap,label:Text(entry.value.toString(),style:const TextStyle(fontSize:11)),selected:selected.contains(entry.key),onSelected:(yes)=>setState((){if(yes){selected.add(entry.key);}else{selected.remove(entry.key);}}))]),
             const SizedBox(height:10),TextField(controller:reason,maxLines:2,decoration:const InputDecoration(labelText:'Alasan dan petunjuk untuk warga')),
-            const SizedBox(height:10),FilledButton.icon(onPressed:submitting?null:askCorrections,icon:const Icon(Icons.send),label:Text(submitting?'Mengirim...':'Kirim Permintaan Perbaikan')),
+            const SizedBox(height:16),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:submitting?null:askCorrections,icon:const Icon(Icons.send),label:Text(submitting?'Mengirim...':'Kirim Permintaan Perbaikan'))),
+            const SizedBox(height:16),
           ],
           if(isOwner && pending.isNotEmpty)...[
             section('Unggah Ulang Dokumen yang Kurang'),
