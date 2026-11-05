@@ -225,7 +225,7 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
                   decoration: BoxDecoration(color: accent.withValues(alpha: .11),
                       borderRadius: BorderRadius.circular(7)),
-                  child: Text('${group.features.length}', style: const TextStyle(
+                  child: Text('${group.features.length}', style: TextStyle(
                       fontSize: 10, color: accent, fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 7),
