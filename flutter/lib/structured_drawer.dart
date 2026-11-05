@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'role_catalog.dart';
 import 'premium_ui.dart';
 
-const _navy = Color(0xff10375f);
-const _blue = Color(0xff226fda);
-const _muted = Color(0xff647b91);
+const _navy = CikokoPalette.navy;
+const _blue = CikokoPalette.blue;
+const _muted = CikokoPalette.muted;
 const _panel = Color(0xfff2f6fb);
 
 /// Struktur navigasi saja. Setiap submenu berasal dari daftar RoleFeature
@@ -134,6 +134,17 @@ class CikokoStructuredDrawer extends StatefulWidget {
 }
 
 class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
+  Color _accent(String id) {
+    switch (id) {
+      case 'petugas': return CikokoPalette.purple;
+      case 'laporan': return CikokoPalette.rose;
+      case 'surat': return CikokoPalette.blue;
+      case 'informasi': return CikokoPalette.orange;
+      case 'komunikasi': return CikokoPalette.green;
+      default: return const Color(0xFF15A7BA);
+    }
+  }
+
   String? _expanded;
 
   @override
@@ -163,7 +174,7 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 7),
       child: Material(
-        color: active ? const Color(0xffe4efff) : Colors.white,
+        color: active ? CikokoPalette.sky : Colors.white,
         borderRadius: BorderRadius.circular(12),
         child: ListTile(
           key: const Key('nav_beranda'),
@@ -184,11 +195,12 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
   Widget _group(CikokoMenuGroup group) {
     final expanded = _expanded == group.id;
     final active = group.features.any((f) => f.route == widget.currentRoute);
+    final accent = _accent(group.id);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 3, 12, 3),
       child: Column(children: [
         Material(
-          color: expanded || active ? const Color(0xffeaf2fd) : Colors.transparent,
+          color: expanded || active ? accent.withValues(alpha: .09) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
             key: Key('nav_group_${group.id}'),
@@ -199,20 +211,22 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(children: [
-                Icon(group.icon, size: 21,
-                    color: expanded || active ? _blue : _muted),
+                Container(width: 36, height: 36,
+                  decoration: BoxDecoration(color: accent.withValues(alpha: .14),
+                    borderRadius: BorderRadius.circular(11)),
+                  child: Icon(group.icon, size: 20, color: accent)),
                 const SizedBox(width: 13),
                 Expanded(child: Text(group.title,
                   style: TextStyle(fontSize: 13.1, fontWeight: FontWeight.w700,
-                    color: expanded || active ? _navy : const Color(0xff29445e)))),
+                    color: expanded || active ? accent : _navy))),
                 Container(
                   constraints: const BoxConstraints(minWidth: 21),
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 3),
-                  decoration: BoxDecoration(color: Colors.white,
+                  decoration: BoxDecoration(color: accent.withValues(alpha: .11),
                       borderRadius: BorderRadius.circular(7)),
                   child: Text('${group.features.length}', style: const TextStyle(
-                      fontSize: 10, color: _muted, fontWeight: FontWeight.w700)),
+                      fontSize: 10, color: accent, fontWeight: FontWeight.w700)),
                 ),
                 const SizedBox(width: 7),
                 Icon(expanded ? Icons.keyboard_arrow_up_rounded :
@@ -230,7 +244,7 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
             padding: const EdgeInsets.fromLTRB(19, 3, 0, 5),
             child: DecoratedBox(
               decoration: const BoxDecoration(border: Border(
-                  left: BorderSide(color: Color(0xffd7e4f4), width: 2))),
+                  left: BorderSide(color: CikokoPalette.border, width: 2))),
               child: Column(children: [
                 for (final feature in group.features)
                   _submenu(feature),
@@ -256,7 +270,7 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 9),
           minLeadingWidth: 18,
           leading: Icon(widget.iconFor(feature.route), size: 18,
-              color: active ? _blue : _muted),
+              color: active ? _blue : CikokoPalette.purple),
           title: Text(feature.title, maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 12.5,
@@ -288,9 +302,12 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
         padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
         decoration: const BoxDecoration(gradient: LinearGradient(
           begin:Alignment.topLeft,end:Alignment.bottomRight,
-          colors:[Color(0xFF10448F),Color(0xFF1478DB)])),
+          colors:[CikokoPalette.navy,CikokoPalette.blue])),
         child: Row(children: [
-          widget.avatar,
+          Container(padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: Colors.white,
+              borderRadius: BorderRadius.circular(40)),
+            child: widget.avatar),
           const SizedBox(width: 12),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
             children: [
