@@ -351,10 +351,12 @@ class CikokoPremiumCanvas extends StatelessWidget {
  final Widget child;
  const CikokoPremiumCanvas({super.key,required this.child});
  @override Widget build(BuildContext context)=>DecoratedBox(
-  decoration:const BoxDecoration(gradient:LinearGradient(
+  decoration:BoxDecoration(gradient:LinearGradient(
    begin:Alignment.topCenter,end:Alignment.bottomCenter,
-   colors:[Color(0xFFEFF6FF),Color(0xFFF6F9FF),Color(0xFFF7FAFD)],
-   stops:[0,.33,1])),
+   colors:Theme.of(context).brightness==Brightness.dark
+    ?const [Color(0xFF0A1628),Color(0xFF101C2E),Color(0xFF0C1627)]
+    :const [Color(0xFFEFF6FF),Color(0xFFF6F9FF),Color(0xFFF7FAFD)],
+   stops:const [0,.33,1])),
   child:Center(child:ConstrainedBox(
    constraints:const BoxConstraints(maxWidth:820),child:child)));
 }
