@@ -47,7 +47,7 @@ abstract final class CikokoDesign {
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontSize: 19, fontWeight: FontWeight.w700, color: navy,
+          fontSize: 19, fontWeight: FontWeight.w600, color: navy,
           letterSpacing: -.35,
         ),
         iconTheme: IconThemeData(color: navy),
@@ -103,7 +103,7 @@ abstract final class CikokoDesign {
           foregroundColor: Colors.white,
           minimumSize: const Size(0, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: .1),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: .1),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -166,9 +166,9 @@ abstract final class CikokoDesign {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       textTheme: const TextTheme(
-        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: navy, letterSpacing: -.5),
-        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: navy, letterSpacing: -.3),
-        titleMedium: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w700, color: navy),
+        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: navy, letterSpacing: -.5),
+        titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: navy, letterSpacing: -.3),
+        titleMedium: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: navy),
         bodyLarge: TextStyle(fontSize: 15, color: ink, height: 1.45),
         bodyMedium: TextStyle(fontSize: 13.5, color: ink, height: 1.45),
         bodySmall: TextStyle(fontSize: 12, color: muted, height: 1.4),
