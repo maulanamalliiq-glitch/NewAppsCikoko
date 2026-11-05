@@ -370,6 +370,12 @@ class CikokoPageSignature extends StatelessWidget {
 }
 
 class CikokoStatusBadge extends StatelessWidget {
+  static Color accentFor(String status) {
+    final value=status.toLowerCase();
+    if(value.contains('tolak')||value.contains('reject')||value.contains('return'))return const Color(0xFFDC3558);
+    if(value.contains('selesai')||value.contains('approved')||value.contains('disetujui')||value.contains('complete'))return const Color(0xFF15985B);
+    return const Color(0xFFB67A00);
+  }
   final String status;
   const CikokoStatusBadge({super.key, required this.status});
   @override Widget build(BuildContext context) {
