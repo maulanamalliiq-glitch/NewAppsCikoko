@@ -1,3 +1,4 @@
+import 'app_settings.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -96,7 +97,7 @@ class CikokoWelcomeHero extends StatelessWidget {
           child:Text(roleName.toUpperCase(),style:const TextStyle(color:Colors.white,
             fontSize:10,fontWeight:FontWeight.w700,letterSpacing:.7))),
         const SizedBox(height:16),
-        Text('Hai, '+(name.trim().isEmpty?'Pengguna Cikoko':name),
+        Text(CikokoSettings.tr('Hai, ','Hi, ')+(name.trim().isEmpty?'Pengguna Cikoko':name),
           maxLines:2,overflow:TextOverflow.ellipsis,
           style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,
             fontSize:24,height:1.18)),
@@ -123,8 +124,8 @@ class CikokoResidentHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
    crossAxisAlignment:CrossAxisAlignment.start,children:[
-    CikokoWelcomeHero(name:name,roleName:'Warga',
-      subtitle:'Selamat datang di Cikoko SmartAPP'),
+    CikokoWelcomeHero(name:name,roleName:CikokoSettings.tr('Warga','Resident'),
+      subtitle:CikokoSettings.tr('Selamat datang di Cikoko SmartAPP','Welcome to Cikoko SmartAPP')),
     const SizedBox(height:12),
     const CikokoLiveWeather(),
     const SizedBox(height:17),
@@ -141,7 +142,7 @@ class CikokoResidentHero extends StatelessWidget {
       _PremiumQuickAction(icon:Icons.support_agent_outlined,title:'Bantuan',onTap:onAspirations,accent:const Color(0xFF9255D4)),
      ]),
     const SizedBox(height:13),
-    Material(color:const Color(0xFFE4F1FF),borderRadius:BorderRadius.circular(15),
+    Material(color:Theme.of(context).colorScheme.primaryContainer,borderRadius:BorderRadius.circular(15),
      child:InkWell(onTap:onService,borderRadius:BorderRadius.circular(15),
       child:Padding(padding:const EdgeInsets.all(14),
        child:Row(children:[
@@ -226,17 +227,17 @@ class _CikokoLiveWeatherState extends State<CikokoLiveWeather> {
           color:Theme.of(context).colorScheme.primary),
         const SizedBox(width:10),
         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text('CUACA CIKOKO · PANCORAN',style:TextStyle(
+          Text(CikokoSettings.tr('CUACA CIKOKO · PANCORAN','CIKOKO · PANCORAN WEATHER'),style:TextStyle(
             color:Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize:9,fontWeight:FontWeight.w700)),
           const SizedBox(height:3),
           Text(loaded?(temp as num).toStringAsFixed(0)+'°C · '+description(code):
-            s.hasError?'Cuaca belum tersedia':'Memuat cuaca...',
+            s.hasError?CikokoSettings.tr('Cuaca belum tersedia','Weather unavailable'):CikokoSettings.tr('Memuat cuaca...','Loading weather...'),
             maxLines:1,overflow:TextOverflow.ellipsis,
             style:TextStyle(fontSize:13,fontWeight:FontWeight.w700,
               color:Theme.of(context).colorScheme.onSurface)),
         ])),
-        IconButton(tooltip:'Muat ulang cuaca',
+        IconButton(tooltip:CikokoSettings.tr('Muat ulang cuaca','Refresh weather'),
           icon:const Icon(Icons.refresh_rounded,size:19),
           onPressed:()=>setState(()=>pending=fetch())),
       ]),
@@ -292,7 +293,7 @@ class CikokoStaffHero extends StatelessWidget {
         ];
     return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       CikokoWelcomeHero(name:accountName,roleName:roleName,
-        subtitle:admin?'Kelola sistem Cikoko SmartAPP':'Status tugas dan pelayanan hari ini'),
+        subtitle:admin?CikokoSettings.tr('Kelola sistem Cikoko SmartAPP','Manage Cikoko SmartAPP'):CikokoSettings.tr('Status tugas dan pelayanan hari ini','Today’s services and tasks')),
       const SizedBox(height:12),
       const CikokoLiveWeather(),
       const SizedBox(height:16),
@@ -326,7 +327,7 @@ class CikokoStaffHero extends StatelessWidget {
         color:const Color(0xFF13A58B),onTap:onServices)),
       ]),
       const SizedBox(height:12),
-      Material(color:const Color(0xFFE5F2FF),borderRadius:BorderRadius.circular(15),
+      Material(color:Theme.of(context).colorScheme.primaryContainer,borderRadius:BorderRadius.circular(15),
        child:InkWell(onTap:onManagement,borderRadius:BorderRadius.circular(15),
         child:Padding(padding:const EdgeInsets.all(13),child:Row(children:[
          const Icon(Icons.shield_outlined,color:Color(0xFF1769D2),size:26),
