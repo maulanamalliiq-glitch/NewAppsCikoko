@@ -1,3 +1,5 @@
+import 'profile_status.dart';
+import 'app_settings.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
@@ -217,18 +219,55 @@ class _CivicProfileState extends State<CivicProfilePage>{
  late Future<Map<String,dynamic>> pending;final fields={for(final k in ['name','username','phone','email','address','nik','rt','rw'])k:TextEditingController()};
  final currentPassword=TextEditingController();bool editing=false,saving=false,avatarReady=false;int imageVersion=0;
  Future<Map<String,dynamic>> loadProfile()async{
-  try{return await widget.api.call('v211_profile');}
+  try{final result=await widget.api.call('v211_profile');
+    if(result['user'] is Map){widget.api.profile={...?(widget.api.profile),...Map<String,dynamic>.from(result['user'] as Map)};}
+    return result;}
   catch(_){return {'ok':true,'offline':true,'user':widget.api.profile??<String,dynamic>{}};}
  }
  @override void initState(){super.initState();pending=loadProfile();}
  @override void dispose(){for(final c in fields.values){c.dispose();}currentPassword.dispose();super.dispose();}
  void fill(Map<String,dynamic> row){for(final k in fields.keys){final raw='${row[k]??''}';if(k=='rt'||k=='rw'){final n=int.tryParse(raw);fields[k]!.text=n==null?'':n.toString().padLeft(2,'0');}else{fields[k]!.text=raw;}}}
- Future<void> save()async{if(saving)return;setState(()=>saving=true);try{
-  await widget.api.call('v211_profile_update',body:{for(final k in ['name','phone','email','address','nik'])k:fields[k]!.text.trim(),if(widget.api.profile?['role']=='warga') ...{'rt':fields['rt']!.text.trim(),'rw':fields['rw']!.text.trim(),'current_password':currentPassword.text}});
-  widget.api.profile?['name']=fields['name']!.text.trim();
-  widget.api.profile?['rt']=fields['rt']!.text.trim().padLeft(2,'0');widget.api.profile?['rw']=fields['rw']!.text.trim().padLeft(2,'0');
-  currentPassword.clear();if(mounted){civicMessage(context,'Perubahan profil berhasil disimpan.');setState((){editing=false;pending=loadProfile();});}
- }catch(_){if(mounted)civicMessage(context,'Perubahan profil belum berhasil disimpan. Silakan periksa kembali isian Anda.');}finally{if(mounted)setState(()=>saving=false);}}
+ Future<void> save()async{
+  if(saving)return;
+  final isResident=widget.api.profile?['role']=='warga';
+  final rawRt=fields['rt']!.text.trim(),rawRw=fields['rw']!.text.trim();
+  if(isResident&&(rawRt.isNotEmpty||rawRw.isNotEmpty)&&
+     (!cikokoValidRtRw(rawRt)||!cikokoValidRtRw(rawRw))){
+   civicMessage(context,'RT dan RW harus diisi bersamaan dengan angka 01 sampai 99.');
+   return;
+  }
+  final oldRt=cikokoNormalizeRtRw(widget.api.profile?['rt']);
+  final oldRw=cikokoNormalizeRtRw(widget.api.profile?['rw']);
+  if(isResident&&(cikokoNormalizeRtRw(rawRt)!=oldRt||
+     cikokoNormalizeRtRw(rawRw)!=oldRw)&&currentPassword.text.isEmpty){
+   civicMessage(context,'Masukkan password akun untuk perubahan RT/RW.');
+   return;
+  }
+  setState(()=>saving=true);
+  try{
+   await widget.api.call('v211_profile_update',body:{
+    for(final key in ['name','phone','email','address','nik'])
+     key:fields[key]!.text.trim(),
+    if(isResident)...{'rt':rawRt,'rw':rawRw,
+     'current_password':currentPassword.text},
+   });
+   // The legacy server acknowledged saves but silently discarded RT/RW.
+   // Confirm the actual stored state before marking the profile complete.
+   final confirmed=await widget.api.call('v211_profile');
+   final saved=Map<String,dynamic>.from(confirmed['user'] as Map? ?? {});
+   if(isResident&&(cikokoNormalizeRtRw(saved['rt'])!=cikokoNormalizeRtRw(rawRt)||
+      cikokoNormalizeRtRw(saved['rw'])!=cikokoNormalizeRtRw(rawRw))){
+    throw ApiError('RT/RW belum tersimpan di server. Pembaruan API profil diperlukan.');
+   }
+   widget.api.profile={...?widget.api.profile,...saved};
+   currentPassword.clear();
+   if(mounted){
+    setState((){editing=false;pending=Future.value(confirmed);});
+    civicMessage(context,'Perubahan profil berhasil disimpan di server.');
+   }
+  }catch(e){if(mounted)civicMessage(context,cikokoFormalMessage(e));}
+  finally{if(mounted)setState(()=>saving=false);}
+ }
  void showPersonalInfo(Map<String,dynamic> row,bool isResident){
   final entries=<String,String>{
    'name':'Nama lengkap','username':'Username','phone':'Nomor HP',
@@ -279,15 +318,14 @@ class _CivicProfileState extends State<CivicProfilePage>{
     icon:const Icon(Icons.refresh),label:const Text('Muat ulang profil')));
    if(!s.hasData)return const Center(child:CircularProgressIndicator());
    final row=Map<String,dynamic>.from(s.data?['user']??{});
-   if(!editing&&fields['name']!.text.isEmpty)fill(row);
+   if(!editing)fill(row);
    final role=(widget.api.profile?['role']??'warga').toString();
    final isResident=role=='warga';
    final photoUrl='${CikokoApi.root.replaceFirst('index.php','v211.php')}?action=v211_profile_photo&v=$imageVersion';
    final displayName=fields['name']!.text.isNotEmpty?fields['name']!.text:'Pengguna Cikoko';
    final photo=(row['has_photo']==true||avatarReady);
-   final requiredKeys=<String>['name','phone','email','address','nik',if(isResident)...['rt','rw']];
-   final complete=requiredKeys.every((key)=>(row[key]??'').toString().trim().isNotEmpty);
-   final verified=complete&&(row['verified']==true||row['is_verified']==true||row['verification_status']=='verified');
+   final complete=cikokoProfileIsComplete(row,isResident:isResident);
+   final verified=s.data?['offline']!=true&&complete&&(row['verified']==true||row['is_verified']==true||row['verification_status']=='verified');
    Widget profileRow(IconData icon,String label,{VoidCallback? onTap,Color? color,String? subtitle}){
     return ListTile(
      contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:3),
@@ -300,8 +338,8 @@ class _CivicProfileState extends State<CivicProfilePage>{
     );
    }
    Widget group(List<Widget> children)=>Container(
-    decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16),
-     border:Border.all(color:const Color(0xFFE5EAF2))),
+    decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(16),
+     border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
     child:Column(children:[
      for(var i=0;i<children.length;i++)...[
       if(i>0)const Divider(height:1,indent:56,endIndent:15),
@@ -312,21 +350,23 @@ class _CivicProfileState extends State<CivicProfilePage>{
     Container(
      padding:const EdgeInsets.fromLTRB(16,22,16,17),
      decoration:BoxDecoration(
-      gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
-       colors:[Color(0xFFFFFFFF),Color(0xFFE8F1FF),Color(0xFFDCEBFF)]),
+      gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+       colors:Theme.of(context).brightness==Brightness.dark
+        ?const [Color(0xFF173455),Color(0xFF152940),Color(0xFF111E30)]
+        :const [Color(0xFFFFFFFF),Color(0xFFE8F1FF),Color(0xFFDCEBFF)]),
       borderRadius:BorderRadius.circular(20),
       border:Border.all(color:const Color(0xFFE0EAF8))),
      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[
        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Text('Hai, $displayName',maxLines:2,overflow:TextOverflow.ellipsis,
-         style:const TextStyle(fontSize:21,fontWeight:FontWeight.w600,color:civicNavy)),
+        Text(CikokoSettings.tr('Hai, ','Hi, ')+displayName,maxLines:2,overflow:TextOverflow.ellipsis,
+         style:TextStyle(fontSize:21,fontWeight:FontWeight.w700,color:Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height:7),
         Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),
-         decoration:BoxDecoration(color:Colors.white.withValues(alpha:.85),
+         decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface.withValues(alpha:.85),
           borderRadius:BorderRadius.circular(8)),
-         child:Text(isResident?'Akun Warga':'Akun ${role.replaceAll('_',' ').toUpperCase()}',
-          style:const TextStyle(fontSize:11,color:Color(0xFF536B88)))),
+         child:Text(isResident?CikokoSettings.tr('Akun Warga','Resident Account'):CikokoSettings.tr('Akun ','Account ')+role.replaceAll('_',' ').toUpperCase(),
+          style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant))),
        ])),
        const SizedBox(width:12),
        Stack(clipBehavior:Clip.none,children:[
@@ -347,29 +387,58 @@ class _CivicProfileState extends State<CivicProfilePage>{
         icon:complete?Icons.check_circle_rounded:Icons.verified_user_outlined,
         iconColor:complete?const Color(0xFF0C9657):null,
         highlighted:complete,
-        title:'Identitas Akun',
-        detail:verified?'Terverifikasi':complete?'Data lengkap':'Lengkapi profil',
+        title:CikokoSettings.tr('Identitas Akun','Account Identity'),
+        detail:verified?CikokoSettings.tr('Terverifikasi','Verified'):complete?CikokoSettings.tr('Data lengkap','Complete'):isResident?CikokoSettings.tr('Lengkapi RT/RW','Complete RT/RW'):CikokoSettings.tr('Lengkapi profil','Complete profile'),
         onTap:()=>showPersonalInfo(row,isResident))),
        const SizedBox(width:10),
        Expanded(child:_ProfileQuickAction(
         icon:Icons.manage_accounts_outlined,title:'Informasi Akun',
-        detail:'Lihat & ubah data',onTap:()=>setState(()=>editing=true))),
+        detail:CikokoSettings.tr('Lihat & ubah data','View & edit'),
+        onTap:()=>setState(()=>editing=true))),
       ]),
+      if(isResident)...[
+       const SizedBox(height:12),
+       Container(width:double.infinity,
+        padding:const EdgeInsets.symmetric(horizontal:12,vertical:10),
+        decoration:BoxDecoration(
+         color:Theme.of(context).colorScheme.surface.withValues(alpha:.77),
+         borderRadius:BorderRadius.circular(12)),
+        child:Row(children:[
+         Icon(cikokoValidRtRw(row['rt'])&&cikokoValidRtRw(row['rw'])
+           ?Icons.location_on_rounded:Icons.info_outline_rounded,
+           color:Theme.of(context).colorScheme.primary,size:17),
+         const SizedBox(width:7),
+         Expanded(child:Text(
+          cikokoValidRtRw(row['rt'])&&cikokoValidRtRw(row['rw'])
+           ?CikokoSettings.tr('Wilayah tersimpan: RT ','Saved area: RT ')+
+             cikokoNormalizeRtRw(row['rt'])+' / RW '+cikokoNormalizeRtRw(row['rw'])
+           :CikokoSettings.tr('Wilayah RT/RW belum lengkap','RT/RW area not complete'),
+          maxLines:1,overflow:TextOverflow.ellipsis,
+          style:TextStyle(fontSize:11,fontWeight:FontWeight.w600,
+           color:Theme.of(context).colorScheme.onSurface))),
+        ])),
+      ],
      ]),
     ),
     const SizedBox(height:16),
     if(!editing)...[
      group([
-      profileRow(Icons.person_outline_rounded,'Informasi pribadi',
+      profileRow(Icons.person_outline_rounded,CikokoSettings.label('Informasi pribadi'),
        subtitle:'Nama, kontak, alamat dan identitas',
        onTap:()=>showPersonalInfo(row,isResident)),
      ]),
      const SizedBox(height:12),
      group([
-      profileRow(Icons.settings_outlined,'Pengaturan profil',
+      profileRow(Icons.settings_outlined,CikokoSettings.label('Pengaturan profil'),
        onTap:()=>setState(()=>editing=true)),
-      profileRow(Icons.photo_camera_outlined,'Ganti foto profil',
+      profileRow(Icons.photo_camera_outlined,CikokoSettings.label('Ganti foto profil'),
        onTap:uploadAvatar),
+      profileRow(Icons.dark_mode_outlined,CikokoSettings.label('Tema tampilan'),
+       subtitle:CikokoSettings.themeMode.value==ThemeMode.dark?'Gelap':'Terang',
+       onTap:(){CikokoSettings.toggleTheme();setState((){});}),
+      profileRow(Icons.language_outlined,CikokoSettings.label('Bahasa aplikasi'),
+       subtitle:CikokoSettings.isEnglish?'English':'Bahasa Indonesia',
+       onTap:(){CikokoSettings.toggleLanguage();setState((){});}),
      ]),
      const SizedBox(height:12),
      group([
@@ -391,7 +460,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
      ]),
     ]else...[
      Row(children:[
-      const Expanded(child:Text('Edit Informasi Profil',style:TextStyle(
+      Expanded(child:Text(CikokoSettings.tr('Edit Informasi Profil','Edit Profile'),style:TextStyle(
        fontSize:16,fontWeight:FontWeight.w600,color:civicNavy))),
       TextButton.icon(onPressed:(){fill(row);setState(()=>editing=false);},
        icon:const Icon(Icons.close,size:17),label:const Text('Tutup')),
@@ -440,7 +509,7 @@ class _ProfileQuickAction extends StatelessWidget{
   required this.icon,this.iconColor,required this.title,required this.detail,
   required this.onTap,this.highlighted=false});
  @override Widget build(BuildContext context)=>Material(
-  color:highlighted?const Color(0xFFDAFAE6):Colors.white,
+  color:highlighted?(Theme.of(context).brightness==Brightness.dark?const Color(0xFF153E30):const Color(0xFFDAFAE6)):Theme.of(context).colorScheme.surface,
   borderRadius:BorderRadius.circular(14),
   child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(14),
    child:Container(
@@ -451,8 +520,8 @@ class _ProfileQuickAction extends StatelessWidget{
     padding:const EdgeInsets.all(9),
     child:Row(children:[
      Container(width:35,height:35,
-       decoration:BoxDecoration(color:highlighted?Colors.white:
-        const Color(0xFFE8F3FF),borderRadius:BorderRadius.circular(11)),
+       decoration:BoxDecoration(color:highlighted?Theme.of(context).colorScheme.surface:
+        Theme.of(context).colorScheme.primaryContainer,borderRadius:BorderRadius.circular(11)),
        child:Icon(icon,
         color:iconColor??CikokoPalette.blue,
         size:highlighted?27:22)),
@@ -460,12 +529,12 @@ class _ProfileQuickAction extends StatelessWidget{
      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Text(title,maxLines:1,overflow:TextOverflow.ellipsis,
        style:TextStyle(fontSize:11.3,
-        color:highlighted?const Color(0xFF10643B):civicNavy,
+        color:highlighted?(Theme.of(context).brightness==Brightness.dark?const Color(0xFF7CE0A9):const Color(0xFF10643B)):Theme.of(context).colorScheme.onSurface,
         fontWeight:FontWeight.w800)),
       const SizedBox(height:4),
       Text(detail,maxLines:1,overflow:TextOverflow.ellipsis,
        style:TextStyle(fontSize:10.5,
-        color:highlighted?const Color(0xFF13834C):Colors.blueGrey,
+        color:highlighted?(Theme.of(context).brightness==Brightness.dark?const Color(0xFF7CE0A9):const Color(0xFF13834C)):Theme.of(context).colorScheme.onSurfaceVariant,
         fontWeight:highlighted?FontWeight.w700:FontWeight.w400)),
      ])),
      Icon(Icons.chevron_right_rounded,size:16,
@@ -497,12 +566,42 @@ class _PpsuReportState extends State<PpsuReportPage>{
    TextField(controller:name,decoration:const InputDecoration(labelText:'Nama Lengkap')),const SizedBox(height:12),
    DropdownButtonFormField<String>(initialValue:team,decoration:const InputDecoration(labelText:'Tim PPSU'),items:['Jalur','Hilux','Penataan','Taman'].map((v)=>DropdownMenuItem(value:v,child:Text(v))).toList(),onChanged:(v)=>setState(()=>team=v??team)),const SizedBox(height:12),
    TextField(controller:activity,minLines:3,maxLines:5,decoration:const InputDecoration(labelText:'Uraian Kegiatan')),const SizedBox(height:10),
-   for(var i=0;i<3;i++)Padding(padding:const EdgeInsets.only(bottom:9),child:Row(children:[
-    if(photos[i]!=null)ClipRRect(borderRadius:BorderRadius.circular(8),child:Image.file(File(photos[i]!),width:55,height:55,fit:BoxFit.cover))else const SizedBox(width:55,height:55,child:Icon(Icons.add_a_photo_outlined,color:civicBlue)),
-    const SizedBox(width:8),Expanded(child:Text('Dokumentasi ${i+1} dari 3',style:const TextStyle(fontSize:12))),
-    IconButton(tooltip:'Kamera',onPressed:()=>pick(i,ImageSource.camera),icon:const Icon(Icons.camera_alt_outlined)),
-    IconButton(tooltip:'Galeri',onPressed:()=>pick(i,ImageSource.gallery),icon:const Icon(Icons.photo_library_outlined)),
-   ])),
+   for(var i=0;i<3;i++)Container(
+    margin:const EdgeInsets.only(bottom:12),
+    padding:const EdgeInsets.all(11),
+    decoration:BoxDecoration(
+      borderRadius:BorderRadius.circular(14),
+      color:Theme.of(context).colorScheme.surfaceContainerLow,
+      border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
+    child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Row(children:[
+        Expanded(child:Text('Dokumentasi '+(i+1).toString()+' dari 3',
+          style:const TextStyle(fontSize:12,fontWeight:FontWeight.w700))),
+        if(photos[i]!=null)const Icon(Icons.check_circle_rounded,
+          color:Color(0xFF1AA27C),size:18),
+      ]),
+      const SizedBox(height:9),
+      ClipRRect(borderRadius:BorderRadius.circular(10),
+        child:SizedBox(width:double.infinity,height:132,
+          child:photos[i]==null
+            ?ColoredBox(color:Theme.of(context).colorScheme.surfaceContainerHighest,
+              child:const Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+                Icon(Icons.add_photo_alternate_outlined,size:31),
+                SizedBox(height:5),Text('Foto belum dipilih',
+                  style:TextStyle(fontSize:11))]))
+            :Image.file(File(photos[i]!),fit:BoxFit.contain,
+              errorBuilder:(_,__,___)=>const Center(
+                child:Text('Pratinjau foto belum tersedia'))))),
+      const SizedBox(height:8),
+      Wrap(spacing:8,runSpacing:6,children:[
+        OutlinedButton.icon(onPressed:()=>pick(i,ImageSource.camera),
+          icon:const Icon(Icons.camera_alt_outlined,size:17),
+          label:Text(photos[i]==null?'Kamera':'Foto Ulang')),
+        OutlinedButton.icon(onPressed:()=>pick(i,ImageSource.gallery),
+          icon:const Icon(Icons.photo_library_outlined,size:17),
+          label:Text(photos[i]==null?'Galeri':'Ganti Foto')),
+      ]),
+    ])),
    SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:sending?null:send,icon:const Icon(Icons.send_outlined),label:Text(sending?'Mengirim laporan…':'Kirim Laporan PPSU'))),
   ]))),const SizedBox(height:12),
   OutlinedButton.icon(onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>Scaffold(appBar:AppBar(title:const Text('Riwayat Kegiatan PPSU')),body:PpsuHistoryPage(api:widget.api)))) ,icon:const Icon(Icons.history),label:const Text('Lihat Riwayat Kegiatan')),

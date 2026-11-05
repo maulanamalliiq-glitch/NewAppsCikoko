@@ -1,3 +1,5 @@
+import 'event_scope.dart';
+import 'app_settings.dart';
 import 'design_system.dart';
 import 'premium_ui.dart';
 import 'profile_editor.dart';
@@ -33,10 +35,12 @@ import 'lpj_pages.dart';
 const navy=CikokoDesign.navy, blue=CikokoDesign.royal, pale=CikokoDesign.canvas;
 const sky=Color(0xffe6f0ff), ink=CikokoDesign.ink;
 final api=CikokoApi();
-void main(){WidgetsFlutterBinding.ensureInitialized();runApp(const CikokoApp());}
+Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();await CikokoSettings.restore();runApp(const CikokoApp());}
 class CikokoApp extends StatelessWidget {
  const CikokoApp({super.key});
- @override Widget build(BuildContext c)=>MaterialApp(title:'Cikoko',debugShowCheckedModeBanner:false,
+ @override Widget build(BuildContext c)=>AnimatedBuilder(
+  animation:Listenable.merge([CikokoSettings.themeMode,CikokoSettings.language]),
+  builder:(context,_)=>MaterialApp(title:'Cikoko',debugShowCheckedModeBanner:false,
  builder:(ctx,child)=>Stack(children:[
    if(child!=null)child,
    ValueListenableBuilder<double?>(valueListenable:CikokoRequestProgress.value,
@@ -60,7 +64,8 @@ class CikokoApp extends StatelessWidget {
                  borderRadius:BorderRadius.circular(5)),
            ]))))),
      ),
- ]),theme:CikokoDesign.light,home:const Entry());
+ ]),theme:CikokoDesign.light,darkTheme:CikokoDesign.dark,
+    themeMode:CikokoSettings.themeMode.value,home:const Entry()));
 }
 class Entry extends StatefulWidget{const Entry({super.key});@override State<Entry> createState()=>_EntryState();}
 class _EntryState extends State<Entry>{bool loading=true;@override void initState(){super.initState();api.restore().whenComplete((){if(mounted)setState(()=>loading=false);});}
@@ -203,17 +208,18 @@ class _HomeState extends State<HomePage> {
   bool get isStaff=>role!='warga'&&role!='guest';
   bool get isAdmin=>capabilities['reports:view']==true;
   List<RoleFeature> get modules=>role=='guest'?[roleFeatures['services']!,roleFeatures['waris']!,roleFeatures['waris_requirements']!,roleFeatures['jumantik']!,roleFeatures['news']!,roleFeatures['announcements']!,roleFeatures['gallery']!]:modulesForRole(role,capabilities);
-  @override void initState(){super.initState();load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
+  void _refreshSettings(){if(mounted)setState((){});}
+  @override void initState(){super.initState();CikokoSettings.language.addListener(_refreshSettings);load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
       WidgetsBinding.instance.addPostFrameCallback((_){
-        if(!mounted)return;
+        if(!mounted || !cikokoPushBelongsToAccount(message.data,api.profile?['id']))return;
         final pushId=int.tryParse('${message.data['event_id']??''}')??0;
         if(pushId>0)api.call('event_read',body:{'id':pushId}).then((_)=>refresh()).catchError((_){});
         switchTo(destinationForPushCategory('${message.data['category']??''}',isStaff:isStaff));
       });
     });timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());}}
-  @override void dispose(){timer?.cancel();push?.dispose();super.dispose();}
+  @override void dispose(){CikokoSettings.language.removeListener(_refreshSettings);timer?.cancel();push?.dispose();super.dispose();}
   Future<void> refresh() async {
-    try {if(api.token==null)return;final v=await api.call('events');final incoming=List<dynamic>.from(v['events']??[]);await push?.onEvents(incoming);if(mounted)setState(()=>events=incoming);}
+    try {if(api.token==null)return;final v=await api.call('events');final incoming=cikokoEventsForAccount(List<dynamic>.from(v['events']??[]),api.profile?['id']);await push?.onEvents(incoming);if(mounted)setState(()=>events=incoming);}
     catch(_) {}
   }
   Future<void> load() async {
@@ -318,7 +324,18 @@ class _HomeState extends State<HomePage> {
   @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
     appBar:guest && section=='Dashboard'?null:AppBar(
       title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:navy)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.5,color:Colors.blueGrey))]))]),
-      actions:[IconButton(tooltip:'Notifikasi',onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
+      actions:[
+        IconButton(
+          tooltip:CikokoSettings.tr('Ganti tema gelap/terang','Switch dark/light theme'),
+          onPressed:CikokoSettings.toggleTheme,
+          icon:Icon(CikokoSettings.themeMode.value==ThemeMode.dark
+            ?Icons.light_mode_outlined:Icons.dark_mode_outlined)),
+        TextButton(
+          onPressed:CikokoSettings.toggleLanguage,
+          child:Text(CikokoSettings.isEnglish?'ID':'EN',
+            style:TextStyle(fontWeight:FontWeight.w800,
+              color:Theme.of(c).colorScheme.primary))),
+        IconButton(tooltip:CikokoSettings.tr('Notifikasi','Notifications'),onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
     ),
     drawer:Drawer(child:CikokoStructuredDrawer(
       avatar:const Logo(size:52),
@@ -333,6 +350,8 @@ class _HomeState extends State<HomePage> {
       onLogin:(){Navigator.pop(context);openLogin();},
       onLogout:()async{
         Navigator.pop(context);
+        await push?.unregisterDevice();
+        push?.dispose();
         await api.logout();
         widget.onLogout();
       },
@@ -341,11 +360,11 @@ class _HomeState extends State<HomePage> {
       SafeArea(top:guest && section=='Dashboard',
        child:CikokoPremiumCanvas(child:_page())),
     bottomNavigationBar:NavigationBar(height:67,selectedIndex:nav,labelBehavior:NavigationDestinationLabelBehavior.alwaysShow,onDestinationSelected:selectNav,destinations:[
-      const NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:'Menu'),
-      const NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:'Berita'),
-      const NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:'Beranda'),
-      const NavigationDestination(icon:Icon(Icons.auto_awesome_outlined),selectedIcon:Icon(Icons.auto_awesome),label:'Inovasi'),
-      const NavigationDestination(icon:Icon(Icons.person_outline),selectedIcon:Icon(Icons.person),label:'Profil'),
+      NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:CikokoSettings.tr('Menu','Menu')),
+      NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:CikokoSettings.tr('Berita','News')),
+      NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:CikokoSettings.tr('Beranda','Home')),
+      NavigationDestination(icon:Icon(Icons.auto_awesome_outlined),selectedIcon:Icon(Icons.auto_awesome),label:CikokoSettings.tr('Inovasi','Innovation')),
+      NavigationDestination(icon:Icon(Icons.person_outline),selectedIcon:Icon(Icons.person),label:CikokoSettings.tr('Profil','Profile')),
     ]),
     floatingActionButton:section=='Hubungi Kami'?null:FloatingActionButton.small(tooltip:'Hubungi Admin',onPressed:()=>switchTo('Hubungi Kami'),backgroundColor:blue,foregroundColor:Colors.white,child:const Icon(Icons.chat_bubble_outline)),
   ));
@@ -508,6 +527,7 @@ class _HomeState extends State<HomePage> {
   Widget home()=>ListView(padding:EdgeInsets.zero,children:[
     if(isStaff) Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoStaffHero(
       roleName:roleLabel,
+      accountName:'${api.profile?['name']??'Petugas Cikoko'}',
       onManagement:()=>switchTo('Menu Cikoko'),
       onServices:()=>switchTo('Layanan Online'),
     ))
@@ -682,6 +702,7 @@ class _HomeState extends State<HomePage> {
 
  Future<void> share(String link) async {final u=Uri.parse(link);await launchUrl(u,mode:LaunchMode.externalApplication);}
  Future<void> openNotification(Map<String,dynamic> event)async{
+     if(cikokoEventsForAccount([event],api.profile?['id']).isEmpty)return;
      final eventId=int.tryParse('${event['id']??''}')??0;
      if(eventId>0 && event['is_read']!=true && '${event['is_read']??0}'!='1'){
        try{
@@ -782,6 +803,7 @@ class _PhotoState extends State<PhotoInput> {
     super.didUpdateWidget(oldWidget);
     if(oldWidget.currentPath!=widget.currentPath){
       selectedPath=widget.currentPath;
+      selectedName=null;
     }
   }
   Future<void> pick(ImageSource source) async {
@@ -836,7 +858,7 @@ class _PhotoState extends State<PhotoInput> {
       });
       widget.onChanged(out.path);
       // Do not remove other documents; only replace this field's old copy.
-      if(previous!=null&&previous!=out.path) {
+      if(previous!=null&&previous!=out.path&&previous.startsWith(folder.path+'/')) {
         final f=File(previous);
         if(await f.exists())await f.delete();
       }
@@ -848,23 +870,51 @@ class _PhotoState extends State<PhotoInput> {
     }
   }
   @override Widget build(BuildContext c)=>Card(
-    child:Padding(padding:const EdgeInsets.all(10),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Text(widget.label,style:const TextStyle(fontWeight:FontWeight.w700,fontSize:12)),
-      const SizedBox(height:8),
-      Row(crossAxisAlignment:CrossAxisAlignment.center,children:[
-        if(selectedPath!=null)...[
-          ClipRRect(borderRadius:BorderRadius.circular(10),child:Image.file(File(selectedPath!),width:57,height:62,fit:BoxFit.cover,errorBuilder:(_,__,___)=>const SizedBox(width:57,height:62,child:Icon(Icons.broken_image_outlined)))),
-          const SizedBox(width:10),
-        ],
-        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Wrap(spacing:6,runSpacing:5,children:[
-            OutlinedButton.icon(onPressed:selecting?null:()=>pick(ImageSource.camera),icon:const Icon(Icons.camera_alt_outlined,size:16),label:const Text('Kamera',style:TextStyle(fontSize:12))),
-            OutlinedButton.icon(onPressed:selecting?null:()=>pick(ImageSource.gallery),icon:const Icon(Icons.photo_library_outlined,size:16),label:const Text('Galeri',style:TextStyle(fontSize:12))),
-          ]),
-          Text(selectedName??(selectedPath==null?'Belum ada foto':'Foto sudah dipilih'),maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
-        ]))
+    clipBehavior:Clip.antiAlias,
+    child:Padding(padding:const EdgeInsets.all(13),child:Column(
+      crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Row(children:[
+        Expanded(child:Text(widget.label,
+          style:const TextStyle(fontWeight:FontWeight.w700,fontSize:13))),
+        if(selectedPath!=null)const Icon(Icons.check_circle_rounded,
+          color:Color(0xFF10A277),size:19),
       ]),
+      const SizedBox(height:10),
+      ClipRRect(borderRadius:BorderRadius.circular(12),child:Container(
+        width:double.infinity,
+        height:selectedPath==null?100:172,
+        decoration:BoxDecoration(
+          color:Theme.of(context).colorScheme.surfaceContainerHighest,
+          border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
+        child:selectedPath==null
+          ?Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+              Icon(Icons.add_photo_alternate_outlined,size:32,
+                color:Theme.of(context).colorScheme.primary),
+              const SizedBox(height:6),
+              const Text('Pratinjau foto akan tampil di sini',
+                style:TextStyle(fontSize:11)),
+            ])
+          :Image.file(File(selectedPath!),width:double.infinity,
+              height:172,fit:BoxFit.contain,
+              errorBuilder:(_,__,___)=>const Center(
+                child:Text('Pratinjau tidak tersedia. Pilih ulang foto.'))),
+      )),
+      const SizedBox(height:10),
+      Wrap(spacing:8,runSpacing:8,children:[
+        OutlinedButton.icon(onPressed:selecting?null:()=>pick(ImageSource.camera),
+          icon:const Icon(Icons.camera_alt_outlined,size:17),
+          label:Text(selectedPath==null?'Kamera':'Foto Ulang')),
+        OutlinedButton.icon(onPressed:selecting?null:()=>pick(ImageSource.gallery),
+          icon:const Icon(Icons.photo_library_outlined,size:17),
+          label:Text(selectedPath==null?'Galeri':'Ganti Foto')),
+      ]),
+      const SizedBox(height:6),
+      Text(selectedName??(selectedPath==null?'Belum ada foto':'Foto siap diunggah'),
+        maxLines:2,overflow:TextOverflow.ellipsis,
+        style:TextStyle(fontSize:11,
+          color:Theme.of(context).colorScheme.onSurfaceVariant)),
     ])));
+
 }
 class WarisForm extends StatefulWidget{const WarisForm({super.key});@override State<WarisForm> createState()=>_WarisState();}
 class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingController>{};final files=<String,List<String>>{};int children=0;bool sending=false;double progress=0;bool agree=false;String? savedReference;bool completed=false;
