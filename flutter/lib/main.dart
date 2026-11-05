@@ -1,3 +1,4 @@
+import 'event_scope.dart';
 import 'app_settings.dart';
 import 'design_system.dart';
 import 'premium_ui.dart';
@@ -209,7 +210,7 @@ class _HomeState extends State<HomePage> {
   List<RoleFeature> get modules=>role=='guest'?[roleFeatures['services']!,roleFeatures['waris']!,roleFeatures['waris_requirements']!,roleFeatures['jumantik']!,roleFeatures['news']!,roleFeatures['announcements']!,roleFeatures['gallery']!]:modulesForRole(role,capabilities);
   @override void initState(){super.initState();load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
       WidgetsBinding.instance.addPostFrameCallback((_){
-        if(!mounted)return;
+        if(!mounted || !cikokoPushBelongsToAccount(message.data,api.profile?['id']))return;
         final pushId=int.tryParse('${message.data['event_id']??''}')??0;
         if(pushId>0)api.call('event_read',body:{'id':pushId}).then((_)=>refresh()).catchError((_){});
         switchTo(destinationForPushCategory('${message.data['category']??''}',isStaff:isStaff));
@@ -217,7 +218,7 @@ class _HomeState extends State<HomePage> {
     });timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());}}
   @override void dispose(){timer?.cancel();push?.dispose();super.dispose();}
   Future<void> refresh() async {
-    try {if(api.token==null)return;final v=await api.call('events');final incoming=List<dynamic>.from(v['events']??[]);await push?.onEvents(incoming);if(mounted)setState(()=>events=incoming);}
+    try {if(api.token==null)return;final v=await api.call('events');final incoming=cikokoEventsForAccount(List<dynamic>.from(v['events']??[]),api.profile?['id']);await push?.onEvents(incoming);if(mounted)setState(()=>events=incoming);}
     catch(_) {}
   }
   Future<void> load() async {
@@ -348,6 +349,8 @@ class _HomeState extends State<HomePage> {
       onLogin:(){Navigator.pop(context);openLogin();},
       onLogout:()async{
         Navigator.pop(context);
+        await push?.unregisterDevice();
+        push?.dispose();
         await api.logout();
         widget.onLogout();
       },
@@ -698,6 +701,7 @@ class _HomeState extends State<HomePage> {
 
  Future<void> share(String link) async {final u=Uri.parse(link);await launchUrl(u,mode:LaunchMode.externalApplication);}
  Future<void> openNotification(Map<String,dynamic> event)async{
+     if(cikokoEventsForAccount([event],api.profile?['id']).isEmpty)return;
      final eventId=int.tryParse('${event['id']??''}')??0;
      if(eventId>0 && event['is_read']!=true && '${event['is_read']??0}'!='1'){
        try{
