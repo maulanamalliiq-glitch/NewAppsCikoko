@@ -22,7 +22,6 @@ abstract final class CikokoSettings {
     'Layanan Masyarakat':'Community Services',
     'Menu Cepat':'Quick Access',
     'Lihat Semua':'View All',
-    'Berita & Informasi':'News & Updates',
     'Aktivitas Terbaru':'Recent Activity',
     'Layanan Cepat':'Quick Services',
     'Layanan':'Services',
