@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'api.dart';
 
 class RolePermissionPage extends StatefulWidget {final CikokoApi api;const RolePermissionPage({super.key,required this.api});@override State<RolePermissionPage> createState()=>_RolePermissionPageState();}
@@ -24,7 +25,12 @@ class _RolePermissionPageState extends State<RolePermissionPage> {
  @override Widget build(BuildContext c){if(error!=null)return Center(child:Text('Gagal memuat hak akses: $error'));if(data==null)return const Center(child:CircularProgressIndicator());
   final roles=Map<String,dynamic>.from(data!['roles'] as Map);
   final keys=(data!['keys'] as List<dynamic>).cast<String>().where((e)=>e!='role:manage').toList();
-  return ListView(padding:const EdgeInsets.all(14),children:[Text('Hak Akses Petugas',style:Theme.of(c).textTheme.titleLarge),const SizedBox(height:6),const Text('Perubahan berlaku pada API server. Admin Utama selalu memiliki akses penuh.',style:TextStyle(color:Colors.blueGrey,fontSize:12)),const SizedBox(height:12),
+  return ListView(padding:const EdgeInsets.all(14),children:[
+   const CikokoPremiumHeader(title:'Hak Akses Petugas',
+    subtitle:'Kelola izin setiap peran dengan aman. Admin Utama memiliki akses penuh.',
+    icon:Icons.admin_panel_settings_outlined,
+    start:Color(0xFF42378A),end:Color(0xFF1769D2)),
+   const SizedBox(height:13),
    DropdownButtonFormField<String>(initialValue:role,decoration:const InputDecoration(labelText:'Pilih role'),items:[for(final e in roles.entries)if(e.key!='admin')DropdownMenuItem(value:e.key,child:Text('${e.value}'))],onChanged:busy?null:(r){if(r!=null)setState(()=>role=r);}),
    const SizedBox(height:8),for(final key in keys)Card(child:SwitchListTile(dense:true,title:Text(key.replaceAll(':',' / ').replaceAll('_',' ')),value:allowed(key),onChanged:busy?null:(v)=>change(key,v))),
    const SizedBox(height:18),
