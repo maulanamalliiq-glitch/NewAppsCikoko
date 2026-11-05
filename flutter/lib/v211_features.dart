@@ -43,16 +43,16 @@ class _InnovationPageState extends State<InnovationPage>{
  }
  List<String> images(Map<String,dynamic> item){
   final all=(item['images'] as List? ?? []).map((e)=>e.toString()).where((e)=>e.isNotEmpty).toList();
-  if(all.isEmpty&&'\${item['image']??''}'.isNotEmpty)all.add(item['image'].toString());
+  if(all.isEmpty&&'${item['image']??''}'.isNotEmpty)all.add(item['image'].toString());
   return all.take(5).toList();
  }
  void detail(Map<String,dynamic> item){
   Navigator.of(context).push(MaterialPageRoute(builder:(detailContext)=>Scaffold(
    appBar:AppBar(title:const Text('Detail Inovasi')),
    body:ListView(padding:const EdgeInsets.all(16),children:[
-    Text('\${item['title']??''}',style:const TextStyle(fontSize:22,color:civicNavy,fontWeight:FontWeight.w600)),
+    Text('${item['title']??''}',style:const TextStyle(fontSize:22,color:civicNavy,fontWeight:FontWeight.w600)),
     const SizedBox(height:8),
-    Text('\${item['summary']??''}',style:const TextStyle(fontSize:13,color:Colors.blueGrey)),
+    Text('${item['summary']??''}',style:const TextStyle(fontSize:13,color:Colors.blueGrey)),
     const SizedBox(height:16),
     if(images(item).isNotEmpty)SizedBox(height:190,child:ListView(scrollDirection:Axis.horizontal,children:[
      for(final path in images(item))Padding(padding:const EdgeInsets.only(right:9),
@@ -61,7 +61,7 @@ class _InnovationPageState extends State<InnovationPage>{
          errorBuilder:(_,__,___)=>const SizedBox(width:265,child:Icon(Icons.broken_image_outlined))))),
     ])),
     const SizedBox(height:15),
-    SelectableText('\${item['body']??''}',style:const TextStyle(fontSize:14,height:1.6)),
+    SelectableText('${item['body']??''}',style:const TextStyle(fontSize:14,height:1.6)),
     const SizedBox(height:20),
     if(widget.api.profile?['role']=='admin')FilledButton.icon(
       onPressed:()async{Navigator.pop(detailContext);await edit(item);},
@@ -97,9 +97,9 @@ class InnovationEditor extends StatefulWidget{
  @override State<InnovationEditor> createState()=>_InnovationEditorState();
 }
 class _InnovationEditorState extends State<InnovationEditor>{
- late final title=TextEditingController(text:'\${widget.item['title']??''}');
- late final summary=TextEditingController(text:'\${widget.item['summary']??''}');
- late final body=TextEditingController(text:'\${widget.item['body']??''}');
+ late final title=TextEditingController(text:'${widget.item['title']??''}');
+ late final summary=TextEditingController(text:'${widget.item['summary']??''}');
+ late final body=TextEditingController(text:'${widget.item['body']??''}');
  late final photos=(widget.item['images'] as List? ?? [])
   .map((e)=>e.toString()).where((e)=>e.isNotEmpty).take(5).toList();
  bool saving=false,uploading=false,codeView=false;
@@ -159,7 +159,7 @@ class _InnovationEditorState extends State<InnovationEditor>{
     const SizedBox(height:16),
     Row(children:[const Expanded(child:Text('Galeri Foto',style:TextStyle(
       color:civicNavy,fontWeight:FontWeight.w600,fontSize:15))),
-      Text('\${photos.length}/5',style:const TextStyle(color:Colors.blueGrey)),
+      Text('${photos.length}/5',style:const TextStyle(color:Colors.blueGrey)),
     ]),
     const SizedBox(height:8),
     if(photos.isNotEmpty)SizedBox(height:110,child:ListView(scrollDirection:Axis.horizontal,children:[
