@@ -551,7 +551,7 @@ class _HomeState extends State<HomePage> {
             : showPublicLetterStatus(context,api,category:category))),
     Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Row(
       mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:const TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w600)),
+        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w600)),
         TextButton(onPressed:()=>switchTo(role=='warga'?'Layanan Online':'Menu Cikoko'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11))),
       ])),
     if(role=='warga')
@@ -587,7 +587,7 @@ class _HomeState extends State<HomePage> {
               child:Container(
                 padding:const EdgeInsets.all(9),
                 decoration:BoxDecoration(
-                  border:Border.all(color:const Color(0xFFE3EAF4)),
+                  border:Border.all(color:Theme.of(context).colorScheme.outlineVariant),
                   borderRadius:BorderRadius.circular(16)),
                 child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
                   if(Uri.tryParse(logo)?.scheme=='https')
@@ -597,7 +597,7 @@ class _HomeState extends State<HomePage> {
                   const SizedBox(height:8),
                   Text('${service['title']??''}',textAlign:TextAlign.center,
                     maxLines:2,overflow:TextOverflow.ellipsis,
-                    style:const TextStyle(color:navy,fontSize:11.5,fontWeight:FontWeight.w700)),
+                    style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:11.5,fontWeight:FontWeight.w700)),
                 ]),
               ),
             ),
@@ -631,13 +631,13 @@ class _HomeState extends State<HomePage> {
       ActionChip(avatar:const Icon(Icons.history,size:16,color:blue),label:const Text('Riwayat',style:TextStyle(fontSize:11)),onPressed:()=>switchTo('Riwayat')),
     ])),
     Padding(padding:const EdgeInsets.only(top:17,bottom:8),child:Row(children:[
-      const Expanded(child:Text('Berita & Informasi',style:TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w800))),
+      Expanded(child:Text('Berita & Informasi',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w800))),
       TextButton(onPressed:()=>switchTo('Berita & Kegiatan'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11)))
     ])),
     for(final x in items.where((x)=>x['type']=='berita'||x['type']=='pengumuman').take(3))contentCard(Map<String,dynamic>.from(x)),
     if(items.isEmpty)const Card(child:ListTile(dense:true,title:Text('Belum ada berita atau pengumuman.'))),
     if(!guest&&events.isNotEmpty)...[
-      const Padding(padding:EdgeInsets.only(top:12,bottom:7),child:Text('Aktivitas Terbaru',style:TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w800))),
+      Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Text('Aktivitas Terbaru',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w800))),
       for(final e in events.take(2))Card(child:ListTile(dense:true,leading:const Icon(Icons.notifications_outlined,color:blue),
         title:Text('${e['title']??''}',maxLines:1),subtitle:Text('${e['created_at']??''}',style:const TextStyle(fontSize:10)))),
     ],
@@ -1091,7 +1091,7 @@ const CikokoPremiumHeader(title:'Pengajuan Ahli Waris',
  subtitle:'Lengkapi identitas dan dokumen untuk proses administrasi.',
  icon:Icons.family_restroom_outlined),
 const SizedBox(height:11),
-const Card(child:Padding(padding:EdgeInsets.all(16),child:Text('Permohonan Pencatatan Ahli Waris\nSemua data dan foto dokumen akan diperiksa petugas. Pastikan foto terbaca.',style:TextStyle(color:navy,fontWeight:FontWeight.w600)))),Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Identitas Pemohon dan Pewaris',style:Theme.of(c).textTheme.titleMedium),const SizedBox(height:14),for(final e in names.entries)Field(e.value,v(e.key),lines:e.key=='heirs'||e.key=='address'?3:1,date:const ['birthdate','marriage_date','deathdate'].contains(e.key),keyboard:e.key=='nik'?TextInputType.number:e.key=='phone'?TextInputType.phone:TextInputType.text)]))),const SizedBox(height:12),Text('Foto Persyaratan Wajib',style:Theme.of(c).textTheme.titleMedium),for(final e in requiredPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
+Card(child:Padding(padding:const EdgeInsets.all(16),child:Text('Permohonan Pencatatan Ahli Waris\nSemua data dan foto dokumen akan diperiksa petugas. Pastikan foto terbaca.',style:TextStyle(color:Theme.of(c).colorScheme.onSurface,fontWeight:FontWeight.w600)))),Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Identitas Pemohon dan Pewaris',style:Theme.of(c).textTheme.titleMedium),const SizedBox(height:14),for(final e in names.entries)Field(e.value,v(e.key),lines:e.key=='heirs'||e.key=='address'?3:1,date:const ['birthdate','marriage_date','deathdate'].contains(e.key),keyboard:e.key=='nik'?TextInputType.number:e.key=='phone'?TextInputType.phone:TextInputType.text)]))),const SizedBox(height:12),Text('Foto Persyaratan Wajib',style:Theme.of(c).textTheme.titleMedium),for(final e in requiredPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
 const SizedBox(height:12),
 Text('Dua Orang Saksi',style:Theme.of(c).textTheme.titleMedium),
 for(final e in witnessPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
@@ -1350,14 +1350,14 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
       child:Icon(Icons.fact_check_outlined,size:22,
        color:CikokoStatusBadge.accentFor((r['status']??'').toString()))),
      title:Text('${r['title']??r['reference']??'Pengajuan'}',
-       style:const TextStyle(fontWeight:FontWeight.w800,fontSize:13,color:navy)),
+       style:TextStyle(fontWeight:FontWeight.w800,fontSize:13,color:Theme.of(context).colorScheme.onSurface)),
      subtitle:Padding(padding:const EdgeInsets.only(top:7),
        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
          CikokoStatusBadge(status:(r['status']??'').toString()),
          const SizedBox(height:5),
          Text('${r['name']??''}  •  ${cikokoDateOnly(r['created_at']??'-')}',
            maxLines:2,overflow:TextOverflow.ellipsis,
-           style:const TextStyle(fontSize:11,color:CikokoPalette.muted)),
+           style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),
        ])),
     onTap:(){
       final row=Map<String,dynamic>.from(r);
