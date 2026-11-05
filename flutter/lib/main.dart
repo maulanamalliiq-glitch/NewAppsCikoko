@@ -81,28 +81,15 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
     keyboardDismissBehavior:ScrollViewKeyboardDismissBehavior.onDrag,
     child:ConstrainedBox(constraints:BoxConstraints(minHeight:box.maxHeight),
      child:Column(children:[
-      SizedBox(height:220,width:double.infinity,child:Stack(fit:StackFit.expand,children:[
-       const CikokoCityBackdrop(),
+      SizedBox(height:244,width:double.infinity,child:Stack(fit:StackFit.expand,children:[
+       const CikokoMonasBackdrop(),
        const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(
         begin:Alignment.topCenter,end:Alignment.bottomCenter,
-        colors:[Color(0x27104B98),Color(0xAB0D57B3),Color(0xFF0B4D9D)]))),
+        colors:[Color(0x000B4D9D),Color(0x000B4D9D),Color(0x752356A1)]))),
        Positioned(top:12,left:12,child:Material(
         color:Colors.white.withValues(alpha:.91),shape:const CircleBorder(),
         child:IconButton(tooltip:'Kembali',onPressed:()=>Navigator.of(context).maybePop(),
          icon:const Icon(Icons.arrow_back_rounded,color:CikokoPalette.navy)))),
-       Positioned(left:22,right:22,bottom:30,child:Row(children:[
-        Container(width:57,height:57,
-         decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16)),
-         child:const Center(child:CikokoBrandMark(size:47))),
-        const SizedBox(width:12),
-        const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-         Text('Cikoko SmartAPP',style:TextStyle(color:Colors.white,
-          fontSize:24,fontWeight:FontWeight.w700,height:1.05)),
-         SizedBox(height:5),
-         Text('Layanan Digital Kelurahan Cikoko',style:TextStyle(
-          color:Color(0xFFECF5FF),fontSize:11.5)),
-        ])),
-       ])),
       ])),
       Transform.translate(offset:const Offset(0,-14),child:Container(
        constraints:const BoxConstraints(maxWidth:480),
@@ -113,6 +100,14 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
          topRight:Radius.circular(25),bottomLeft:Radius.circular(18),
          bottomRight:Radius.circular(18))),
        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Row(children:[
+         Container(width:54,height:54,decoration:BoxDecoration(color:const Color(0xFFF4F8FF),borderRadius:BorderRadius.circular(15)),child:const Center(child:CikokoBrandMark(size:44))),
+         const SizedBox(width:11),
+         const Expanded(child:Text('Cikoko\nSmartAPP',style:TextStyle(color:CikokoPalette.navy,fontSize:23,fontWeight:FontWeight.w900,height:1.04))),
+        ]),
+        const SizedBox(height:8),
+        const Text('Layanan Digital Kelurahan Cikoko',style:TextStyle(color:CikokoPalette.blue,fontSize:12,fontWeight:FontWeight.w700)),
+        const SizedBox(height:17),
         Text(title,style:const TextStyle(color:CikokoPalette.navy,
          fontSize:23,fontWeight:FontWeight.w700)),
         const SizedBox(height:5),
@@ -510,20 +505,20 @@ class _HomeState extends State<HomePage> {
       const SizedBox(height:22),const _PageCopyright(),
     ]);
   }
-  Widget home()=>ListView(padding:const EdgeInsets.fromLTRB(12,10,12,20),children:[
-    if(isStaff) CikokoStaffHero(
+  Widget home()=>ListView(padding:EdgeInsets.zero,children:[
+    if(isStaff) Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoStaffHero(
       roleName:roleLabel,
       onManagement:()=>switchTo('Menu Cikoko'),
       onServices:()=>switchTo('Layanan Online'),
-    )
-    else if(role=='warga') CikokoResidentHero(
+    ))
+    else if(role=='warga') Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoResidentHero(
       name:'${api.profile?['name']??'Warga Cikoko'}',
       onService:()=>switchTo('Layanan Online'),
       onStatus:()=>showPublicLetterStatus(context,api,category:'all'),
       onAgenda:()=>switchTo('Berita & Kegiatan'),
       onAspirations:()=>switchTo('Pusat Laporan'),
       onInnovations:()=>switchTo('Inovasi'),
-    )
+    ))
     else CikokoGuestHero(
       onLogin:openLogin,
       onRegister:openRegistration,
@@ -533,6 +528,8 @@ class _HomeState extends State<HomePage> {
       onAbout:showOfficeProfile,
     ),
 
+    Padding(padding:const EdgeInsets.symmetric(horizontal:12),child:Column(
+      crossAxisAlignment:CrossAxisAlignment.stretch,children:[
     if(guest||role=='warga'||role=='admin')Padding(padding:const EdgeInsets.only(top:8),child:CikokoLetterCounters(
       counts:letterCounts,onStatusTap:(category)=>
           role=='admin' && category=='all'
@@ -634,6 +631,7 @@ class _HomeState extends State<HomePage> {
     const SizedBox(height:26),
     const _PageCopyright(),
     const SizedBox(height:74),
+    ])),
   ]);
  Widget feed(String type)=>ListView(padding:const EdgeInsets.all(14),children:[for(final v in items.where((e)=>e['type']==type))contentCard(Map<String,dynamic>.from(v)),if(!items.any((e)=>e['type']==type))const Padding(padding:EdgeInsets.all(18),child:Text('Belum ada konten pada kategori ini.')),const SizedBox(height:22),const _PageCopyright()]);
  Widget contentCard(Map<String, dynamic> item) {
