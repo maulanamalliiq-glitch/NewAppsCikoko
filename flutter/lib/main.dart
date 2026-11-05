@@ -416,6 +416,13 @@ class _HomeState extends State<HomePage> {
           ]),
         ]),
       )
+    else if(role=='warga') CikokoResidentHero(
+      name:'${api.profile?['name']??'Warga Cikoko'}',
+      onService:()=>switchTo('Layanan Online'),
+      onStatus:()=>showPublicLetterStatus(context,api,category:'all'),
+      onAgenda:()=>switchTo('Berita & Kegiatan'),
+      onAspirations:()=>switchTo('Menu Cikoko'),
+    )
     else CikokoOfficeHero(onService:()=>switchTo('Layanan Online'),onProfile:showOfficeProfile),
     if(guest)Padding(padding:const EdgeInsets.only(top:8),child:Material(
       color:const Color(0xffe9f1fa),borderRadius:BorderRadius.circular(11),
