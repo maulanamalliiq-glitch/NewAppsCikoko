@@ -312,9 +312,15 @@ class _CivicProfileState extends State<CivicProfilePage>{
      const SizedBox(height:12),
      group([
       profileRow(Icons.info_outline_rounded,'Tentang Cikoko Smart',
-       onTap:()=>showAboutDialog(context:context,applicationName:'Cikoko Smart',
-        applicationVersion:'2.5.39',
-        children:[const Text('Layanan digital Kelurahan Cikoko.')])),
+       onTap:()=>showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
+        title:const Text('Cikoko Smart'),
+        content:const Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Text('2.5.39',style:TextStyle(fontSize:13,color:Colors.blueGrey)),
+          SizedBox(height:20),
+          Text('Layanan digital Cikoko Smart app'),
+        ]),
+        actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Close'))],
+       ))),
       profileRow(Icons.privacy_tip_outlined,'Privasi akun',
        subtitle:'Kelola data pribadi Anda',
        onTap:()=>setState(()=>editing=true)),
