@@ -1001,26 +1001,21 @@ class _ReportState extends State<ReportForm>{final address=TextEditingController
  Widget build(BuildContext c)=>ListView(
    padding:const EdgeInsets.fromLTRB(14,12,14,32),
    children:[
-     Container(
-       padding:const EdgeInsets.all(15),
-       decoration:BoxDecoration(
-         gradient:const LinearGradient(colors:[Color(0xFF104F9C),Color(0xFF1685D8)]),
-         borderRadius:BorderRadius.circular(18)),
-       child:Row(children:[
-         Container(padding:const EdgeInsets.all(11),
-           decoration:BoxDecoration(color:Colors.white.withValues(alpha:.17),
-             borderRadius:BorderRadius.circular(13)),
-           child:const Icon(Icons.assignment_turned_in_outlined,color:Colors.white,size:25)),
-         const SizedBox(width:12),
-         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-           const Text('Formulir laporan',style:TextStyle(color:Colors.white,fontSize:17,fontWeight:FontWeight.w700)),
-           const SizedBox(height:3),
-           Text(widget.kind=='jumantik'?'Pemantauan lingkungan dan jumantik':'Dokumentasi kegiatan dan pelayanan',
-             style:const TextStyle(color:Color(0xFFE2F2FF),fontSize:11.5)),
-         ])),
-       ]),
-     ),
+     CikokoPremiumHeader(
+       title:switch(widget.kind){
+        'jumantik'=>'Laporan Jumantik',
+        'fkdm'=>'Laporan FKDM',
+        'lmk'=>'Laporan LMK',
+        'posyandu'=>'Laporan Posyandu',
+        'pkk'=>'Laporan Dasawisma',
+        'kerja_bakti'=>'Laporan Kerja Bakti',
+        _=>'Laporan Kegiatan',
+       },
+       subtitle:'Lengkapi lokasi, uraian kegiatan, dan foto dokumentasi.',
+       icon:Icons.assignment_turned_in_outlined,
+       start:const Color(0xFF104F9C),end:const Color(0xFF1685D8)),
      const SizedBox(height:13),
+     const CikokoPremiumSection(title:'Data Laporan',subtitle:'Informasi yang diperlukan untuk tindak lanjut'),
      Card(child:Padding(
        padding:const EdgeInsets.all(14),
        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
@@ -1064,7 +1059,7 @@ class _ReportState extends State<ReportForm>{final address=TextEditingController
        label:Text(sending?'Mengirim laporan…':'Kirim Laporan'),
      )),
      const SizedBox(height:7),
-     const Text('Pastikan lokasi, uraian, dan foto sudah sesuai sebelum mengirim.',
+     const Text('Periksa kembali data dan dokumentasi sebelum mengirim.',
        textAlign:TextAlign.center,
        style:TextStyle(fontSize:11,color:Colors.blueGrey)),
    ],
