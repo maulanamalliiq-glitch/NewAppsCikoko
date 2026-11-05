@@ -80,82 +80,121 @@ class CikokoResidentHero extends StatelessWidget {
   const CikokoResidentHero({super.key,required this.name,required this.onService,
     required this.onStatus,required this.onAgenda,required this.onAspirations});
 
-  @override Widget build(BuildContext context)=>Column(children:[
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: SizedBox(
+        height: 224,
+        width: double.infinity,
+        child: Stack(fit: StackFit.expand, children: [
+          Image.asset('assets/kantor-cikoko.jpg', fit: BoxFit.cover,
+            alignment: const Alignment(0, -.12)),
+          const DecoratedBox(decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft, end: Alignment.bottomRight,
+              colors: [Color(0xE9093678), Color(0xB30861B5), Color(0x5D009FE8)],
+              stops: [0, .62, 1],
+            ),
+          )),
+          Positioned(right: -45, bottom: -85,
+            child: Container(width: 210, height: 210,
+              decoration: BoxDecoration(shape: BoxShape.circle,
+                border: Border.all(color: Colors.white24, width: 35)))),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 17, 18, 16),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Row(children: [
+                Icon(Icons.location_city_rounded, color: Color(0xFFFFD479), size: 18),
+                SizedBox(width: 7),
+                Expanded(child: Text('LAYANAN DIGITAL KELURAHAN CIKOKO',
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: Colors.white, fontSize: 10,
+                    fontWeight: FontWeight.w800, letterSpacing: .8))),
+              ]),
+              const SizedBox(height: 14),
+              Text('Halo, ${name.trim().isEmpty ? 'Warga Cikoko' : name} 👋',
+                maxLines: 2, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white,
+                  fontSize: 23, fontWeight: FontWeight.w800, height: 1.15)),
+              const SizedBox(height: 5),
+              const Text('Selamat datang di Cikoko Smart',
+                style: TextStyle(color: Color(0xFFE6F2FF), fontSize: 12.5)),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .96),
+                  borderRadius: BorderRadius.circular(14)),
+                child: Row(children: [
+                  Image.asset('assets/logo.png', width: 36, height: 36),
+                  const SizedBox(width: 10),
+                  const Expanded(child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Kelurahan Cikoko', maxLines: 1,
+                        style: TextStyle(color: homeNavy, fontSize: 13,
+                          fontWeight: FontWeight.w800)),
+                      Text('Kecamatan Pancoran · Jakarta Selatan',
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                        style: TextStyle(color: homeMuted, fontSize: 10)),
+                    ])),
+                  const Icon(Icons.verified_rounded, color: homeBlue, size: 20),
+                ]),
+              ),
+            ]),
+          ),
+        ]),
+      ),
+    ),
+    const SizedBox(height: 14),
     Container(
-      width:double.infinity,
-      clipBehavior:Clip.antiAlias,
-      decoration:BoxDecoration(
-        borderRadius:BorderRadius.circular(24),
-        gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
-          colors:[Color(0xFF064C9D),Color(0xFF1596E8)])),
-      child:Stack(children:[
-        Positioned(right:-35,bottom:-55,child:Container(width:210,height:210,
-          decoration:BoxDecoration(shape:BoxShape.circle,
-            border:Border.all(color:Colors.white.withValues(alpha:.15),width:38)))),
-        Padding(padding:const EdgeInsets.all(20),child:Column(
-          crossAxisAlignment:CrossAxisAlignment.start,children:[
-            const Text('SELAMAT DATANG DI CIKOKO SMART',style:TextStyle(
-              color:Color(0xFFDCEEFF),fontSize:10.5,letterSpacing:1.1,fontWeight:FontWeight.w700)),
-            const SizedBox(height:10),
-            Text('Halo, ${name.trim().isEmpty?'Warga Cikoko':name} 👋',
-              maxLines:2,overflow:TextOverflow.ellipsis,
-              style:const TextStyle(color:Colors.white,fontSize:22,fontWeight:FontWeight.w800)),
-            const SizedBox(height:6),
-            const Text('Layanan digital warga Kelurahan Cikoko',
-              style:TextStyle(color:Color(0xFFE7F3FF),fontSize:12.5)),
-            const SizedBox(height:20),
-            Container(padding:const EdgeInsets.all(12),
-              decoration:BoxDecoration(color:Colors.white,
-                borderRadius:BorderRadius.circular(16)),
-              child:Row(children:[
-                Image.asset('assets/logo.png',width:40,height:40),
-                const SizedBox(width:10),
-                const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,
-                  children:[
-                    Text('Kelurahan Cikoko',style:TextStyle(color:homeNavy,
-                      fontSize:13,fontWeight:FontWeight.w800)),
-                    Text('Kecamatan Pancoran · Jakarta Selatan',
-                      style:TextStyle(color:homeMuted,fontSize:10.5)),
-                  ])),
-                const Icon(Icons.verified_rounded,color:Color(0xFF1875D4),size:22),
-              ])),
-          ])),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 14),
+      decoration: BoxDecoration(color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: homeBorder)),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: _PremiumQuickAction(
+          icon: Icons.description_outlined, title: 'Ajukan Surat', onTap: onService)),
+        Expanded(child: _PremiumQuickAction(
+          icon: Icons.manage_search_rounded, title: 'Cek Status', onTap: onStatus)),
+        Expanded(child: _PremiumQuickAction(
+          icon: Icons.calendar_month_outlined, title: 'Agenda', onTap: onAgenda)),
+        Expanded(child: _PremiumQuickAction(
+          icon: Icons.campaign_outlined, title: 'Aspirasi', onTap: onAspirations)),
       ]),
     ),
-    const SizedBox(height:14),
-    GridView.count(
-      crossAxisCount:2,mainAxisSpacing:12,crossAxisSpacing:12,
-      childAspectRatio:1.65,shrinkWrap:true,
-      physics:const NeverScrollableScrollPhysics(),
-      children:[
-        _PremiumQuickAction(icon:Icons.description_outlined,title:'Ajukan Surat',onTap:onService),
-        _PremiumQuickAction(icon:Icons.manage_search_rounded,title:'Cek Status Pengajuan',onTap:onStatus),
-        _PremiumQuickAction(icon:Icons.calendar_month_outlined,title:'Agenda Kegiatan',onTap:onAgenda),
-        _PremiumQuickAction(icon:Icons.campaign_outlined,title:'Aspirasi & Pengaduan',onTap:onAspirations),
-      ]),
   ]);
 }
+
 class _PremiumQuickAction extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
-  const _PremiumQuickAction({required this.icon,required this.title,required this.onTap});
-  @override Widget build(BuildContext context)=>Material(
-    color:Colors.white,
-    borderRadius:BorderRadius.circular(18),
-    child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(18),
-      child:Container(
-        padding:const EdgeInsets.all(12),
-        decoration:BoxDecoration(border:Border.all(color:homeBorder),
-          borderRadius:BorderRadius.circular(18)),
-        child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-          Icon(icon,color:homeBlue,size:28),
-          const SizedBox(height:8),
-          Text(title,maxLines:2,overflow:TextOverflow.ellipsis,
-            textAlign:TextAlign.center,style:const TextStyle(
-              color:homeNavy,fontSize:12,fontWeight:FontWeight.w800)),
+  const _PremiumQuickAction({required this.icon, required this.title, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Container(
+            width: 48, height: 48,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE9F2FF), shape: BoxShape.circle),
+            child: Icon(icon, color: homeBlue, size: 25)),
+          const SizedBox(height: 8),
+          Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: homeNavy, fontSize: 10.5,
+              fontWeight: FontWeight.w700, height: 1.2)),
         ]),
-      )),
+      ),
+    ),
   );
 }
 
