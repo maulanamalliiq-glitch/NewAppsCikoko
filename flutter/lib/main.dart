@@ -39,7 +39,7 @@ Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();await CikokoS
 class CikokoApp extends StatelessWidget {
  const CikokoApp({super.key});
  @override Widget build(BuildContext c)=>AnimatedBuilder(
-  animation:Listenable.merge([CikokoSettings.themeMode,CikokoSettings.language]),
+  animation:CikokoSettings.themeMode,
   builder:(context,_)=>MaterialApp(title:'Cikoko',debugShowCheckedModeBanner:false,
  builder:(ctx,child)=>Stack(children:[
    if(child!=null)child,
@@ -208,8 +208,7 @@ class _HomeState extends State<HomePage> {
   bool get isStaff=>role!='warga'&&role!='guest';
   bool get isAdmin=>capabilities['reports:view']==true;
   List<RoleFeature> get modules=>role=='guest'?[roleFeatures['services']!,roleFeatures['waris']!,roleFeatures['waris_requirements']!,roleFeatures['jumantik']!,roleFeatures['news']!,roleFeatures['announcements']!,roleFeatures['gallery']!]:modulesForRole(role,capabilities);
-  void _refreshSettings(){if(mounted)setState((){});}
-  @override void initState(){super.initState();CikokoSettings.language.addListener(_refreshSettings);load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
+  @override void initState(){super.initState();load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
       WidgetsBinding.instance.addPostFrameCallback((_){
         if(!mounted || !cikokoPushBelongsToAccount(message.data,api.profile?['id']))return;
         final pushId=int.tryParse('${message.data['event_id']??''}')??0;
@@ -217,7 +216,7 @@ class _HomeState extends State<HomePage> {
         switchTo(destinationForPushCategory('${message.data['category']??''}',isStaff:isStaff));
       });
     });timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());}}
-  @override void dispose(){CikokoSettings.language.removeListener(_refreshSettings);timer?.cancel();push?.dispose();super.dispose();}
+  @override void dispose(){timer?.cancel();push?.dispose();super.dispose();}
   Future<void> refresh() async {
     try {if(api.token==null)return;final v=await api.call('events');final incoming=cikokoEventsForAccount(List<dynamic>.from(v['events']??[]),api.profile?['id']);await push?.onEvents(incoming);if(mounted)setState(()=>events=incoming);}
     catch(_) {}
@@ -330,11 +329,6 @@ class _HomeState extends State<HomePage> {
           onPressed:CikokoSettings.toggleTheme,
           icon:Icon(CikokoSettings.themeMode.value==ThemeMode.dark
             ?Icons.light_mode_outlined:Icons.dark_mode_outlined)),
-        TextButton(
-          onPressed:CikokoSettings.toggleLanguage,
-          child:Text(CikokoSettings.isEnglish?'ID':'EN',
-            style:TextStyle(fontWeight:FontWeight.w800,
-              color:Theme.of(c).colorScheme.primary))),
         IconButton(tooltip:CikokoSettings.tr('Notifikasi','Notifications'),onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
     ),
     drawer:Drawer(child:CikokoStructuredDrawer(
