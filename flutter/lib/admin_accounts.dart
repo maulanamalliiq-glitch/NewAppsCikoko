@@ -390,6 +390,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
                   color: Color(0xFFC13B49), size: 21)),
             ]),
           )),
+        const CikokoPageSignature(),
       ],
     );
   }
