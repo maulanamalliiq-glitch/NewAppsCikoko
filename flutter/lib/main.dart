@@ -1295,10 +1295,26 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
    padding:EdgeInsets.symmetric(horizontal:8,vertical:4),
    child:Text('Laporan kegiatan selain Ahli Waris.')),
   const Padding(padding:EdgeInsets.all(8),child:Text('Ketuk surat untuk membuka data, progres, dan meminta kelengkapan dokumen.',style:TextStyle(fontSize:12,color:Colors.blueGrey))),
-  for(final r in rows)Card(child:ListTile(
-    leading:const Icon(Icons.fact_check_outlined,color:blue),
-    title:Text('${r['title']??r['reference']??'Pengajuan'}',style:const TextStyle(fontWeight:FontWeight.w700,fontSize:13)),
-    subtitle:Text('${r['status']} • ${r['name']??''}'+'\nTanggal: '+cikokoDateOnly(r['created_at']??'-'),style:const TextStyle(fontSize:11)),
+  for(final r in rows)Card(
+    color:CikokoStatusBadge.accentFor((r['status']??'').toString()).withValues(alpha:.09),
+    margin:const EdgeInsets.only(bottom:10),
+    child:ListTile(contentPadding:const EdgeInsets.symmetric(horizontal:13,vertical:8),
+     leading:Container(width:41,height:44,alignment:Alignment.center,
+      decoration:BoxDecoration(
+       color:CikokoStatusBadge.accentFor((r['status']??'').toString()).withValues(alpha:.15),
+       borderRadius:BorderRadius.circular(11)),
+      child:Icon(Icons.fact_check_outlined,size:22,
+       color:CikokoStatusBadge.accentFor((r['status']??'').toString()))),
+     title:Text('${r['title']??r['reference']??'Pengajuan'}',
+       style:const TextStyle(fontWeight:FontWeight.w800,fontSize:13,color:navy)),
+     subtitle:Padding(padding:const EdgeInsets.only(top:7),
+       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+         CikokoStatusBadge(status:(r['status']??'').toString()),
+         const SizedBox(height:5),
+         Text('${r['name']??''}  •  ${cikokoDateOnly(r['created_at']??'-')}',
+           maxLines:2,overflow:TextOverflow.ellipsis,
+           style:const TextStyle(fontSize:11,color:CikokoPalette.muted)),
+       ])),
     onTap:(){
       final row=Map<String,dynamic>.from(r);
       final id=cikokoPositiveId(row);
