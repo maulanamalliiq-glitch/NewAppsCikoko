@@ -359,13 +359,13 @@ class _CivicProfileState extends State<CivicProfilePage>{
      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[
        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Text('Hai, $displayName',maxLines:2,overflow:TextOverflow.ellipsis,
+        Text(CikokoSettings.tr('Hai, ','Hi, ')+displayName,maxLines:2,overflow:TextOverflow.ellipsis,
          style:TextStyle(fontSize:21,fontWeight:FontWeight.w700,color:Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height:7),
         Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),
          decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface.withValues(alpha:.85),
           borderRadius:BorderRadius.circular(8)),
-         child:Text(isResident?'Akun Warga':'Akun ${role.replaceAll('_',' ').toUpperCase()}',
+         child:Text(isResident?CikokoSettings.tr('Akun Warga','Resident Account'):CikokoSettings.tr('Akun ','Account ')+role.replaceAll('_',' ').toUpperCase(),
           style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant))),
        ])),
        const SizedBox(width:12),
@@ -393,27 +393,50 @@ class _CivicProfileState extends State<CivicProfilePage>{
        const SizedBox(width:10),
        Expanded(child:_ProfileQuickAction(
         icon:Icons.manage_accounts_outlined,title:'Informasi Akun',
-        detail:'Lihat & ubah data',onTap:()=>setState(()=>editing=true))),
+        detail:CikokoSettings.tr('Lihat & ubah data','View & edit'),
+        onTap:()=>setState(()=>editing=true))),
       ]),
+      if(isResident)...[
+       const SizedBox(height:12),
+       Container(width:double.infinity,
+        padding:const EdgeInsets.symmetric(horizontal:12,vertical:10),
+        decoration:BoxDecoration(
+         color:Theme.of(context).colorScheme.surface.withValues(alpha:.77),
+         borderRadius:BorderRadius.circular(12)),
+        child:Row(children:[
+         Icon(cikokoValidRtRw(row['rt'])&&cikokoValidRtRw(row['rw'])
+           ?Icons.location_on_rounded:Icons.info_outline_rounded,
+           color:Theme.of(context).colorScheme.primary,size:17),
+         const SizedBox(width:7),
+         Expanded(child:Text(
+          cikokoValidRtRw(row['rt'])&&cikokoValidRtRw(row['rw'])
+           ?CikokoSettings.tr('Wilayah tersimpan: RT ','Saved area: RT ')+
+             cikokoNormalizeRtRw(row['rt'])+' / RW '+cikokoNormalizeRtRw(row['rw'])
+           :CikokoSettings.tr('Wilayah RT/RW belum lengkap','RT/RW area not complete'),
+          maxLines:1,overflow:TextOverflow.ellipsis,
+          style:TextStyle(fontSize:11,fontWeight:FontWeight.w600,
+           color:Theme.of(context).colorScheme.onSurface))),
+        ])),
+      ],
      ]),
     ),
     const SizedBox(height:16),
     if(!editing)...[
      group([
-      profileRow(Icons.person_outline_rounded,'Informasi pribadi',
+      profileRow(Icons.person_outline_rounded,CikokoSettings.label('Informasi pribadi'),
        subtitle:'Nama, kontak, alamat dan identitas',
        onTap:()=>showPersonalInfo(row,isResident)),
      ]),
      const SizedBox(height:12),
      group([
-      profileRow(Icons.settings_outlined,'Pengaturan profil',
+      profileRow(Icons.settings_outlined,CikokoSettings.label('Pengaturan profil'),
        onTap:()=>setState(()=>editing=true)),
-      profileRow(Icons.photo_camera_outlined,'Ganti foto profil',
+      profileRow(Icons.photo_camera_outlined,CikokoSettings.label('Ganti foto profil'),
        onTap:uploadAvatar),
-      profileRow(Icons.dark_mode_outlined,'Tema tampilan',
+      profileRow(Icons.dark_mode_outlined,CikokoSettings.label('Tema tampilan'),
        subtitle:CikokoSettings.themeMode.value==ThemeMode.dark?'Gelap':'Terang',
        onTap:(){CikokoSettings.toggleTheme();setState((){});}),
-      profileRow(Icons.language_outlined,'Bahasa aplikasi',
+      profileRow(Icons.language_outlined,CikokoSettings.label('Bahasa aplikasi'),
        subtitle:CikokoSettings.isEnglish?'English':'Bahasa Indonesia',
        onTap:(){CikokoSettings.toggleLanguage();setState((){});}),
      ]),
@@ -437,7 +460,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
      ]),
     ]else...[
      Row(children:[
-      const Expanded(child:Text('Edit Informasi Profil',style:TextStyle(
+      const Expanded(child:Text(CikokoSettings.tr('Edit Informasi Profil','Edit Profile'),style:TextStyle(
        fontSize:16,fontWeight:FontWeight.w600,color:civicNavy))),
       TextButton.icon(onPressed:(){fill(row);setState(()=>editing=false);},
        icon:const Icon(Icons.close,size:17),label:const Text('Tutup')),
@@ -486,7 +509,7 @@ class _ProfileQuickAction extends StatelessWidget{
   required this.icon,this.iconColor,required this.title,required this.detail,
   required this.onTap,this.highlighted=false});
  @override Widget build(BuildContext context)=>Material(
-  color:highlighted?const Color(0xFFDAFAE6):Colors.white,
+  color:highlighted?(Theme.of(context).brightness==Brightness.dark?const Color(0xFF153E30):const Color(0xFFDAFAE6)):Theme.of(context).colorScheme.surface,
   borderRadius:BorderRadius.circular(14),
   child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(14),
    child:Container(
@@ -497,8 +520,8 @@ class _ProfileQuickAction extends StatelessWidget{
     padding:const EdgeInsets.all(9),
     child:Row(children:[
      Container(width:35,height:35,
-       decoration:BoxDecoration(color:highlighted?Colors.white:
-        const Color(0xFFE8F3FF),borderRadius:BorderRadius.circular(11)),
+       decoration:BoxDecoration(color:highlighted?Theme.of(context).colorScheme.surface:
+        Theme.of(context).colorScheme.primaryContainer,borderRadius:BorderRadius.circular(11)),
        child:Icon(icon,
         color:iconColor??CikokoPalette.blue,
         size:highlighted?27:22)),
@@ -506,12 +529,12 @@ class _ProfileQuickAction extends StatelessWidget{
      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Text(title,maxLines:1,overflow:TextOverflow.ellipsis,
        style:TextStyle(fontSize:11.3,
-        color:highlighted?const Color(0xFF10643B):civicNavy,
+        color:highlighted?(Theme.of(context).brightness==Brightness.dark?const Color(0xFF7CE0A9):const Color(0xFF10643B)):Theme.of(context).colorScheme.onSurface,
         fontWeight:FontWeight.w800)),
       const SizedBox(height:4),
       Text(detail,maxLines:1,overflow:TextOverflow.ellipsis,
        style:TextStyle(fontSize:10.5,
-        color:highlighted?const Color(0xFF13834C):Colors.blueGrey,
+        color:highlighted?(Theme.of(context).brightness==Brightness.dark?const Color(0xFF7CE0A9):const Color(0xFF13834C)):Theme.of(context).colorScheme.onSurfaceVariant,
         fontWeight:highlighted?FontWeight.w700:FontWeight.w400)),
      ])),
      Icon(Icons.chevron_right_rounded,size:16,
