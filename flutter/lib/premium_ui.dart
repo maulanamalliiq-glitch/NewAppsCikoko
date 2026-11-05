@@ -123,7 +123,6 @@ class CikokoGuestHero extends StatelessWidget {
        onPressed:onRegister,child:const Text('Daftar Akun Warga'))),
       const SizedBox(height:16),
     ])),
-   ),
  ]);
 }
 class _GuestFeature extends StatelessWidget {
