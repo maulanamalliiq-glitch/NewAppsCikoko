@@ -218,13 +218,24 @@ class _CivicProfileState extends State<CivicProfilePage>{
  late Future<Map<String,dynamic>> pending;final fields={for(final k in ['name','username','phone','email','address','nik','rt','rw'])k:TextEditingController()};
  final currentPassword=TextEditingController();bool editing=false,saving=false,avatarReady=false;int imageVersion=0;
  Future<Map<String,dynamic>> loadProfile()async{
-  try{return await widget.api.call('v211_profile');}
+  try{final result=await widget.api.call('v211_profile');
+    if(result['user'] is Map){widget.api.profile={...?(widget.api.profile),...Map<String,dynamic>.from(result['user'] as Map)};}
+    return result;}
   catch(_){return {'ok':true,'offline':true,'user':widget.api.profile??<String,dynamic>{}};}
  }
  @override void initState(){super.initState();pending=loadProfile();}
  @override void dispose(){for(final c in fields.values){c.dispose();}currentPassword.dispose();super.dispose();}
  void fill(Map<String,dynamic> row){for(final k in fields.keys){final raw='${row[k]??''}';if(k=='rt'||k=='rw'){final n=int.tryParse(raw);fields[k]!.text=n==null?'':n.toString().padLeft(2,'0');}else{fields[k]!.text=raw;}}}
- Future<void> save()async{if(saving)return;setState(()=>saving=true);try{
+ Future<void> save()async{if(saving)return;
+   final isResident=widget.api.profile?['role']=='warga';
+   if(isResident){
+    final rt=int.tryParse(fields['rt']!.text.trim());
+    final rw=int.tryParse(fields['rw']!.text.trim());
+    if(rt==null||rw==null||rt<1||rt>99||rw<1||rw>99){
+     civicMessage(context,'RT dan RW harus berisi angka 01 sampai 99.');return;
+    }
+   }
+   setState(()=>saving=true);try{
   await widget.api.call('v211_profile_update',body:{for(final k in ['name','phone','email','address','nik'])k:fields[k]!.text.trim(),if(widget.api.profile?['role']=='warga') ...{'rt':fields['rt']!.text.trim(),'rw':fields['rw']!.text.trim(),'current_password':currentPassword.text}});
   widget.api.profile?['name']=fields['name']!.text.trim();
   if(isResident){widget.api.profile?['rt']=fields['rt']!.text.trim().padLeft(2,'0');widget.api.profile?['rw']=fields['rw']!.text.trim().padLeft(2,'0');}
