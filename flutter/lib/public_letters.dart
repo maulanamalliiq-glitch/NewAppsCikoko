@@ -10,7 +10,7 @@ Future<void> showPublicLetterStatus(BuildContext context,CikokoApi api,
     {String category='all'}) {
   return showModalBottomSheet<void>(
     context:context,isScrollControlled:true,useSafeArea:true,
-    backgroundColor:Colors.white,
+    backgroundColor:Theme.of(context).colorScheme.surface,
     shape:const RoundedRectangleBorder(
       borderRadius:BorderRadius.vertical(top:Radius.circular(22))),
     builder:(_)=>FractionallySizedBox(
@@ -171,11 +171,11 @@ Future<void> showPublicLetterPie(BuildContext context,CikokoApi api){
      return SingleChildScrollView(child:Column(
       mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.stretch,children:[
        Row(children:[
-        const Expanded(child:Text('Status Pelayanan Surat',
-          style:TextStyle(fontWeight:FontWeight.w800,fontSize:18,color:Color(0xff10375f)))),
+        Expanded(child:Text('Status Pelayanan Surat',
+          style:TextStyle(fontWeight:FontWeight.w800,fontSize:18,color:Theme.of(dialog).colorScheme.onSurface))),
         IconButton(onPressed:()=>Navigator.pop(dialog),icon:const Icon(Icons.close)),
        ]),
-       const Text('Grafik seluruh pengajuan surat',style:TextStyle(fontSize:12,color:Colors.blueGrey)),
+       Text('Grafik seluruh pengajuan surat',style:TextStyle(fontSize:12,color:Theme.of(dialog).colorScheme.onSurfaceVariant)),
        const SizedBox(height:12),
        Center(child:SizedBox(width:210,height:210,child:Stack(alignment:Alignment.center,children:[
         CustomPaint(size:const Size(210,210),painter:_LetterPiePainter(
