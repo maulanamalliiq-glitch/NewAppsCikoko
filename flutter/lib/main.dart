@@ -389,12 +389,18 @@ class _HomeState extends State<HomePage> {
       onAgenda:()=>switchTo('Berita & Kegiatan'),
       onAspirations:()=>switchTo('Menu Cikoko'),
     )
-    else CikokoOfficeHero(onService:()=>switchTo('Layanan Online'),onProfile:showOfficeProfile),
+    else CikokoResidentHero(
+      name:'Pengunjung',
+      onService:()=>switchTo('Layanan Online'),
+      onStatus:openLogin,
+      onAgenda:()=>switchTo('Berita & Kegiatan'),
+      onAspirations:()=>switchTo('Menu Cikoko'),
+    ),
     if(guest)Padding(padding:const EdgeInsets.only(top:8),child:Material(
       color:const Color(0xffe9f1fa),borderRadius:BorderRadius.circular(11),
       child:ListTile(dense:true,contentPadding:const EdgeInsets.symmetric(horizontal:10),
         leading:const Icon(Icons.lock_open_outlined,color:blue,size:20),
-        title:const Text('Silakan login untuk menikmati lebih banyak layanan.',style:TextStyle(fontSize:11.5,fontWeight:FontWeight.w700)),
+        title:const Text('Masuk untuk mengajukan surat dan memantau layanan.',style:TextStyle(fontSize:11.5)),
         trailing:TextButton(onPressed:openLogin,child:const Text('Masuk',style:TextStyle(fontSize:11))),
       ),
     )),
@@ -405,7 +411,7 @@ class _HomeState extends State<HomePage> {
             : showPublicLetterStatus(context,api,category:category))),
     Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Row(
       mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:const TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w800)),
+        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:const TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w600)),
         TextButton(onPressed:()=>switchTo(role=='warga'?'Layanan Online':'Menu Cikoko'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11))),
       ])),
     if(role=='warga')
@@ -534,7 +540,7 @@ class _HomeState extends State<HomePage> {
          Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
            Text('${item['type']??''}'.toUpperCase(),style:const TextStyle(fontSize:9.5,letterSpacing:.65,color:blue,fontWeight:FontWeight.w700)),
            const SizedBox(height:4),
-           Text(title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:13.5,height:1.23,fontWeight:FontWeight.w800,color:navy)),
+           Text(title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:13.5,height:1.23,fontWeight:FontWeight.w600,color:navy)),
            const SizedBox(height:5),
            Text(description,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.8,height:1.22,color:Color(0xff647992))),
            const SizedBox(height:7),
@@ -914,7 +920,78 @@ class ReportForm extends StatefulWidget{final String kind;const ReportForm({supe
 class _ReportState extends State<ReportForm>{final address=TextEditingController(),phone=TextEditingController(),notes=TextEditingController();String? photo;bool sending=false;double progress=0;
  @override void dispose(){address.dispose();phone.dispose();notes.dispose();super.dispose();}
  Future<void> send()async{if(address.text.trim().isEmpty||notes.text.trim().isEmpty||photo==null){notify(context,'Lengkapi alamat, keterangan dan foto',error:true);return;}setState(()=>sending=true);try{await api.upload('report',{'kind':widget.kind,'address':address.text,'phone':phone.text,'notes':notes.text},{'photo':[photo!]},progress:(p){if(mounted)setState(()=>progress=p);});if(mounted)notify(context,'Laporan berhasil dikirim');}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>sending=false);}}
- @override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(14),children:[Field('Alamat / Lokasi',address),Field('Nomor telepon',phone),Field('Keterangan kegiatan / hasil pemantauan',notes,lines:5),PhotoInput(label:'Foto bukti kegiatan',onChanged:(f)=>photo=f),if(sending)...[LinearProgressIndicator(value:progress),Text('${(progress*100).round()}%')],FilledButton(onPressed:sending?null:send,child:const Text('Kirim Laporan'))]);
+ @override
+ Widget build(BuildContext c)=>ListView(
+   padding:const EdgeInsets.fromLTRB(14,12,14,32),
+   children:[
+     Container(
+       padding:const EdgeInsets.all(15),
+       decoration:BoxDecoration(
+         gradient:const LinearGradient(colors:[Color(0xFF104F9C),Color(0xFF1685D8)]),
+         borderRadius:BorderRadius.circular(18)),
+       child:Row(children:[
+         Container(padding:const EdgeInsets.all(11),
+           decoration:BoxDecoration(color:Colors.white.withValues(alpha:.17),
+             borderRadius:BorderRadius.circular(13)),
+           child:const Icon(Icons.assignment_turned_in_outlined,color:Colors.white,size:25)),
+         const SizedBox(width:12),
+         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+           const Text('Formulir laporan',style:TextStyle(color:Colors.white,fontSize:17,fontWeight:FontWeight.w700)),
+           const SizedBox(height:3),
+           Text(widget.kind=='jumantik'?'Pemantauan lingkungan dan jumantik':'Dokumentasi kegiatan dan pelayanan',
+             style:const TextStyle(color:Color(0xFFE2F2FF),fontSize:11.5)),
+         ])),
+       ]),
+     ),
+     const SizedBox(height:13),
+     Card(child:Padding(
+       padding:const EdgeInsets.all(14),
+       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+         const Row(children:[
+           Icon(Icons.location_on_outlined,color:Color(0xFF1874CB),size:19),
+           SizedBox(width:8),
+           Text('Lokasi & kontak',style:TextStyle(fontSize:14,color:navy,fontWeight:FontWeight.w600)),
+         ]),
+         const SizedBox(height:11),
+         Field('Alamat / Lokasi',address),
+         const SizedBox(height:9),
+         Field('Nomor telepon (opsional)',phone),
+       ]),
+     )),
+     const SizedBox(height:10),
+     Card(child:Padding(
+       padding:const EdgeInsets.all(14),
+       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+         const Row(children:[
+           Icon(Icons.edit_note_outlined,color:Color(0xFF0E947E),size:20),
+           SizedBox(width:8),
+           Text('Uraian laporan',style:TextStyle(fontSize:14,color:navy,fontWeight:FontWeight.w600)),
+         ]),
+         const SizedBox(height:11),
+         Field('Keterangan kegiatan / hasil pemantauan',notes,lines:4),
+         const SizedBox(height:10),
+         PhotoInput(label:'Foto bukti kegiatan',onChanged:(f)=>photo=f),
+       ]),
+     )),
+     const SizedBox(height:12),
+     if(sending)...[
+       LinearProgressIndicator(value:progress>0?progress:null,minHeight:5),
+       const SizedBox(height:6),
+       Text('Mengunggah laporan ${(progress*100).round()}%',
+         style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
+       const SizedBox(height:10),
+     ],
+     SizedBox(height:48,child:FilledButton.icon(
+       onPressed:sending?null:send,
+       icon:const Icon(Icons.send_rounded,size:18),
+       label:Text(sending?'Mengirim laporan…':'Kirim Laporan'),
+     )),
+     const SizedBox(height:7),
+     const Text('Pastikan lokasi, uraian, dan foto sudah sesuai sebelum mengirim.',
+       textAlign:TextAlign.center,
+       style:TextStyle(fontSize:11,color:Colors.blueGrey)),
+   ],
+ );
 }
 class HistoryPage extends StatefulWidget{const HistoryPage({super.key});@override State<HistoryPage> createState()=>_HistoryState();}
 class _HistoryState extends State<HistoryPage>{Future<Map<String,dynamic>>? future;
