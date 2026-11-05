@@ -73,6 +73,41 @@ class CikokoOfficeHero extends StatelessWidget {
   );
 }
 
+
+class CikokoWelcomeHero extends StatelessWidget {
+  final String name, roleName, subtitle;
+  const CikokoWelcomeHero({super.key,required this.name,
+    required this.roleName,required this.subtitle});
+  @override Widget build(BuildContext context)=>Container(
+    width:double.infinity,
+    decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),
+      gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+        colors:[Color(0xFF082653),Color(0xFF175AA7),Color(0xFF2287E1)]),
+      boxShadow:[BoxShadow(color:const Color(0xFF175AA7).withValues(alpha:.22),
+        blurRadius:18,offset:const Offset(0,7))]),
+    child:ClipRRect(borderRadius:BorderRadius.circular(22),child:Stack(children:[
+      Positioned(right:-24,top:-54,child:Icon(Icons.blur_circular_rounded,
+        size:174,color:Colors.white.withValues(alpha:.10))),
+      Padding(padding:const EdgeInsets.all(20),child:Column(
+        crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),
+          decoration:BoxDecoration(color:Colors.white.withValues(alpha:.15),
+            borderRadius:BorderRadius.circular(20)),
+          child:Text(roleName.toUpperCase(),style:const TextStyle(color:Colors.white,
+            fontSize:10,fontWeight:FontWeight.w700,letterSpacing:.7))),
+        const SizedBox(height:16),
+        Text('Hai, '+(name.trim().isEmpty?'Pengguna Cikoko':name),
+          maxLines:2,overflow:TextOverflow.ellipsis,
+          style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,
+            fontSize:24,height:1.18)),
+        const SizedBox(height:6),
+        Text(subtitle,maxLines:2,overflow:TextOverflow.ellipsis,
+          style:const TextStyle(color:Color(0xFFDEEEFF),fontSize:12)),
+      ])),
+    ])),
+  );
+}
+
 /// Beranda warga premium: identitas kelurahan, sapaan, dan empat akses utama.
 class CikokoResidentHero extends StatelessWidget {
   final String name;
@@ -88,26 +123,10 @@ class CikokoResidentHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
    crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Padding(padding:const EdgeInsets.fromLTRB(3,5,3,13),
-     child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Text('Hai, ${name.trim().isEmpty ? 'Warga Cikoko' : name}',
-       maxLines:2,overflow:TextOverflow.ellipsis,
-       style:const TextStyle(color:homeNavy,fontSize:23,fontWeight:FontWeight.w700)),
-      const SizedBox(height:3),
-      const Text('Selamat datang di Cikoko SmartAPP',
-       style:TextStyle(color:homeMuted,fontSize:12)),
-     ])),
-    Container(height:143,width:double.infinity,
-     decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),
-      gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
-       colors:[Color(0xFF0D48A5),Color(0xFF2288ED)]),
-      boxShadow:[BoxShadow(color:homeBlue.withValues(alpha:.14),blurRadius:14,offset:const Offset(0,5))]),
-     child:Stack(children:[
-      Positioned(right:-15,bottom:-44,child:Icon(Icons.cloud_rounded,
-       size:173,color:Colors.white.withValues(alpha:.10))),
-      const Padding(padding:EdgeInsets.fromLTRB(16,12,16,12),
-       child:CikokoLiveWeather()),
-     ])),
+    CikokoWelcomeHero(name:name,roleName:'Warga',
+      subtitle:'Selamat datang di Cikoko SmartAPP'),
+    const SizedBox(height:12),
+    const CikokoLiveWeather(),
     const SizedBox(height:17),
     GridView.count(crossAxisCount:4,shrinkWrap:true,
      physics:const NeverScrollableScrollPhysics(),mainAxisSpacing:10,
@@ -197,45 +216,31 @@ class _CikokoLiveWeatherState extends State<CikokoLiveWeather> {
    final code=(value?['weather_code'] is num)
     ?(value!['weather_code'] as num).toInt():2;
    final time='${value?['time']??''}';
-   return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    const Row(children:[
-     Icon(Icons.place_outlined,size:15,color:Color(0xFFFFD56D)),
-     SizedBox(width:5),
-     Text('Cikoko, Pancoran',style:TextStyle(color:Colors.white,
-      fontSize:11.5,fontWeight:FontWeight.w700)),
-    ]),
-    const Spacer(),
-    Row(crossAxisAlignment:CrossAxisAlignment.center,children:[
-     Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      if(loaded)...[
-       Text('${(temp as num).toStringAsFixed(0)}°C',
-        style:const TextStyle(fontSize:33,color:Colors.white,
-         height:1,fontWeight:FontWeight.w900)),
-       const SizedBox(height:4),
-       Text(description(code),style:const TextStyle(
-        fontSize:11.5,color:Colors.white,fontWeight:FontWeight.w600)),
-      ] else ...[
-       Text(s.hasError?'Cuaca tidak tersedia':'Memuat cuaca...',
-        style:const TextStyle(fontSize:15,color:Colors.white,
-         fontWeight:FontWeight.w700)),
-       const SizedBox(height:4),
-       const Text('Data aktual, bukan suhu contoh',
-        style:TextStyle(fontSize:10,color:Color(0xFFE2F3FF))),
-      ],
-     ])),
-     Icon(loaded?symbol(code):Icons.cloud_outlined,size:52,
-      color:const Color(0xFFFFE398)),
-    ]),
-    const SizedBox(height:7),
-    Row(children:[
-     Expanded(child:Text(loaded&&time.length>=16
-      ?'Diperbarui ${time.substring(11,16)} WIB • Open-Meteo'
-      :'Sumber: Open-Meteo',
-      style:const TextStyle(fontSize:9,color:Color(0xFFD5ECFF)))),
-     InkWell(onTap:()=>setState(()=>pending=fetch()),
-      child:const Icon(Icons.refresh_rounded,color:Colors.white,size:19)),
-    ]),
-   ]);
+   return Container(
+      padding:const EdgeInsets.symmetric(horizontal:12,vertical:9),
+      decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface,
+        borderRadius:BorderRadius.circular(14),
+        border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
+      child:Row(children:[
+        Icon(loaded?symbol(code):Icons.cloud_outlined,size:29,
+          color:Theme.of(context).colorScheme.primary),
+        const SizedBox(width:10),
+        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Text('CUACA CIKOKO · PANCORAN',style:TextStyle(
+            color:Theme.of(context).colorScheme.onSurfaceVariant,
+            fontSize:9,fontWeight:FontWeight.w700)),
+          const SizedBox(height:3),
+          Text(loaded?(temp as num).toStringAsFixed(0)+'°C · '+description(code):
+            s.hasError?'Cuaca belum tersedia':'Memuat cuaca...',
+            maxLines:1,overflow:TextOverflow.ellipsis,
+            style:TextStyle(fontSize:13,fontWeight:FontWeight.w700,
+              color:Theme.of(context).colorScheme.onSurface)),
+        ])),
+        IconButton(tooltip:'Muat ulang cuaca',
+          icon:const Icon(Icons.refresh_rounded,size:19),
+          onPressed:()=>setState(()=>pending=fetch())),
+      ]),
+    );
   });
 }
 
@@ -264,10 +269,12 @@ class _PremiumQuickAction extends StatelessWidget {
 /// Konsisten untuk semua akun petugas tanpa mengubah izin atau endpoint.
 class CikokoStaffHero extends StatelessWidget {
   final String roleName;
+  final String accountName;
   final VoidCallback onManagement;
   final VoidCallback onServices;
   const CikokoStaffHero({super.key, required this.roleName,
-    required this.onManagement, required this.onServices});
+    required this.onManagement, required this.onServices,
+    this.accountName='Petugas Cikoko'});
 
   @override
   Widget build(BuildContext context) {
@@ -284,14 +291,11 @@ class CikokoStaffHero extends StatelessWidget {
           (title:'Selesai',value:'Riwayat',color:const Color(0xFF0FAE94)),
         ];
     return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Padding(padding:const EdgeInsets.fromLTRB(3,7,3,14),
-       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Text(admin?'Hai, Administrator':'Hai, Petugas',
-          style:const TextStyle(color:homeNavy,fontSize:23,fontWeight:FontWeight.w700)),
-        const SizedBox(height:3),
-        Text(admin?'Kelola sistem Cikoko SmartAPP':'Status tugas dan pelayanan hari ini',
-          style:const TextStyle(color:homeMuted,fontSize:12)),
-       ])),
+      CikokoWelcomeHero(name:accountName,roleName:roleName,
+        subtitle:admin?'Kelola sistem Cikoko SmartAPP':'Status tugas dan pelayanan hari ini'),
+      const SizedBox(height:12),
+      const CikokoLiveWeather(),
+      const SizedBox(height:16),
       Row(children:[
         for(final card in cards)
          Expanded(child:Container(
