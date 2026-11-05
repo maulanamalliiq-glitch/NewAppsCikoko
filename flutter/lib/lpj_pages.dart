@@ -323,22 +323,44 @@ class _LpjDetailPageState extends State<LpjDetailPage>{
   final approvals=doc?['approvals'] is List?List<dynamic>.from(doc!['approvals'] as List):<dynamic>[];
   final canReview=expectedSigner.isNotEmpty&&scope?['duty']==expectedSigner;
   return Scaffold(appBar:AppBar(title:const Text('Detail LPJ')),body:loading?const Center(child:CircularProgressIndicator()):error!=null?Center(child:Text(error!)):ListView(padding:const EdgeInsets.all(16),children:[
-   Text(lpjLabels[widget.kind]??'LPJ',style:Theme.of(context).textTheme.titleLarge),
-   const SizedBox(height:8),
-   Text('Periode: '+(doc?['period']??'-').toString()),
-   Text('Wilayah: RT '+(doc?['rt']??'-').toString()+' / RW '+(doc?['rw']??'-').toString()),
-   Text('Status: '+(doc?['status']??'-').toString().replaceAll('_',' ')),
-   const Divider(height:28),
-   Text('Saldo awal: Rp '+(payload['opening']??0).toString()),
-   Text('Penerimaan: Rp '+(payload['income']??0).toString()),
-   Text('Total pengeluaran: Rp '+(payload['total_expenses']??0).toString()),
-   Text('Saldo akhir: Rp '+(payload['closing']??0).toString(),style:const TextStyle(fontWeight:FontWeight.bold)),
-   const SizedBox(height:15),const Text('Rincian pengeluaran',style:TextStyle(fontWeight:FontWeight.bold)),
+   CikokoPremiumHeader(title:lpjLabels[widget.kind]??'Laporan LPJ',
+     subtitle:'Rincian laporan dan riwayat persetujuan wilayah',
+     icon:Icons.account_balance_wallet_outlined),
+   const SizedBox(height:14),
+   Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(
+     crossAxisAlignment:CrossAxisAlignment.start,children:[
+     Row(children:[const Icon(Icons.calendar_month_outlined,color:CikokoPalette.blue,size:19),
+       const SizedBox(width:9),Expanded(child:Text('Periode: ${doc?['period']??'-'}'))]),
+     const SizedBox(height:9),
+     Row(children:[const Icon(Icons.location_on_outlined,color:CikokoPalette.green,size:19),
+       const SizedBox(width:9),Expanded(child:Text('Wilayah: RT ${doc?['rt']??'-'} / RW ${doc?['rw']??'-'}'))]),
+     const SizedBox(height:12),
+     CikokoStatusBadge(status:(doc?['status']??'proses').toString()),
+   ]))),
+   const SizedBox(height:12),
+   Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(children:[
+     _LpjSummaryRow('Saldo awal',payload['opening'],Icons.savings_outlined),
+     _LpjSummaryRow('Penerimaan',payload['income'],Icons.arrow_downward_rounded),
+     _LpjSummaryRow('Total pengeluaran',payload['total_expenses'],Icons.arrow_upward_rounded),
+     const Divider(height:22),
+     _LpjSummaryRow('Saldo akhir',payload['closing'],Icons.account_balance_wallet_outlined,highlight:true),
+   ]))),
+   const SizedBox(height:15),
+   const CikokoPremiumSection(title:'Rincian pengeluaran'),
    for(final row in (payload['entries'] is List?(payload['entries'] as List):<dynamic>[]))
-    if(row is Map)ListTile(title:Text((row['activity']??'').toString()),subtitle:Text((row['notes']??'').toString()),trailing:Text('Rp '+(row['amount']??0).toString())),
-   const Divider(),
-   const Text('Riwayat persetujuan',style:TextStyle(fontWeight:FontWeight.bold)),
-   for(final a in approvals)if(a is Map)ListTile(leading:const Icon(Icons.verified_outlined),title:Text((a['duty']??'').toString()+' • '+(a['action']??'').toString()),subtitle:Text((a['created_at']??'').toString())),
+     if(row is Map)Card(child:ListTile(
+       leading:const Icon(Icons.description_outlined,color:CikokoPalette.blue),
+       title:Text((row['activity']??'').toString()),
+       subtitle:Text((row['notes']??'').toString()),
+       trailing:Text('Rp ${row['amount']??0}',style:const TextStyle(fontWeight:FontWeight.w700)))),
+   const SizedBox(height:10),
+   const CikokoPremiumSection(title:'Riwayat persetujuan'),
+   if(approvals.isEmpty)const Text('Belum ada riwayat persetujuan.',
+     style:TextStyle(color:CikokoPalette.muted,fontSize:12)),
+   for(final a in approvals)if(a is Map)Card(child:ListTile(
+     leading:const Icon(Icons.verified_outlined,color:CikokoPalette.green),
+     title:Text('${a['duty']??''} • ${a['action']??''}'),
+     subtitle:Text((a['created_at']??'').toString()))),
    const SizedBox(height:14),
    if(canReview)OutlinedButton.icon(onPressed:busy?null:setupPin,icon:const Icon(Icons.lock_outline),label:const Text('Atur / Ganti PIN Persetujuan')),
    if(canReview)Row(children:[
@@ -350,4 +372,24 @@ class _LpjDetailPageState extends State<LpjDetailPage>{
    const SizedBox(height:18),const CikokoPageSignature(),
   ]));
  }
+}
+
+class _LpjSummaryRow extends StatelessWidget {
+ final String label;
+ final dynamic amount;
+ final IconData icon;
+ final bool highlight;
+ const _LpjSummaryRow(this.label,this.amount,this.icon,{this.highlight=false});
+ @override Widget build(BuildContext context)=>Padding(
+  padding:const EdgeInsets.symmetric(vertical:5),
+  child:Row(children:[
+   Icon(icon,color:highlight?CikokoPalette.blue:CikokoPalette.orange,size:19),
+   const SizedBox(width:10),
+   Expanded(child:Text(label,style:TextStyle(
+     color:highlight?CikokoPalette.navy:CikokoPalette.muted,
+     fontWeight:highlight?FontWeight.w800:FontWeight.w500))),
+   Text('Rp ${amount??0}',style:TextStyle(
+     color:highlight?CikokoPalette.blue:CikokoPalette.navy,
+     fontWeight:FontWeight.w800)),
+  ]));
 }
