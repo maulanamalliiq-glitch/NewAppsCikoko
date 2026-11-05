@@ -1,0 +1,150 @@
+import 'dart:math' as math;
+import 'package:flutter/material.dart';
+
+/// Shared Cikoko SmartAPP visual language. No account permissions or APIs.
+abstract final class CikokoPalette {
+  static const navy = Color(0xFF10346C);
+  static const blue = Color(0xFF1675E5);
+  static const sky = Color(0xFFEAF4FF);
+  static const border = Color(0xFFE1EAF5);
+  static const muted = Color(0xFF61748F);
+  static const gold = Color(0xFFFFC34A);
+  static const green = Color(0xFF15A783);
+  static const purple = Color(0xFF8157D8);
+  static const orange = Color(0xFFF29B2C);
+  static const rose = Color(0xFFD9538A);
+}
+
+class CikokoBrandMark extends StatelessWidget {
+  final double size;
+  const CikokoBrandMark({super.key,this.size=54});
+  @override
+  Widget build(BuildContext context) => SizedBox.square(
+    dimension:size,child:CustomPaint(painter:const _CikokoMarkPainter()));
+}
+class _CikokoMarkPainter extends CustomPainter {
+  const _CikokoMarkPainter();
+  @override
+  void paint(Canvas canvas,Size size) {
+    final rect=Rect.fromLTWH(size.width*.18,size.height*.16,size.width*.65,size.height*.68);
+    final paint=Paint()..style=PaintingStyle.stroke..strokeWidth=size.width*.19
+      ..strokeCap=StrokeCap.round
+      ..shader=const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+        colors:[Color(0xFF07469C),Color(0xFF1B7CEC),Color(0xFF06468F)])
+        .createShader(Offset.zero & size);
+    canvas.drawArc(rect,math.pi*.25,math.pi*1.50,false,paint);
+    final accent=Paint()..style=PaintingStyle.stroke..strokeWidth=size.width*.125
+      ..strokeCap=StrokeCap.round..color=CikokoPalette.gold;
+    canvas.drawArc(rect.deflate(size.width*.04),math.pi*.95,math.pi*.53,false,accent);
+  }
+  @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
+}
+
+class CikokoPremiumHeader extends StatelessWidget {
+  final String title,subtitle;
+  final IconData icon;
+  final Color start,end;
+  final Widget? trailing;
+  const CikokoPremiumHeader({super.key,required this.title,required this.subtitle,
+    this.icon=Icons.dashboard_customize_outlined,
+    this.start=CikokoPalette.navy,this.end=CikokoPalette.blue,this.trailing});
+  @override
+  Widget build(BuildContext context)=>Container(
+    width:double.infinity,
+    padding:const EdgeInsets.all(15),
+    decoration:BoxDecoration(
+      gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+        colors:[start,end]),
+      borderRadius:BorderRadius.circular(18),
+      boxShadow:[BoxShadow(color:end.withValues(alpha:.14),
+        blurRadius:14,offset:const Offset(0,5))]),
+    child:Row(children:[
+      Container(width:46,height:46,
+        decoration:BoxDecoration(color:Colors.white.withValues(alpha:.18),
+          borderRadius:BorderRadius.circular(14)),
+        child:Icon(icon,size:25,color:Colors.white)),
+      const SizedBox(width:12),
+      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Text(title,maxLines:2,overflow:TextOverflow.ellipsis,
+          style:const TextStyle(color:Colors.white,fontSize:16,
+            fontWeight:FontWeight.w600,height:1.2)),
+        const SizedBox(height:5),
+        Text(subtitle,maxLines:3,overflow:TextOverflow.ellipsis,
+          style:const TextStyle(color:Color(0xFFE4F1FF),fontSize:11.5,height:1.3)),
+      ])),
+      if(trailing!=null)...[const SizedBox(width:7),trailing!],
+    ]),
+  );
+}
+
+class CikokoPremiumSection extends StatelessWidget {
+ final String title;
+ final String? subtitle;
+ final Widget? action;
+ const CikokoPremiumSection({super.key,required this.title,this.subtitle,this.action});
+ @override Widget build(BuildContext context)=>Padding(
+  padding:const EdgeInsets.symmetric(vertical:9),
+  child:Row(crossAxisAlignment:CrossAxisAlignment.center,children:[
+   Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Text(title,style:const TextStyle(color:CikokoPalette.navy,
+      fontSize:16,fontWeight:FontWeight.w600)),
+    if(subtitle!=null)Padding(padding:const EdgeInsets.only(top:3),
+      child:Text(subtitle!,style:const TextStyle(color:CikokoPalette.muted,fontSize:11.5))),
+   ])),
+   if(action!=null)action!,
+  ]));
+}
+
+class CikokoPremiumTile extends StatelessWidget {
+ final IconData icon;
+ final String title,subtitle;
+ final Color accent;
+ final VoidCallback? onTap;
+ const CikokoPremiumTile({super.key,required this.icon,required this.title,
+   required this.subtitle,required this.accent,this.onTap});
+ @override Widget build(BuildContext context)=>Material(
+  color:Colors.white,borderRadius:BorderRadius.circular(15),
+  child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(15),
+    child:Container(
+      padding:const EdgeInsets.symmetric(horizontal:12,vertical:10),
+      decoration:BoxDecoration(border:Border.all(color:CikokoPalette.border),
+        borderRadius:BorderRadius.circular(15)),
+      child:Row(children:[
+        Container(width:39,height:39,
+         decoration:BoxDecoration(color:accent.withValues(alpha:.12),
+          borderRadius:BorderRadius.circular(11)),
+         child:Icon(icon,color:accent,size:21)),
+        const SizedBox(width:10),
+        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Text(title,maxLines:2,overflow:TextOverflow.ellipsis,
+            style:const TextStyle(color:CikokoPalette.navy,
+              fontSize:12,fontWeight:FontWeight.w600)),
+          const SizedBox(height:3),
+          Text(subtitle,maxLines:2,overflow:TextOverflow.ellipsis,
+            style:const TextStyle(color:CikokoPalette.muted,fontSize:10.5)),
+        ])),
+        const Icon(Icons.chevron_right_rounded,color:CikokoPalette.muted,size:18),
+      ]),
+    )));
+}
+
+class CikokoStageIndicator extends StatelessWidget {
+ final int current;
+ final List<String> labels;
+ const CikokoStageIndicator({super.key,required this.current,required this.labels});
+ @override Widget build(BuildContext context)=>Row(children:[
+  for(var i=0;i<labels.length;i++)...[
+    if(i>0)Expanded(child:Container(height:2,color:i<=current?
+      CikokoPalette.blue:CikokoPalette.border)),
+    Column(children:[
+      CircleAvatar(radius:13,backgroundColor:i<=current?
+       CikokoPalette.blue:const Color(0xFFE8EEF6),
+       child:Text('${i+1}',style:TextStyle(fontSize:11,
+         color:i<=current?Colors.white:CikokoPalette.muted,
+         fontWeight:FontWeight.w600))),
+      const SizedBox(height:4),
+      Text(labels[i],style:const TextStyle(color:CikokoPalette.muted,fontSize:10)),
+    ]),
+  ],
+ ]);
+}
