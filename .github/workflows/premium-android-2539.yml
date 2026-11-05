@@ -1,4 +1,4 @@
-name: Premium UI 2539 - Release ARM64 APK and Play AAB
+name: Cikoko Premium - Android APK QA Only
 on:
   push:
     branches:
@@ -56,8 +56,8 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "$CIKOKO_KEYSTORE_B64" || -z "$CIKOKO_STORE_PASSWORD" || -z "$CIKOKO_KEY_PASSWORD" ]]; then
-            echo "::warning::Play upload signing secrets missing: no Play-ready AAB will be built."
-            echo "SIGN_READY=false" >> "$GITHUB_ENV"
+            echo "::error::Signing secrets required for installable QA APK."
+            exit 1
           else
             printf '%s' "$CIKOKO_KEYSTORE_B64" | base64 --decode > flutter/android/cikoko_upload.jks
             chmod 600 flutter/android/cikoko_upload.jks
@@ -77,27 +77,6 @@ jobs:
             echo "::error::Unexpected Play upload signing certificate."
             exit 1
           fi
-      - name: Build Play-signed Android App Bundle
-        if: env.SIGN_READY == 'true'
-        working-directory: flutter
-        env:
-          CIKOKO_KEYSTORE_PATH: ${{ github.workspace }}/flutter/android/cikoko_upload.jks
-          CIKOKO_STORE_PASSWORD: ${{ secrets.CIKOKO_STORE_PASSWORD }}
-          CIKOKO_KEY_PASSWORD: ${{ secrets.CIKOKO_KEY_PASSWORD }}
-          CIKOKO_KEY_ALIAS: androidkey
-        shell: bash
-        run: |
-          set -euo pipefail
-          flutter build appbundle --release
-          aab=build/app/outputs/bundle/release/app-release.aab
-          test -s "$aab"
-          jarsigner -verify "$aab" > /tmp/cikoko-premium-signature.log 2>&1
-          grep -q 'jar verified' /tmp/cikoko-premium-signature.log
-          actual=$(keytool -printcert -jarfile "$aab" | sed -n 's/^[[:space:]]*SHA256: //p' | head -1 | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
-          expected="394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5"
-          test "$actual" = "$expected"
-          mkdir -p ../premium-outputs
-          cp "$aab" ../premium-outputs/Cikoko-Premium-2539-PLAY-SIGNED.aab
       - name: Build compact ARM64 release APK
         if: env.SIGN_READY == 'true'
         working-directory: flutter
@@ -126,11 +105,11 @@ jobs:
           expected="394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5"
           test "$actual" = "$expected"
           ls -lh "$output"
-      - name: Upload isolated QA outputs (never replace production release)
+      - name: Upload APK for phone testing (no AAB)
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cikoko-premium-2539-${{ github.run_number }}
+          name: cikoko-apk-qa-2539-${{ github.run_number }}
           path: premium-outputs/*
           if-no-files-found: warn
           retention-days: 14
