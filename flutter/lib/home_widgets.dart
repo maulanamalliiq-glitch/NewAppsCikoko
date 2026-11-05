@@ -249,32 +249,30 @@ class CikokoStaffHero extends StatelessWidget {
   }
 }
 class _StaffAction extends StatelessWidget {
- final IconData icon;
- final String title,subtitle;
- final Color color;
- final VoidCallback onTap;
- const _StaffAction({required this.icon,required this.title,required this.subtitle,
-  required this.color,required this.onTap});
- @override Widget build(BuildContext context)=>Material(color:Colors.white,
-  borderRadius:BorderRadius.circular(15),child:InkWell(onTap:onTap,
-   borderRadius:BorderRadius.circular(15),child:Container(
-    padding:const EdgeInsets.all(11),
-    decoration:BoxDecoration(borderRadius:BorderRadius.circular(15),
-     border:Border.all(color:homeBorder)),
-    child:Row(children:[
-     Container(width:34,height:36,decoration:BoxDecoration(
-      color:color.withValues(alpha:.12),borderRadius:BorderRadius.circular(10)),
-      child:Icon(icon,color:color,size:20)),
-     const SizedBox(width:8),
-     Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Text(title,maxLines:2,overflow:TextOverflow.ellipsis,
-       style:const TextStyle(color:homeNavy,fontSize:11,fontWeight:FontWeight.w600)),
-      const SizedBox(height:3),
-      Text(subtitle,maxLines:2,overflow:TextOverflow.ellipsis,
-       style:const TextStyle(color:homeMuted,fontSize:9.5)),
-     ])),
-    ])),
-  ));
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+  const _StaffAction({required this.icon, required this.title,
+    required this.subtitle, required this.color, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      margin: EdgeInsets.zero,
+      child: ListTile(
+        dense: true,
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        leading: Icon(icon, color: color, size: 22),
+        title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 11, color: homeNavy)),
+        subtitle: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 9.5, color: homeMuted)),
+      ),
+    );
+  }
 }
 
 /// Kategori pelayanan pada website, diterjemahkan menjadi kartu Flutter.
