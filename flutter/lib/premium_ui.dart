@@ -342,3 +342,26 @@ class CikokoPageSignature extends StatelessWidget {
    style:TextStyle(fontSize:10.5,color:CikokoPalette.muted,
     fontWeight:FontWeight.w400)));
 }
+
+class CikokoStatusBadge extends StatelessWidget {
+  final String status;
+  const CikokoStatusBadge({super.key, required this.status});
+  @override Widget build(BuildContext context) {
+    final value=status.toLowerCase().replaceAll('_',' ').trim();
+    final rejected=value.contains('tolak') || value.contains('reject') || value.contains('return');
+    final completed=value.contains('selesai') || value.contains('approved') || value.contains('disetujui') || value.contains('complete');
+    final accent=rejected?const Color(0xFFDC3558):completed?const Color(0xFF15985B):const Color(0xFFB67A00);
+    final fill=rejected?const Color(0xFFFFE4EA):completed?const Color(0xFFDCF9E9):const Color(0xFFFFF1BC);
+    final label=rejected?'Ditolak':completed?'Selesai':'Dalam Proses';
+    return Container(
+      padding:const EdgeInsets.symmetric(horizontal:11,vertical:6),
+      decoration:BoxDecoration(color:fill,borderRadius:BorderRadius.circular(24)),
+      child:Row(mainAxisSize:MainAxisSize.min,children:[
+        Icon(rejected?Icons.cancel_rounded:completed?Icons.check_circle_rounded:Icons.schedule_rounded,
+          color:accent,size:16),
+        const SizedBox(width:5),
+        Text(label,style:TextStyle(color:accent,fontSize:11,fontWeight:FontWeight.w800)),
+      ]),
+    );
+  }
+}
