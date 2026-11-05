@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'api.dart';
 import 'v211_features.dart';
 import 'package:image_picker/image_picker.dart';
@@ -28,7 +29,12 @@ class _MobileEditorState extends State<MobileEditor> {
  Future<void> _addNewsImage(ImageSource source)async{final img=await ImagePicker().pickImage(source:source,imageQuality:82,maxWidth:2200);if(img!=null&&mounted)setState(()=>newsPhotos.add(img.path));}
  Widget entry(String label,TextEditingController controller,{int lines=1,TextInputType? keyboard}) => Padding(padding:const EdgeInsets.only(bottom:12),child:TextField(controller:controller,maxLines:lines,keyboardType:keyboard,decoration:InputDecoration(labelText:label)));
  @override Widget build(BuildContext context) => ListView(padding:const EdgeInsets.all(14),children:[
-  Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(archive?'Tambah Arsip Ahli Waris':widget.mode=='berita'?'Publikasi Berita':'Tambah Pengumuman',style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:6),Text(archive?'Surat lama disimpan terpisah dari pengajuan online baru.':'Konten diterbitkan di website dan aplikasi setelah tersimpan.',style:Theme.of(context).textTheme.bodySmall)]))),
+  CikokoPremiumHeader(
+    title:archive?'Tambah Arsip Ahli Waris':widget.mode=='berita'?'Publikasi Berita':'Tambah Pengumuman',
+    subtitle:archive?'Simpan dan kelola arsip surat lama dengan aman.':
+      'Tulis dan terbitkan informasi untuk warga Cikoko.',
+    icon:archive?Icons.folder_copy_outlined:
+      widget.mode=='berita'?Icons.newspaper_outlined:Icons.campaign_outlined),
   const SizedBox(height:12),
   if(archive)...[entry('Tahun surat',year,keyboard:TextInputType.number),entry('Nomor surat',reference),entry('Nama pemohon',title),entry('Nama pewaris',deceased),entry('Catatan arsip',body,lines:4)]
   else ...[entry('Judul',title),entry('Isi ${widget.mode}',body,lines:9),if(widget.mode=='berita')...[
