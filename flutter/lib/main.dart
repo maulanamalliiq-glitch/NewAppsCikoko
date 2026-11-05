@@ -508,6 +508,7 @@ class _HomeState extends State<HomePage> {
   Widget home()=>ListView(padding:EdgeInsets.zero,children:[
     if(isStaff) Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoStaffHero(
       roleName:roleLabel,
+      accountName:'${api.profile?['name']??'Petugas Cikoko'}',
       onManagement:()=>switchTo('Menu Cikoko'),
       onServices:()=>switchTo('Layanan Online'),
     ))
