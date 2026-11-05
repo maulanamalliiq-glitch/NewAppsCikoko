@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -75,13 +76,16 @@ class _InnovationPageState extends State<InnovationPage>{
   if(!s.hasData)return const Center(child:CircularProgressIndicator());
   final items=List<dynamic>.from(s.data?['items']??[]);
   return RefreshIndicator(onRefresh:()async{setState(reload);await pending;},child:ListView(padding:const EdgeInsets.all(14),children:[
-   const Text('Inovasi Kelurahan Cikoko',style:TextStyle(fontSize:20,color:civicNavy,fontWeight:FontWeight.w800)),
-   const SizedBox(height:4),const Text('Program unggulan bagi masyarakat dan lingkungan Kelurahan Cikoko.',style:TextStyle(color:Colors.blueGrey,fontSize:12)),if(s.data?['offline']==true)Padding(padding:const EdgeInsets.symmetric(vertical:7),child:TextButton.icon(onPressed:()=>setState(reload),icon:const Icon(Icons.sync),label:const Text('Ringkasan sementara · Sinkronkan informasi'))),const SizedBox(height:12),
+   const CikokoPremiumHeader(title:'Inovasi Kelurahan Cikoko',
+     subtitle:'Program unggulan dan terobosan untuk masyarakat Cikoko.',
+     icon:Icons.auto_awesome_outlined,
+     start:Color(0xFF174B91),end:Color(0xFF138DCC)),
+   const SizedBox(height:13),if(s.data?['offline']==true)Padding(padding:const EdgeInsets.symmetric(vertical:7),child:TextButton.icon(onPressed:()=>setState(reload),icon:const Icon(Icons.sync),label:const Text('Ringkasan sementara · Sinkronkan informasi'))),const SizedBox(height:12),
    for(final raw in items)...[Builder(builder:(context){final item=Map<String,dynamic>.from(raw);return Card(clipBehavior:Clip.antiAlias,child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     if(images(item).isNotEmpty && imageUrl(images(item).first)!=null)Image.network(imageUrl(images(item).first)!,height:126,width:double.infinity,fit:BoxFit.cover,errorBuilder:(_,__,___)=>const SizedBox.shrink())
     else Container(height:72,width:double.infinity,color:const Color(0xffe3f0ff),alignment:Alignment.center,child:const Icon(Icons.eco_outlined,color:civicBlue,size:32)),
     Padding(padding:const EdgeInsets.all(13),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Text('${item['title']}',style:const TextStyle(fontWeight:FontWeight.w800,color:civicNavy,fontSize:15)),const SizedBox(height:5),
+      Text('${item['title']}',style:const TextStyle(fontWeight:FontWeight.w600,color:civicNavy,fontSize:15)),const SizedBox(height:5),
       Text('${item['summary']??''}',style:const TextStyle(fontSize:12)),const SizedBox(height:10),
       Row(children:[Expanded(child:OutlinedButton.icon(onPressed:()=>detail(item),icon:const Icon(Icons.arrow_forward_outlined,size:16),label:const Text('Lihat Selengkapnya'))),
       if(widget.api.profile?['role']=='admin')IconButton(tooltip:'Sunting inovasi',onPressed:()=>edit(item),icon:const Icon(Icons.edit_outlined,color:civicBlue))]),
@@ -447,21 +451,12 @@ class _PpsuReportState extends State<PpsuReportPage>{
   if(mounted){setState((){for(var i=0;i<3;i++){photos[i]=null;}activity.clear();});civicMessage(context,'Laporan PPSU telah diterima untuk ditindaklanjuti.');}
  }catch(_){if(mounted)civicMessage(context,'Laporan belum berhasil dikirim. Mohon coba kembali.');}finally{if(mounted)setState(()=>sending=false);}}
  @override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.fromLTRB(12,12,12,28),children:[
-  Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(
-    gradient:const LinearGradient(colors:[Color(0xFF10549F),Color(0xFF0C9B9A)]),
-    borderRadius:BorderRadius.circular(18)),
-    child:const Row(children:[
-      Icon(Icons.cleaning_services_outlined,color:Colors.white,size:28),
-      SizedBox(width:12),
-      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Text('Laporan Kegiatan PPSU',style:TextStyle(
-          fontSize:16,fontWeight:FontWeight.w600,color:Colors.white)),
-        SizedBox(height:3),
-        Text('Isi kegiatan dan dokumentasi lapangan',
-          style:TextStyle(fontSize:11.5,color:Color(0xFFE5F7FA))),
-      ])),
-    ])),
+  const CikokoPremiumHeader(title:'Laporan Kegiatan PPSU',
+    subtitle:'Input kegiatan, tanggal kerja, dan dokumentasi lapangan.',
+    icon:Icons.cleaning_services_outlined,
+    start:Color(0xFF10549F),end:Color(0xFF0C9B9A)),
   const SizedBox(height:10),
+  const CikokoPremiumSection(title:'Data Kegiatan',subtitle:'Lengkapi sebelum mengirim laporan'),
   Card(child:Padding(padding:const EdgeInsets.all(13),child:Column(children:[
    ListTile(dense:true,leading:const Icon(Icons.calendar_today,color:civicBlue),title:Text('Hari dan tanggal: ${date.day}/${date.month}/${date.year}'),trailing:const Icon(Icons.edit_calendar),onTap:()async{final d=await showDatePicker(context:context,initialDate:date,firstDate:DateTime(2020),lastDate:DateTime.now());if(d!=null && mounted)setState(()=>date=d);}),
    TextField(controller:name,decoration:const InputDecoration(labelText:'Nama Lengkap')),const SizedBox(height:12),
