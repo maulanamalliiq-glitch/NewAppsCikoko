@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -156,12 +157,14 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
   @override Widget build(BuildContext context){
     final visible=widget.admin?entries:entries.where((e)=>e['active']!=false).toList();
     return RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(14),children:[
-      Text(widget.admin?'Kelola Layanan Terpadu':'Layanan Masyarakat Terpadu',
-          style:const TextStyle(fontSize:19,fontWeight:FontWeight.w800,color:_ink)),
-      const SizedBox(height:6),
-      Text(widget.admin?'Atur logo, judul, keterangan, tautan, dan layanan yang tampil bagi warga.':
-        'Pilih layanan untuk membuka situs resmi penyedia layanan.',
-        style:const TextStyle(fontSize:12,color:Colors.blueGrey)),
+      CikokoPremiumHeader(
+        title:widget.admin?'Kelola Layanan Terpadu':'Layanan Masyarakat Terpadu',
+        subtitle:widget.admin
+          ?'Atur logo, judul, tautan dan layanan aktif untuk warga.'
+          :'Pilih layanan resmi sesuai kebutuhan Anda.',
+        icon:widget.admin?Icons.tune_rounded:Icons.widgets_outlined,
+        start:const Color(0xFF134C9C),end:const Color(0xFF218AE6)),
+      const SizedBox(height:12),
       if(notice!=null)Padding(padding:const EdgeInsets.only(top:12),child:Card(
         child:Padding(padding:const EdgeInsets.all(12),child:Text(notice!,style:const TextStyle(fontSize:12))))),
       if(widget.admin)Padding(padding:const EdgeInsets.symmetric(vertical:10),child:FilledButton.icon(
