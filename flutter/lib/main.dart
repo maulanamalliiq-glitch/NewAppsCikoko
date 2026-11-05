@@ -783,6 +783,7 @@ class _PhotoState extends State<PhotoInput> {
     super.didUpdateWidget(oldWidget);
     if(oldWidget.currentPath!=widget.currentPath){
       selectedPath=widget.currentPath;
+      selectedName=null;
     }
   }
   Future<void> pick(ImageSource source) async {
@@ -837,7 +838,7 @@ class _PhotoState extends State<PhotoInput> {
       });
       widget.onChanged(out.path);
       // Do not remove other documents; only replace this field's old copy.
-      if(previous!=null&&previous!=out.path) {
+      if(previous!=null&&previous!=out.path&&previous.startsWith(folder.path+'/')) {
         final f=File(previous);
         if(await f.exists())await f.delete();
       }
@@ -849,23 +850,51 @@ class _PhotoState extends State<PhotoInput> {
     }
   }
   @override Widget build(BuildContext c)=>Card(
-    child:Padding(padding:const EdgeInsets.all(10),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Text(widget.label,style:const TextStyle(fontWeight:FontWeight.w700,fontSize:12)),
-      const SizedBox(height:8),
-      Row(crossAxisAlignment:CrossAxisAlignment.center,children:[
-        if(selectedPath!=null)...[
-          ClipRRect(borderRadius:BorderRadius.circular(10),child:Image.file(File(selectedPath!),width:57,height:62,fit:BoxFit.cover,errorBuilder:(_,__,___)=>const SizedBox(width:57,height:62,child:Icon(Icons.broken_image_outlined)))),
-          const SizedBox(width:10),
-        ],
-        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Wrap(spacing:6,runSpacing:5,children:[
-            OutlinedButton.icon(onPressed:selecting?null:()=>pick(ImageSource.camera),icon:const Icon(Icons.camera_alt_outlined,size:16),label:const Text('Kamera',style:TextStyle(fontSize:12))),
-            OutlinedButton.icon(onPressed:selecting?null:()=>pick(ImageSource.gallery),icon:const Icon(Icons.photo_library_outlined,size:16),label:const Text('Galeri',style:TextStyle(fontSize:12))),
-          ]),
-          Text(selectedName??(selectedPath==null?'Belum ada foto':'Foto sudah dipilih'),maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
-        ]))
+    clipBehavior:Clip.antiAlias,
+    child:Padding(padding:const EdgeInsets.all(13),child:Column(
+      crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Row(children:[
+        Expanded(child:Text(widget.label,
+          style:const TextStyle(fontWeight:FontWeight.w700,fontSize:13))),
+        if(selectedPath!=null)const Icon(Icons.check_circle_rounded,
+          color:Color(0xFF10A277),size:19),
       ]),
+      const SizedBox(height:10),
+      ClipRRect(borderRadius:BorderRadius.circular(12),child:Container(
+        width:double.infinity,
+        height:selectedPath==null?100:172,
+        decoration:BoxDecoration(
+          color:Theme.of(context).colorScheme.surfaceContainerHighest,
+          border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
+        child:selectedPath==null
+          ?Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+              Icon(Icons.add_photo_alternate_outlined,size:32,
+                color:Theme.of(context).colorScheme.primary),
+              const SizedBox(height:6),
+              const Text('Pratinjau foto akan tampil di sini',
+                style:TextStyle(fontSize:11)),
+            ])
+          :Image.file(File(selectedPath!),width:double.infinity,
+              height:172,fit:BoxFit.contain,
+              errorBuilder:(_,__,___)=>const Center(
+                child:Text('Pratinjau tidak tersedia. Pilih ulang foto.'))),
+      )),
+      const SizedBox(height:10),
+      Wrap(spacing:8,runSpacing:8,children:[
+        OutlinedButton.icon(onPressed:selecting?null:()=>pick(ImageSource.camera),
+          icon:const Icon(Icons.camera_alt_outlined,size:17),
+          label:Text(selectedPath==null?'Kamera':'Foto Ulang')),
+        OutlinedButton.icon(onPressed:selecting?null:()=>pick(ImageSource.gallery),
+          icon:const Icon(Icons.photo_library_outlined,size:17),
+          label:Text(selectedPath==null?'Galeri':'Ganti Foto')),
+      ]),
+      const SizedBox(height:6),
+      Text(selectedName??(selectedPath==null?'Belum ada foto':'Foto siap diunggah'),
+        maxLines:2,overflow:TextOverflow.ellipsis,
+        style:TextStyle(fontSize:11,
+          color:Theme.of(context).colorScheme.onSurfaceVariant)),
     ])));
+
 }
 class WarisForm extends StatefulWidget{const WarisForm({super.key});@override State<WarisForm> createState()=>_WarisState();}
 class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingController>{};final files=<String,List<String>>{};int children=0;bool sending=false;double progress=0;bool agree=false;String? savedReference;bool completed=false;
