@@ -77,8 +77,10 @@ class CikokoResidentHero extends StatelessWidget {
   final VoidCallback onStatus;
   final VoidCallback onAgenda;
   final VoidCallback onAspirations;
+  final VoidCallback onInnovations;
   const CikokoResidentHero({super.key,required this.name,required this.onService,
-    required this.onStatus,required this.onAgenda,required this.onAspirations});
+    required this.onStatus,required this.onAgenda,required this.onAspirations,
+    required this.onInnovations});
 
   @override
   Widget build(BuildContext context) => Column(
@@ -119,7 +121,7 @@ class CikokoResidentHero extends StatelessWidget {
       _PremiumQuickAction(icon:Icons.description_outlined,title:'Layanan',onTap:onService,accent:const Color(0xFF8B51D7)),
       _PremiumQuickAction(icon:Icons.send_outlined,title:'Kirim Laporan',onTap:onAspirations,accent:const Color(0xFFFF9B22)),
       _PremiumQuickAction(icon:Icons.newspaper_outlined,title:'Info & Berita',onTap:onAgenda,accent:const Color(0xFFB54BD9)),
-      _PremiumQuickAction(icon:Icons.auto_awesome_outlined,title:'Inovasi',onTap:onAgenda,accent:const Color(0xFF35AD5B)),
+      _PremiumQuickAction(icon:Icons.auto_awesome_outlined,title:'Inovasi',onTap:onInnovations,accent:const Color(0xFF35AD5B)),
       _PremiumQuickAction(icon:Icons.calendar_month_outlined,title:'Agenda',onTap:onAgenda,accent:const Color(0xFFF49A23)),
       _PremiumQuickAction(icon:Icons.manage_search_rounded,title:'Cek Status',onTap:onStatus,accent:const Color(0xFF2376D5)),
       _PremiumQuickAction(icon:Icons.map_outlined,title:'Wilayah',onTap:onService,accent:const Color(0xFF14A99D)),
