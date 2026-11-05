@@ -443,15 +443,54 @@ class _HomeState extends State<HomePage> {
         TextButton(onPressed:()=>switchTo(role=='warga'?'Layanan Online':'Menu Cikoko'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11))),
       ])),
     if(role=='warga')
-      LayoutBuilder(builder:(ctx,c)=>GridView.count(
-        crossAxisCount:c.maxWidth>700?3:2,
-        crossAxisSpacing:8,mainAxisSpacing:8,
-        childAspectRatio:1.94,shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),
-        children:[
-          for(final item in activeServices)
-            CikokoServiceTile(title:'${item['title']}',description:'${item['description']}',icon:Icons.account_balance_outlined,
-              accent:const Color(0xff2868c9),onTap:()=>switchTo('Layanan Online')),
-        ],
+      LayoutBuilder(builder:(ctx,c)=>GridView.builder(
+        itemCount:activeServices.length,
+        shrinkWrap:true,
+        physics:const NeverScrollableScrollPhysics(),
+        gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount:c.maxWidth>700?4:3,
+          mainAxisSpacing:10,crossAxisSpacing:10,
+          mainAxisExtent:106),
+        itemBuilder:(ctx,index){
+          final service=activeServices[index];
+          final url='${service['url']??''}';
+          final logo='${service['logo_url']??''}';
+          return Material(
+            color:Colors.white,
+            borderRadius:BorderRadius.circular(16),
+            child:InkWell(
+              borderRadius:BorderRadius.circular(16),
+              onTap:()async{
+                final uri=Uri.tryParse(url);
+                if(uri==null||uri.scheme!='https'||uri.host.isEmpty){
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content:Text('Tautan layanan belum tersedia. Hubungi pengelola.')));
+                  return;
+                }
+                if(!await launchUrl(uri,mode:LaunchMode.externalApplication)&&context.mounted){
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content:Text('Layanan belum dapat dibuka.')));
+                }
+              },
+              child:Container(
+                padding:const EdgeInsets.all(9),
+                decoration:BoxDecoration(
+                  border:Border.all(color:const Color(0xFFE3EAF4)),
+                  borderRadius:BorderRadius.circular(16)),
+                child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+                  if(Uri.tryParse(logo)?.scheme=='https')
+                    Image.network(logo,height:31,width:31,fit:BoxFit.contain,
+                      errorBuilder:(_,__,___)=>const Icon(Icons.account_balance_outlined,color:blue,size:30))
+                  else const Icon(Icons.account_balance_outlined,color:blue,size:30),
+                  const SizedBox(height:8),
+                  Text('${service['title']??''}',textAlign:TextAlign.center,
+                    maxLines:2,overflow:TextOverflow.ellipsis,
+                    style:const TextStyle(color:navy,fontSize:11.5,fontWeight:FontWeight.w700)),
+                ]),
+              ),
+            ),
+          );
+        },
       ))
     else if(guest)
       LayoutBuilder(builder:(ctx,c)=>GridView.count(
