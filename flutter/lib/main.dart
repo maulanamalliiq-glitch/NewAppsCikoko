@@ -356,11 +356,11 @@ class _HomeState extends State<HomePage> {
       SafeArea(top:guest && section=='Dashboard',
        child:CikokoPremiumCanvas(child:_page())),
     bottomNavigationBar:NavigationBar(height:67,selectedIndex:nav,labelBehavior:NavigationDestinationLabelBehavior.alwaysShow,onDestinationSelected:selectNav,destinations:[
-      const NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:CikokoSettings.tr('Menu','Menu')),
-      const NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:CikokoSettings.tr('Berita','News')),
-      const NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:CikokoSettings.tr('Beranda','Home')),
-      const NavigationDestination(icon:Icon(Icons.auto_awesome_outlined),selectedIcon:Icon(Icons.auto_awesome),label:CikokoSettings.tr('Inovasi','Innovation')),
-      const NavigationDestination(icon:Icon(Icons.person_outline),selectedIcon:Icon(Icons.person),label:CikokoSettings.tr('Profil','Profile')),
+      NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:CikokoSettings.tr('Menu','Menu')),
+      NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:CikokoSettings.tr('Berita','News')),
+      NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:CikokoSettings.tr('Beranda','Home')),
+      NavigationDestination(icon:Icon(Icons.auto_awesome_outlined),selectedIcon:Icon(Icons.auto_awesome),label:CikokoSettings.tr('Inovasi','Innovation')),
+      NavigationDestination(icon:Icon(Icons.person_outline),selectedIcon:Icon(Icons.person),label:CikokoSettings.tr('Profil','Profile')),
     ]),
     floatingActionButton:section=='Hubungi Kami'?null:FloatingActionButton.small(tooltip:'Hubungi Admin',onPressed:()=>switchTo('Hubungi Kami'),backgroundColor:blue,foregroundColor:Colors.white,child:const Icon(Icons.chat_bubble_outline)),
   ));
