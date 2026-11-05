@@ -323,7 +323,7 @@ class _HomeState extends State<HomePage> {
   }
   @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
     appBar:guest && section=='Dashboard'?null:AppBar(
-      title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:navy)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.5,color:Colors.blueGrey))]))]),
+      title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:Theme.of(c).colorScheme.onSurface)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:10.5,color:Theme.of(c).colorScheme.onSurfaceVariant))]))]),
       actions:[
         IconButton(
           tooltip:CikokoSettings.tr('Ganti tema gelap/terang','Switch dark/light theme'),
