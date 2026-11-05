@@ -41,63 +41,89 @@ class _CikokoMarkPainter extends CustomPainter {
 }
 
 
+/// Full-bleed photo banner. The in-app illustration remains available offline.
+class CikokoMonasBackdrop extends StatelessWidget {
+ const CikokoMonasBackdrop({super.key});
+ @override Widget build(BuildContext context)=>Stack(fit:StackFit.expand,children:[
+   const CikokoCityBackdrop(),
+   Image.network(
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f3/Jakarta_Panorama.jpg/1280px-Jakarta_Panorama.jpg',
+    fit:BoxFit.cover,alignment:const Alignment(.65,0),
+    errorBuilder:(_,__,___)=>const SizedBox.shrink(),
+   ),
+ ]);
+}
+
 class CikokoGuestHero extends StatelessWidget {
  final VoidCallback onLogin,onRegister,onServices,onNews,onInnovations,onAbout;
  const CikokoGuestHero({super.key,required this.onLogin,required this.onRegister,
   required this.onServices,required this.onNews,required this.onInnovations,
   required this.onAbout});
  @override Widget build(BuildContext context)=>Column(children:[
-   Container(height:232,width:double.infinity,clipBehavior:Clip.antiAlias,
-    decoration:BoxDecoration(borderRadius:BorderRadius.circular(21)),
-    child:Stack(fit:StackFit.expand,children:[
-      const CikokoCityBackdrop(),
-      const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(
-        begin:Alignment.topCenter,end:Alignment.bottomCenter,
-        colors:[Color(0x4C0F6DBD),Color(0xE50B448F)]))),
-      Positioned(top:22,left:15,child:Container(
-       padding:const EdgeInsets.symmetric(horizontal:9,vertical:5),
-       decoration:BoxDecoration(color:Colors.white.withValues(alpha:.85),
-        borderRadius:BorderRadius.circular(8)),
-       child:const Text('KELURAHAN CIKOKO · PANCORAN',
-        style:TextStyle(fontSize:9,color:CikokoPalette.navy,fontWeight:FontWeight.w600)))),
-      Positioned(left:16,right:16,bottom:22,child:Row(children:[
-       Container(width:64,height:64,decoration:BoxDecoration(
-         color:Colors.white,borderRadius:BorderRadius.circular(18)),
-        child:const Center(child:CikokoBrandMark(size:50))),
+   SizedBox(height:252,width:double.infinity,child:Stack(fit:StackFit.expand,children:[
+    const CikokoMonasBackdrop(),
+    const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(
+      begin:Alignment.topCenter,end:Alignment.bottomCenter,
+      colors:[Color(0x0810479B),Color(0x0010479B),Color(0x442063AC)]))),
+    Positioned(top:14,left:18,child:Container(
+      padding:const EdgeInsets.symmetric(horizontal:13,vertical:7),
+      decoration:BoxDecoration(color:Colors.white.withValues(alpha:.94),
+       borderRadius:BorderRadius.circular(24)),
+      child:const Text('KELURAHAN CIKOKO  ·  PANCORAN',
+        style:TextStyle(fontSize:10,color:CikokoPalette.navy,fontWeight:FontWeight.w800)))),
+    Positioned(bottom:5,right:7,child:Text('Monas • G. Kartapranata / CC BY-SA 3.0',
+      style:TextStyle(fontSize:7.5,color:Colors.white,
+        shadows:[Shadow(color:Colors.black,blurRadius:3)]))),
+   ])),
+   Container(width:double.infinity,
+    padding:const EdgeInsets.fromLTRB(19,14,19,0),
+    decoration:const BoxDecoration(color:Color(0xFFF6F9FF)),
+    child:Column(children:[
+      Row(mainAxisAlignment:MainAxisAlignment.center,children:[
+       Container(width:67,height:67,
+        decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18),
+         boxShadow:[BoxShadow(color:Color(0x1C2076CC),blurRadius:13)]),
+        child:const Center(child:CikokoBrandMark(size:53))),
        const SizedBox(width:12),
-       const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Text('Cikoko\nSmartAPP',style:TextStyle(
-          color:Colors.white,fontSize:26,fontWeight:FontWeight.w700,
-          height:1.02)),
-        SizedBox(height:5),
-        Text('Layanan Digital Kelurahan Cikoko',
-         style:TextStyle(color:Color(0xFFEAF3FF),fontSize:11)),
-       ])),
-      ])),
+       const Flexible(child:Text('Cikoko\nSmartAPP',
+        style:TextStyle(color:CikokoPalette.navy,fontSize:29,
+         fontWeight:FontWeight.w900,height:.98))),
+      ]),
+      const SizedBox(height:10),
+      Container(padding:const EdgeInsets.symmetric(horizontal:16,vertical:7),
+       decoration:BoxDecoration(gradient:const LinearGradient(
+        colors:[CikokoPalette.navy,CikokoPalette.blue]),
+        borderRadius:BorderRadius.circular(24)),
+       child:const Text('Layanan Digital Kelurahan Cikoko',
+        style:TextStyle(color:Colors.white,fontSize:11,fontWeight:FontWeight.w700))),
+      const SizedBox(height:18),
+      Container(padding:const EdgeInsets.all(12),
+       decoration:BoxDecoration(color:Colors.white,
+        borderRadius:BorderRadius.circular(19),
+        border:Border.all(color:CikokoPalette.border)),
+       child:GridView.count(crossAxisCount:2,mainAxisSpacing:9,crossAxisSpacing:9,
+        childAspectRatio:2.15,shrinkWrap:true,
+        physics:const NeverScrollableScrollPhysics(),children:[
+         _GuestFeature(title:'Profil Kelurahan',subtitle:'Tentang Cikoko',
+          icon:Icons.account_balance_outlined,color:CikokoPalette.green,onTap:onAbout),
+         _GuestFeature(title:'Layanan Publik',subtitle:'Lihat layanan',
+          icon:Icons.widgets_outlined,color:CikokoPalette.orange,onTap:onServices),
+         _GuestFeature(title:'Berita & Informasi',subtitle:'Kegiatan terbaru',
+          icon:Icons.newspaper_outlined,color:CikokoPalette.blue,onTap:onNews),
+         _GuestFeature(title:'Inovasi Cikoko',subtitle:'Program unggulan',
+          icon:Icons.lightbulb_outline,color:const Color(0xFF28A45B),
+          onTap:onInnovations),
+        ])),
+      const SizedBox(height:13),
+      SizedBox(height:49,width:double.infinity,child:FilledButton(
+       onPressed:onLogin,child:const Text('Masuk ke Akun',
+        style:TextStyle(fontSize:15,fontWeight:FontWeight.w800)))),
+      const SizedBox(height:9),
+      SizedBox(height:47,width:double.infinity,child:OutlinedButton(
+       onPressed:onRegister,child:const Text('Daftar Akun Warga'))),
+      const SizedBox(height:16),
     ])),
-   const SizedBox(height:12),
-   Container(padding:const EdgeInsets.all(13),
-    decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(18),
-     border:Border.all(color:CikokoPalette.border)),
-    child:GridView.count(crossAxisCount:2,mainAxisSpacing:10,crossAxisSpacing:10,
-     childAspectRatio:2.35,shrinkWrap:true,
-     physics:const NeverScrollableScrollPhysics(),children:[
-      _GuestFeature(title:'Profil Kelurahan',subtitle:'Tentang Cikoko',
-       icon:Icons.account_balance_outlined,color:CikokoPalette.green,onTap:onAbout),
-      _GuestFeature(title:'Layanan Publik',subtitle:'Lihat layanan',
-       icon:Icons.widgets_outlined,color:CikokoPalette.orange,onTap:onServices),
-      _GuestFeature(title:'Berita & Informasi',subtitle:'Kegiatan terbaru',
-       icon:Icons.newspaper_outlined,color:CikokoPalette.blue,onTap:onNews),
-      _GuestFeature(title:'Inovasi Cikoko',subtitle:'Program unggulan',
-       icon:Icons.lightbulb_outline,color:const Color(0xFF28A45B),
-       onTap:onInnovations),
-     ])),
-   const SizedBox(height:12),
-   SizedBox(height:45,width:double.infinity,child:FilledButton(
-    onPressed:onLogin,child:const Text('Masuk ke Akun'))),
-   const SizedBox(height:8),
-   SizedBox(height:43,width:double.infinity,child:OutlinedButton(
-    onPressed:onRegister,child:const Text('Daftar Akun Warga'))),
+   ),
  ]);
 }
 class _GuestFeature extends StatelessWidget {
