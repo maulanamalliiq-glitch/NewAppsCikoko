@@ -311,15 +311,12 @@ class _HomeState extends State<HomePage> {
       },
     )),
     body:loading?const Center(child:CircularProgressIndicator()):_page(),
-    bottomNavigationBar:Column(mainAxisSize:MainAxisSize.min,children:[
-      const CikokoCopyrightFooter(),
-      NavigationBar(height:67,selectedIndex:nav,labelBehavior:NavigationDestinationLabelBehavior.alwaysShow,onDestinationSelected:selectNav,destinations:[
+    bottomNavigationBar:NavigationBar(height:67,selectedIndex:nav,labelBehavior:NavigationDestinationLabelBehavior.alwaysShow,onDestinationSelected:selectNav,destinations:[
       const NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:'Menu'),
       const NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:'Berita'),
       const NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:'Beranda'),
       const NavigationDestination(icon:Icon(Icons.auto_awesome_outlined),selectedIcon:Icon(Icons.auto_awesome),label:'Inovasi'),
       const NavigationDestination(icon:Icon(Icons.person_outline),selectedIcon:Icon(Icons.person),label:'Profil'),
-    ]),
     ]),
     floatingActionButton:section=='Hubungi Kami'?null:FloatingActionButton.small(tooltip:'Hubungi Admin',onPressed:()=>switchTo('Hubungi Kami'),backgroundColor:blue,foregroundColor:Colors.white,child:const Icon(Icons.chat_bubble_outline)),
   ));
@@ -378,6 +375,7 @@ class _HomeState extends State<HomePage> {
     const Text('Pilih layanan sesuai kewenangan akun.',style:TextStyle(color:Colors.blueGrey)),
     if(!permissionsOk)const Card(child:ListTile(leading:Icon(Icons.warning_amber_rounded,color:Colors.orange),title:Text('Izin server belum berhasil dimuat'),subtitle:Text('Menu khusus disembunyikan sampai koneksi pulih.'))),
     const SizedBox(height:12),for(final f in modules)Card(child:ListTile(onTap:()=>switchTo(f.route),leading:CircleAvatar(backgroundColor:sky,child:Icon(iconFor(f.route),color:blue)),title:Text(f.title,style:const TextStyle(fontWeight:FontWeight.w600,fontSize:13.5)),subtitle:Text(f.connected?f.description:'${f.description} • Modul belum terintegrasi',style:const TextStyle(fontSize:11.5)),trailing:const Icon(Icons.chevron_right))),
+    const SizedBox(height:22),const _PageCopyright(),
   ]);
   Future<void> showOfficeProfile() async {
     await showModalBottomSheet<void>(context:context,isScrollControlled:true,
@@ -527,9 +525,11 @@ class _HomeState extends State<HomePage> {
         title:Text('${e['title']??''}',maxLines:1),subtitle:Text('${e['created_at']??''}',style:const TextStyle(fontSize:10)))),
     ],
     if(!guest && (role=='ppsu'||isAdmin||role=='admin_kelurahan'))PpsuHighlights(api:api),
+    const SizedBox(height:26),
+    const _PageCopyright(),
     const SizedBox(height:74),
   ]);
- Widget feed(String type)=>ListView(padding:const EdgeInsets.all(14),children:[for(final v in items.where((e)=>e['type']==type))contentCard(Map<String,dynamic>.from(v)),if(!items.any((e)=>e['type']==type))const Padding(padding:EdgeInsets.all(18),child:Text('Belum ada konten pada kategori ini.'))]);
+ Widget feed(String type)=>ListView(padding:const EdgeInsets.all(14),children:[for(final v in items.where((e)=>e['type']==type))contentCard(Map<String,dynamic>.from(v)),if(!items.any((e)=>e['type']==type))const Padding(padding:EdgeInsets.all(18),child:Text('Belum ada konten pada kategori ini.')),const SizedBox(height:22),const _PageCopyright()]);
  Widget contentCard(Map<String, dynamic> item) {
    final image = api.media('${item['image']??''}');
    final title = '${item['title']??''}';
@@ -1186,4 +1186,13 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
         PopupMenuItem<String>(value:status,child:Text('Status: '+status)),
       ]),
   )),if(rows.isEmpty)const ListTile(title:Text('Belum ada permohonan.'))]));
+}
+
+class _PageCopyright extends StatelessWidget {
+ const _PageCopyright();
+ @override Widget build(BuildContext context)=>const Padding(
+  padding:EdgeInsets.symmetric(vertical:12,horizontal:12),
+  child:Text('Copyright © Cikoko Smart',textAlign:TextAlign.center,
+   style:TextStyle(fontSize:10.5,color:Color(0xFF7B899D),fontWeight:FontWeight.w400)),
+ );
 }
