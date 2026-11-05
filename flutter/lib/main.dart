@@ -1,3 +1,4 @@
+import 'app_settings.dart';
 import 'design_system.dart';
 import 'premium_ui.dart';
 import 'profile_editor.dart';
@@ -33,10 +34,12 @@ import 'lpj_pages.dart';
 const navy=CikokoDesign.navy, blue=CikokoDesign.royal, pale=CikokoDesign.canvas;
 const sky=Color(0xffe6f0ff), ink=CikokoDesign.ink;
 final api=CikokoApi();
-void main(){WidgetsFlutterBinding.ensureInitialized();runApp(const CikokoApp());}
+Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();await CikokoSettings.restore();runApp(const CikokoApp());}
 class CikokoApp extends StatelessWidget {
  const CikokoApp({super.key});
- @override Widget build(BuildContext c)=>MaterialApp(title:'Cikoko',debugShowCheckedModeBanner:false,
+ @override Widget build(BuildContext c)=>AnimatedBuilder(
+  animation:Listenable.merge([CikokoSettings.themeMode,CikokoSettings.language]),
+  builder:(context,_)=>MaterialApp(title:'Cikoko',debugShowCheckedModeBanner:false,
  builder:(ctx,child)=>Stack(children:[
    if(child!=null)child,
    ValueListenableBuilder<double?>(valueListenable:CikokoRequestProgress.value,
@@ -60,7 +63,8 @@ class CikokoApp extends StatelessWidget {
                  borderRadius:BorderRadius.circular(5)),
            ]))))),
      ),
- ]),theme:CikokoDesign.light,home:const Entry());
+ ]),theme:CikokoDesign.light,darkTheme:CikokoDesign.dark,
+    themeMode:CikokoSettings.themeMode.value,home:const Entry()));
 }
 class Entry extends StatefulWidget{const Entry({super.key});@override State<Entry> createState()=>_EntryState();}
 class _EntryState extends State<Entry>{bool loading=true;@override void initState(){super.initState();api.restore().whenComplete((){if(mounted)setState(()=>loading=false);});}
@@ -318,7 +322,18 @@ class _HomeState extends State<HomePage> {
   @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
     appBar:guest && section=='Dashboard'?null:AppBar(
       title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:navy)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.5,color:Colors.blueGrey))]))]),
-      actions:[IconButton(tooltip:'Notifikasi',onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
+      actions:[
+        IconButton(
+          tooltip:CikokoSettings.tr('Ganti tema gelap/terang','Switch dark/light theme'),
+          onPressed:CikokoSettings.toggleTheme,
+          icon:Icon(CikokoSettings.themeMode.value==ThemeMode.dark
+            ?Icons.light_mode_outlined:Icons.dark_mode_outlined)),
+        TextButton(
+          onPressed:CikokoSettings.toggleLanguage,
+          child:Text(CikokoSettings.isEnglish?'ID':'EN',
+            style:TextStyle(fontWeight:FontWeight.w800,
+              color:Theme.of(c).colorScheme.primary))),
+        IconButton(tooltip:CikokoSettings.tr('Notifikasi','Notifications'),onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
     ),
     drawer:Drawer(child:CikokoStructuredDrawer(
       avatar:const Logo(size:52),
@@ -341,11 +356,11 @@ class _HomeState extends State<HomePage> {
       SafeArea(top:guest && section=='Dashboard',
        child:CikokoPremiumCanvas(child:_page())),
     bottomNavigationBar:NavigationBar(height:67,selectedIndex:nav,labelBehavior:NavigationDestinationLabelBehavior.alwaysShow,onDestinationSelected:selectNav,destinations:[
-      const NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:'Menu'),
-      const NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:'Berita'),
-      const NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:'Beranda'),
-      const NavigationDestination(icon:Icon(Icons.auto_awesome_outlined),selectedIcon:Icon(Icons.auto_awesome),label:'Inovasi'),
-      const NavigationDestination(icon:Icon(Icons.person_outline),selectedIcon:Icon(Icons.person),label:'Profil'),
+      const NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:CikokoSettings.tr('Menu','Menu')),
+      const NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:CikokoSettings.tr('Berita','News')),
+      const NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:CikokoSettings.tr('Beranda','Home')),
+      const NavigationDestination(icon:Icon(Icons.auto_awesome_outlined),selectedIcon:Icon(Icons.auto_awesome),label:CikokoSettings.tr('Inovasi','Innovation')),
+      const NavigationDestination(icon:Icon(Icons.person_outline),selectedIcon:Icon(Icons.person),label:CikokoSettings.tr('Profil','Profile')),
     ]),
     floatingActionButton:section=='Hubungi Kami'?null:FloatingActionButton.small(tooltip:'Hubungi Admin',onPressed:()=>switchTo('Hubungi Kami'),backgroundColor:blue,foregroundColor:Colors.white,child:const Icon(Icons.chat_bubble_outline)),
   ));
