@@ -419,6 +419,7 @@ class _HomeState extends State<HomePage> {
       onStatus:openLogin,
       onAgenda:()=>switchTo('Berita & Kegiatan'),
       onAspirations:()=>switchTo('Menu Cikoko'),
+      onInnovations:()=>switchTo('Inovasi'),
     ),
     if(guest)Padding(padding:const EdgeInsets.only(top:8),child:Material(
       color:const Color(0xffe9f1fa),borderRadius:BorderRadius.circular(11),
