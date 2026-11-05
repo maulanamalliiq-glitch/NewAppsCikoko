@@ -377,45 +377,11 @@ class _HomeState extends State<HomePage> {
     return modules.take(6).toList();
   }
   Widget home()=>ListView(padding:const EdgeInsets.fromLTRB(12,10,12,20),children:[
-    if(isStaff)
-      Container(
-        padding:const EdgeInsets.all(20),
-        decoration:BoxDecoration(
-          borderRadius:BorderRadius.circular(24),
-          gradient:const LinearGradient(
-            begin:Alignment.topLeft,end:Alignment.bottomRight,
-            colors:[Color(0xFF0B397C),Color(0xFF1475D8)]),
-          boxShadow:[BoxShadow(color:blue.withValues(alpha:.12),blurRadius:20,offset:const Offset(0,8))],
-        ),
-        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          const Row(children:[
-            Icon(Icons.verified_user_outlined,color:Color(0xFFFFD27B),size:20),
-            SizedBox(width:8),
-            Text('PUSAT KENDALI KELURAHAN',style:TextStyle(
-              color:Colors.white70,fontSize:11,fontWeight:FontWeight.w700,letterSpacing:1)),
-          ]),
-          const SizedBox(height:16),
-          Text('Selamat datang, $roleLabel',style:const TextStyle(
-            color:Colors.white,fontSize:22,fontWeight:FontWeight.w800)),
-          const SizedBox(height:8),
-          const Text('Kelola layanan dan administrasi warga secara terstruktur, aman, dan efisien.',
-            style:TextStyle(color:Color(0xFFE0EEFF),fontSize:13,height:1.45)),
-          const SizedBox(height:18),
-          Wrap(spacing:9,runSpacing:9,children:[
-            FilledButton.icon(
-              style:FilledButton.styleFrom(backgroundColor:Colors.white,foregroundColor:navy),
-              onPressed:()=>switchTo('Menu Cikoko'),
-              icon:const Icon(Icons.dashboard_customize_outlined,size:18),
-              label:const Text('Pusat Pengelolaan')),
-            OutlinedButton.icon(
-              style:OutlinedButton.styleFrom(foregroundColor:Colors.white,
-                side:const BorderSide(color:Colors.white54)),
-              onPressed:()=>switchTo('Layanan Online'),
-              icon:const Icon(Icons.description_outlined,size:18),
-              label:const Text('Layanan')),
-          ]),
-        ]),
-      )
+    if(isStaff) CikokoStaffHero(
+      roleName:roleLabel,
+      onManagement:()=>switchTo('Menu Cikoko'),
+      onServices:()=>switchTo('Layanan Online'),
+    )
     else if(role=='warga') CikokoResidentHero(
       name:'${api.profile?['name']??'Warga Cikoko'}',
       onService:()=>switchTo('Layanan Online'),
