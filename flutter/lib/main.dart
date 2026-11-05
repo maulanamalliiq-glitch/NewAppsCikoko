@@ -322,7 +322,7 @@ class _HomeState extends State<HomePage> {
   }
   @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
     appBar:guest && section=='Dashboard'?null:AppBar(
-      title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:navy)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.5,color:Colors.blueGrey))]))]),
+      title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:15,fontWeight:FontWeight.w700,color:Theme.of(c).colorScheme.onSurface)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:10.5,color:Theme.of(c).colorScheme.onSurfaceVariant))]))]),
       actions:[
         IconButton(
           tooltip:CikokoSettings.tr('Ganti tema gelap/terang','Switch dark/light theme'),
@@ -419,10 +419,10 @@ class _HomeState extends State<HomePage> {
       feature.title.toLowerCase().contains(query)||
       feature.description.toLowerCase().contains(query)).toList();
     return ListView(padding:const EdgeInsets.fromLTRB(15,16,15,24),children:[
-    const Text('Menu Layanan',style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w700)),
+    Text('Menu Layanan',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:22,fontWeight:FontWeight.w700)),
     const SizedBox(height:4),
     Text('Pilih layanan sesuai akses $roleLabel',
-     style:const TextStyle(color:Colors.blueGrey,fontSize:12)),
+     style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:12)),
     const SizedBox(height:14),
     if(!permissionsOk)const Card(child:ListTile(
      leading:Icon(Icons.warning_amber_rounded,color:Colors.orange),
@@ -450,12 +450,12 @@ class _HomeState extends State<HomePage> {
       const colors=[Color(0xFF8653D7),Color(0xFFED6A38),
        Color(0xFF2187DB),Color(0xFF17A983),Color(0xFFE3A12A),Color(0xFFB857CB)];
       final accent=colors[i%colors.length];
-      return Material(color:Colors.white,borderRadius:BorderRadius.circular(15),
+      return Material(color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(15),
        child:InkWell(onTap:()=>switchTo(f.route),borderRadius:BorderRadius.circular(15),
         child:Container(
          padding:const EdgeInsets.all(11),
          decoration:BoxDecoration(borderRadius:BorderRadius.circular(15),
-          border:Border.all(color:CikokoDesign.outline)),
+          border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
          child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
           Container(width:36,height:36,
            decoration:BoxDecoration(color:accent.withValues(alpha:.12),
@@ -477,7 +477,7 @@ class _HomeState extends State<HomePage> {
       showDragHandle:true,builder:(sheetContext)=>SafeArea(child:Padding(
         padding:const EdgeInsets.fromLTRB(20,0,20,24),child:Column(mainAxisSize:MainAxisSize.min,
           crossAxisAlignment:CrossAxisAlignment.start,children:[
-            const Text('Profil Kelurahan Cikoko',style:TextStyle(fontSize:19,color:navy,fontWeight:FontWeight.w800)),
+            Text('Profil Kelurahan Cikoko',style:TextStyle(fontSize:19,color:Theme.of(context).colorScheme.onSurface,fontWeight:FontWeight.w800)),
             const SizedBox(height:8),
             const Text('Kecamatan Pancoran, Kota Administrasi Jakarta Selatan. Pelayanan publik, informasi, dan pengajuan surat tersedia melalui Cikoko.'),
             const SizedBox(height:14),
@@ -683,7 +683,7 @@ class _HomeState extends State<HomePage> {
          Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
            Text('${item['type']??''}'.toUpperCase(),style:const TextStyle(fontSize:9.5,letterSpacing:.65,color:blue,fontWeight:FontWeight.w700)),
            const SizedBox(height:4),
-           Text(title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:13.5,height:1.23,fontWeight:FontWeight.w600,color:navy)),
+           Text(title,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:13.5,height:1.23,fontWeight:FontWeight.w600,color:Theme.of(context).colorScheme.onSurface)),
            const SizedBox(height:5),
            Text(description,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.8,height:1.22,color:Color(0xff647992))),
            const SizedBox(height:7),
