@@ -436,9 +436,6 @@ class _CivicProfileState extends State<CivicProfilePage>{
       profileRow(Icons.dark_mode_outlined,CikokoSettings.label('Tema tampilan'),
        subtitle:CikokoSettings.themeMode.value==ThemeMode.dark?'Gelap':'Terang',
        onTap:(){CikokoSettings.toggleTheme();setState((){});}),
-      profileRow(Icons.language_outlined,CikokoSettings.label('Bahasa aplikasi'),
-       subtitle:CikokoSettings.isEnglish?'English':'Bahasa Indonesia',
-       onTap:(){CikokoSettings.toggleLanguage();setState((){});}),
      ]),
      const SizedBox(height:12),
      group([
