@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:printing/printing.dart';
 import 'api.dart';
 import 'surat_identifier.dart';
 import 'rt_rw_pdf_page.dart';
@@ -274,17 +278,47 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
                      label:const Text('Lengkapi TTD Surat Lama'),
                      onPressed:()=>reaffirmLegacy(letter)),
                  if (letter['status']=='terverifikasi' && cikokoPositiveId(letter)!=null)
-                   Wrap(spacing:8,children:[
-                     TextButton.icon(icon:const Icon(Icons.picture_as_pdf_outlined),
-                       label:const Text('Lihat PDF'),
+                   Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
+                     Expanded(child:Padding(
+                       padding:const EdgeInsets.only(top:10,right:8),
+                       child:Text('Dokumen PDF telah diverifikasi dan siap digunakan.',
+                         style:TextStyle(color:Colors.blueGrey.shade700,fontSize:11.5)))),
+                     TextButton.icon(
+                       icon:const Icon(Icons.visibility_outlined,size:17),
+                       label:const Text('Lihat',style:TextStyle(fontSize:12)),
                        onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(
                          builder:(_)=>RtRwPdfPage(api:widget.api,
                            id:cikokoPositiveId(letter)!)))),
-                     OutlinedButton.icon(icon:const Icon(Icons.download_outlined),
-                       label:const Text('Unduh PDF'),
-                       onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(
-                         builder:(_)=>RtRwPdfPage(api:widget.api,
-                           id:cikokoPositiveId(letter)!)))),
+                     IconButton(
+                       tooltip:'Unduh PDF',
+                       icon:const Icon(Icons.download_outlined),
+                       onPressed:()async{
+                         final id=cikokoPositiveId(letter)!;
+                         try{
+                           final response=await http.get(
+                             Uri.parse('${CikokoApi.root}?action=rt_rw_pdf&id=$id'),
+                             headers:widget.api.authHeaders()).timeout(const Duration(seconds:45));
+                           if(response.statusCode!=200 ||
+                               response.bodyBytes.length<4 ||
+                               String.fromCharCodes(response.bodyBytes.take(4))!='%PDF'){
+                             throw const FileSystemException('PDF tidak tersedia');
+                           }
+                           final name='Surat-Pengantar-Cikoko-$id.pdf';
+                           try{
+                             final directory=await getDownloadsDirectory();
+                             if(directory==null)throw const FileSystemException('Unduhan tidak tersedia');
+                             final output=File('${directory.path}/$name');
+                             await output.writeAsBytes(response.bodyBytes,flush:true);
+                             if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(
+                               SnackBar(content:Text('PDF disimpan: ${output.path}')));
+                           }catch(_){
+                             await Printing.sharePdf(bytes:response.bodyBytes,filename:name);
+                           }
+                         }catch(_){
+                           if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(
+                             const SnackBar(content:Text('Gagal mengunduh PDF. Silakan coba lagi.')));
+                         }
+                       }),
                    ]),
                 if (canVerify && ((role == 'rt' && letter['status'] == 'menunggu_rt') ||
                     (role == 'rw' && letter['status'] == 'menunggu_rw')))
