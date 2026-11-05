@@ -330,11 +330,6 @@ class _HomeState extends State<HomePage> {
           onPressed:CikokoSettings.toggleTheme,
           icon:Icon(CikokoSettings.themeMode.value==ThemeMode.dark
             ?Icons.light_mode_outlined:Icons.dark_mode_outlined)),
-        TextButton(
-          onPressed:CikokoSettings.toggleLanguage,
-          child:Text(CikokoSettings.isEnglish?'ID':'EN',
-            style:TextStyle(fontWeight:FontWeight.w800,
-              color:Theme.of(c).colorScheme.primary))),
         IconButton(tooltip:CikokoSettings.tr('Notifikasi','Notifications'),onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
     ),
     drawer:Drawer(child:CikokoStructuredDrawer(
