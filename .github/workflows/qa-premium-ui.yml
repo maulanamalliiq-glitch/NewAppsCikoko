@@ -16,12 +16,18 @@ jobs:
     timeout-minutes: 65
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
-      - name: Restore Android project
+      - name: Use compatible Java toolchain and restore Android project
         working-directory: flutter
-        run: flutter create --platforms=android --project-name=cikoko .
+        run: |
+          flutter config --jdk-dir="$JAVA_HOME"
+          flutter create --platforms=android --project-name=cikoko .
       - name: Resolve dependencies
         working-directory: flutter
         run: flutter pub get
