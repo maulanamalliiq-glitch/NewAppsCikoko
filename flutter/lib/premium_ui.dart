@@ -50,7 +50,7 @@ class CikokoGuestHero extends StatelessWidget {
    Container(height:232,width:double.infinity,clipBehavior:Clip.antiAlias,
     decoration:BoxDecoration(borderRadius:BorderRadius.circular(21)),
     child:Stack(fit:StackFit.expand,children:[
-      Image.asset('assets/kantor-cikoko.jpg',fit:BoxFit.cover),
+      const CikokoCityBackdrop(),
       const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(
         begin:Alignment.topCenter,end:Alignment.bottomCenter,
         colors:[Color(0x4C0F6DBD),Color(0xE50B448F)]))),
@@ -233,4 +233,112 @@ class CikokoStageIndicator extends StatelessWidget {
     ]),
   ],
  ]);
+}
+
+ 
+/// Lightweight in-app Jakarta skyline artwork for the public and sign-in headers.
+/// Drawn natively so no network image or new backend endpoint is needed.
+class CikokoCityBackdrop extends StatelessWidget {
+ const CikokoCityBackdrop({super.key});
+ @override Widget build(BuildContext context)=>const CustomPaint(
+  painter:_CikokoCityPainter(),child:SizedBox.expand());
+}
+class _CikokoCityPainter extends CustomPainter {
+ const _CikokoCityPainter();
+ @override void paint(Canvas canvas,Size size) {
+  final w=size.width,h=size.height;
+  canvas.drawRect(Offset.zero & size,Paint()..shader=
+   const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,
+    colors:[Color(0xFF1F85ED),Color(0xFF7FC5FB),Color(0xFFBCE8FB)])
+    .createShader(Offset.zero & size));
+  // Soft clouds
+  final cloud=Paint()..color=Colors.white.withValues(alpha:.49);
+  for(final c in <(double,double,double)>[(.12,.19,.19),(.75,.14,.23),(.85,.37,.17)]){
+   final x=w*c.$1,y=h*c.$2,r=h*c.$3*.31;
+   canvas.drawOval(Rect.fromCenter(center:Offset(x,y),width:r*3.3,height:r),cloud);
+   canvas.drawCircle(Offset(x-r*.35,y-r*.3),r*.7,cloud);
+   canvas.drawCircle(Offset(x+r*.5,y-r*.2),r*.58,cloud);
+  }
+  // High-rise skyline in layered blues
+  final far=Paint()..color=const Color(0xFF98C5E6).withValues(alpha:.90);
+  final near=Paint()..color=const Color(0xFF4B98CC);
+  final buildings=<(double,double,double,double)>[
+   (.02,.53,.075,.43),(.11,.46,.10,.49),(.24,.58,.085,.39),
+   (.33,.39,.105,.59),(.61,.47,.085,.50),(.71,.35,.095,.63),
+   (.82,.56,.090,.43),(.92,.45,.090,.50)];
+  for(var i=0;i<buildings.length;i++){
+   final b=buildings[i];
+   canvas.drawRRect(RRect.fromRectAndRadius(
+    Rect.fromLTWH(w*b.$1,h*b.$2,w*b.$3,h*b.$4),const Radius.circular(2)),
+    i.isEven?far:near);
+  }
+  final windows=Paint()..color=const Color(0xFFE4F4FF).withValues(alpha:.58);
+  for(final b in buildings){
+   final x=w*b.$1,y=h*b.$2,bw=w*b.$3,bh=h*b.$4;
+   for(var r=0;r<6;r++)for(var col=0;col<3;col++){
+    final yy=y+7+r*bh/8,xx=x+5+col*bw/4;
+    if(yy<h*.95&&xx<x+bw-3)
+     canvas.drawRect(Rect.fromLTWH(xx,yy,math.max(1.2,bw*.10),2),windows);
+   }
+  }
+  // Monument-inspired central landmark and golden flame
+  final cx=w*.51,base=h*.88;
+  final monument=Paint()..color=const Color(0xFFF6FBFF);
+  final shadow=Paint()..color=const Color(0xFFD3E6F5);
+  final shaft=Path()..moveTo(cx-w*.017,base)
+    ..lineTo(cx-w*.008,h*.25)..lineTo(cx+w*.008,h*.25)
+    ..lineTo(cx+w*.018,base)..close();
+  canvas.drawPath(shaft,monument);
+  canvas.drawPath(Path()..moveTo(cx-w*.018,base)
+    ..lineTo(cx-w*.007,h*.29)..lineTo(cx,h*.31)
+    ..lineTo(cx,base)..close(),shadow);
+  canvas.drawRect(Rect.fromLTWH(cx-w*.08,base-h*.02,w*.16,h*.04),
+   Paint()..color=const Color(0xFFF8FCFF));
+  canvas.drawRect(Rect.fromLTWH(cx-w*.048,h*.225,w*.096,h*.025),monument);
+  final flame=Path()..moveTo(cx,h*.09)
+    ..quadraticBezierTo(cx+w*.03,h*.15,cx+w*.012,h*.21)
+    ..quadraticBezierTo(cx,h*.24,cx-w*.018,h*.20)
+    ..quadraticBezierTo(cx-w*.017,h*.16,cx,h*.09)
+    ..close();
+  canvas.drawPath(flame,Paint()..color=const Color(0xFFFFC33E));
+  canvas.drawCircle(Offset(cx-w*.005,h*.18),w*.006,
+   Paint()..color=const Color(0xFFFFE991));
+  // Park shrubs and walkway bring the illustration toward the viewer
+  canvas.drawRect(Rect.fromLTWH(0,h*.88,w,h*.12),
+   Paint()..color=const Color(0xFF89C8A7));
+  final trees=Paint()..color=const Color(0xFF32987D);
+  for(final x in [.04,.15,.26,.78,.89,.97]){
+   final xx=w*x;
+   canvas.drawRect(Rect.fromLTWH(xx-2,h*.81,4,h*.12),
+    Paint()..color=const Color(0xFF887C60));
+   canvas.drawCircle(Offset(xx,h*.79),h*.065,trees);
+   canvas.drawCircle(Offset(xx-h*.038,h*.80),h*.046,
+    Paint()..color=const Color(0xFF51B48D));
+  }
+  final road=Path()..moveTo(w*.38,h)..lineTo(w*.46,h*.87)
+   ..lineTo(w*.56,h*.87)..lineTo(w*.64,h)..close();
+  canvas.drawPath(road,Paint()..color=const Color(0xFFF2F5E8));
+ }
+ @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
+}
+
+class CikokoPremiumCanvas extends StatelessWidget {
+ final Widget child;
+ const CikokoPremiumCanvas({super.key,required this.child});
+ @override Widget build(BuildContext context)=>DecoratedBox(
+  decoration:const BoxDecoration(gradient:LinearGradient(
+   begin:Alignment.topCenter,end:Alignment.bottomCenter,
+   colors:[Color(0xFFEFF6FF),Color(0xFFF6F9FF),Color(0xFFF7FAFD)],
+   stops:[0,.33,1])),
+  child:Center(child:ConstrainedBox(
+   constraints:const BoxConstraints(maxWidth:820),child:child)));
+}
+
+class CikokoPageSignature extends StatelessWidget {
+ const CikokoPageSignature({super.key});
+ @override Widget build(BuildContext context)=>const Padding(
+  padding:EdgeInsets.fromLTRB(10,20,10,24),
+  child:Text('Copyright © Cikoko Smart',textAlign:TextAlign.center,
+   style:TextStyle(fontSize:10.5,color:CikokoPalette.muted,
+    fontWeight:FontWeight.w400)));
 }
