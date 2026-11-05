@@ -182,6 +182,40 @@ abstract final class CikokoDesign {
       ),
     );
   }
+
+  static ThemeData get dark {
+    final scheme=ColorScheme.fromSeed(
+      seedColor:royal,brightness:Brightness.dark,
+      surface:const Color(0xFF152238),
+    );
+    return ThemeData(
+      useMaterial3:true,
+      brightness:Brightness.dark,
+      colorScheme:scheme,
+      scaffoldBackgroundColor:const Color(0xFF091425),
+      appBarTheme:const AppBarTheme(
+        backgroundColor:Color(0xFF111E31),
+        foregroundColor:Colors.white,
+        surfaceTintColor:Colors.transparent,
+      ),
+      cardTheme:CardThemeData(
+        color:const Color(0xFF19283E),
+        elevation:0,
+        shape:RoundedRectangleBorder(
+          borderRadius:BorderRadius.circular(radius),
+          side:const BorderSide(color:Color(0xFF2C3D54))),
+      ),
+      navigationBarTheme:NavigationBarThemeData(
+        backgroundColor:const Color(0xFF111E31),
+        indicatorColor:const Color(0xFF284A76),
+      ),
+      inputDecorationTheme:InputDecorationTheme(
+        filled:true,fillColor:const Color(0xFF1A2D44),
+        border:OutlineInputBorder(borderRadius:BorderRadius.circular(14)),
+      ),
+    );
+  }
+
 }
 
 class CikokoCopyrightFooter extends StatelessWidget {
