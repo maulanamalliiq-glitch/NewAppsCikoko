@@ -82,8 +82,18 @@ class _InnovationPageState extends State<InnovationPage>{
      start:Color(0xFF174B91),end:Color(0xFF138DCC)),
    const SizedBox(height:13),if(s.data?['offline']==true)Padding(padding:const EdgeInsets.symmetric(vertical:7),child:TextButton.icon(onPressed:()=>setState(reload),icon:const Icon(Icons.sync),label:const Text('Ringkasan sementara · Sinkronkan informasi'))),const SizedBox(height:12),
    for(final raw in items)...[Builder(builder:(context){final item=Map<String,dynamic>.from(raw);return Card(clipBehavior:Clip.antiAlias,child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    if(images(item).isNotEmpty && imageUrl(images(item).first)!=null)Image.network(imageUrl(images(item).first)!,height:126,width:double.infinity,fit:BoxFit.cover,errorBuilder:(_,__,___)=>const SizedBox.shrink())
-    else Container(height:72,width:double.infinity,color:const Color(0xffe3f0ff),alignment:Alignment.center,child:const Icon(Icons.eco_outlined,color:civicBlue,size:32)),
+    SizedBox(height:176,width:double.infinity,child:Stack(fit:StackFit.expand,children:[
+      if(images(item).isNotEmpty && imageUrl(images(item).first)!=null)
+       Image.network(imageUrl(images(item).first)!,fit:BoxFit.cover,
+        errorBuilder:(_,__,___)=>const CikokoCityBackdrop())
+      else const CikokoCityBackdrop(),
+      const Positioned(left:12,bottom:12,child:DecoratedBox(
+       decoration:BoxDecoration(color:Color(0xFFFFA51D),
+        borderRadius:BorderRadius.all(Radius.circular(9))),
+       child:Padding(padding:EdgeInsets.symmetric(horizontal:10,vertical:6),
+        child:Text('INOVASI UNGGULAN',style:TextStyle(
+         color:Colors.white,fontSize:10,fontWeight:FontWeight.w600))))),
+     ])),
     Padding(padding:const EdgeInsets.all(13),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Text('${item['title']}',style:const TextStyle(fontWeight:FontWeight.w600,color:civicNavy,fontSize:15)),const SizedBox(height:5),
       Text('${item['summary']??''}',style:const TextStyle(fontSize:12)),const SizedBox(height:10),
@@ -91,6 +101,7 @@ class _InnovationPageState extends State<InnovationPage>{
       if(widget.api.profile?['role']=='admin')IconButton(tooltip:'Sunting inovasi',onPressed:()=>edit(item),icon:const Icon(Icons.edit_outlined,color:civicBlue))]),
     ])),
    ]));}),const SizedBox(height:8)],
+   const CikokoPageSignature(),
   ]));});
 }
 
