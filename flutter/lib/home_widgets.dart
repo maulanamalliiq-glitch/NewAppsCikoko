@@ -157,7 +157,7 @@ class CikokoResidentHero extends StatelessWidget {
          color:homeBlue,borderRadius:BorderRadius.circular(12)),
          child:const Icon(Icons.verified_user_outlined,color:Colors.white,size:25)),
         const SizedBox(width:12),
-        const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
          Text(CikokoSettings.label('Layanan Cepat'),style:TextStyle(color:homeNavy,fontSize:14,fontWeight:FontWeight.w600)),
          SizedBox(height:3),
          Text(CikokoSettings.tr('Urus administrasi lebih mudah dan cepat','Simpler and faster public services'),
