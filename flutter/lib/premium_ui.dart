@@ -1,3 +1,4 @@
+import 'app_settings.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
@@ -197,10 +198,10 @@ class CikokoPremiumSection extends StatelessWidget {
   padding:const EdgeInsets.symmetric(vertical:9),
   child:Row(crossAxisAlignment:CrossAxisAlignment.center,children:[
    Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    Text(title,style:const TextStyle(color:CikokoPalette.navy,
+    Text(CikokoSettings.label(title),style:TextStyle(color:Theme.of(context).colorScheme.onSurface,
       fontSize:16,fontWeight:FontWeight.w600)),
     if(subtitle!=null)Padding(padding:const EdgeInsets.only(top:3),
-      child:Text(subtitle!,style:const TextStyle(color:CikokoPalette.muted,fontSize:11.5))),
+      child:Text(subtitle!,style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:11.5))),
    ])),
    if(action!=null)action!,
   ]));
@@ -214,11 +215,11 @@ class CikokoPremiumTile extends StatelessWidget {
  const CikokoPremiumTile({super.key,required this.icon,required this.title,
    required this.subtitle,required this.accent,this.onTap});
  @override Widget build(BuildContext context)=>Material(
-  color:Colors.white,borderRadius:BorderRadius.circular(15),
+  color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(15),
   child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(15),
     child:Container(
       padding:const EdgeInsets.symmetric(horizontal:12,vertical:10),
-      decoration:BoxDecoration(border:Border.all(color:CikokoPalette.border),
+      decoration:BoxDecoration(border:Border.all(color:Theme.of(context).colorScheme.outlineVariant),
         borderRadius:BorderRadius.circular(15)),
       child:Row(children:[
         Container(width:39,height:39,
@@ -227,12 +228,12 @@ class CikokoPremiumTile extends StatelessWidget {
          child:Icon(icon,color:accent,size:21)),
         const SizedBox(width:10),
         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text(title,maxLines:2,overflow:TextOverflow.ellipsis,
-            style:const TextStyle(color:CikokoPalette.navy,
+          Text(CikokoSettings.label(title),maxLines:2,overflow:TextOverflow.ellipsis,
+            style:TextStyle(color:Theme.of(context).colorScheme.onSurface,
               fontSize:12,fontWeight:FontWeight.w600)),
           const SizedBox(height:3),
           Text(subtitle,maxLines:2,overflow:TextOverflow.ellipsis,
-            style:const TextStyle(color:CikokoPalette.muted,fontSize:10.5)),
+            style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:10.5)),
         ])),
         const Icon(Icons.chevron_right_rounded,color:CikokoPalette.muted,size:18),
       ]),
