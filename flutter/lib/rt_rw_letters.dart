@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
@@ -200,11 +201,14 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
     final isWarga = role == 'warga';
     final canVerify = role == 'rt' || role == 'rw';
     return ListView(padding: const EdgeInsets.all(14), children: [
-      Text(isWarga ? 'Surat Pengantar RT/RW' : 'Permohonan Surat Wilayah',
-        style: Theme.of(context).textTheme.titleLarge),
-      const SizedBox(height: 8),
-      const Text('Wilayah penerima mengikuti RT/RW yang tersimpan pada profil warga.'),
-      const SizedBox(height: 12),
+      CikokoPremiumHeader(
+        title:isWarga?'Surat Pengantar RT/RW':'Permohonan Surat Wilayah',
+        subtitle:isWarga
+          ?'Lengkapi identitas dan keperluan surat untuk wilayah RT/RW Anda.'
+          :'Periksa dan tindak lanjuti permohonan wilayah secara aman.',
+        icon:Icons.description_outlined,
+        start:const Color(0xFF124C9B),end:const Color(0xFF1685D3)),
+      const SizedBox(height:14),
       if (canVerify) Padding(padding:const EdgeInsets.only(bottom:12),
         child:OutlinedButton.icon(
           onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(
@@ -214,11 +218,10 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text('RT '+cikokoAreaLabel(widget.api.profile?['rt'])+
                ' / RW '+cikokoAreaLabel(widget.api.profile?['rw']),
-            style:const TextStyle(fontWeight:FontWeight.bold)),
+            style:const TextStyle(fontWeight:FontWeight.w600,color:CikokoPalette.navy)),
           const SizedBox(height:10),
           Form(key:formKey,child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-            const Text('IDENTITAS PEMOHON',
-              style:TextStyle(fontWeight:FontWeight.bold,fontSize:12)),
+            const CikokoPremiumSection(title:'Identitas Pemohon',subtitle:'Lengkapi data sesuai dokumen asli'),
             const SizedBox(height:10),
             formField('nama','Nama'),
             formField('tempat_lahir','Tempat Lahir'),
@@ -232,8 +235,7 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
             formField('pekerjaan','Pekerjaan'),
             formField('alamat','Alamat',lines:2),
             const SizedBox(height:4),
-            const Text('MAKSUD SURAT',
-              style:TextStyle(fontWeight:FontWeight.bold,fontSize:12)),
+            const CikokoPremiumSection(title:'Maksud Surat',subtitle:'Tulis keperluan pengajuan'),
             const SizedBox(height:10),
             formField('maksud_keperluan','Maksud/Keperluan',lines:2),
           ])),
@@ -390,10 +392,11 @@ class _RtRwOfficerManagerState extends State<RtRwOfficerManager> {
       final rows = (response.data?['items'] as List<dynamic>? ?? [])
           .map((v) => Map<String, dynamic>.from(v as Map)).toList();
       return ListView(padding: const EdgeInsets.all(14), children: [
-        Text('Wilayah Petugas RT/RW', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 6),
-        const Text('Penugasan akun Ketua RT/RW resmi. Wilayah warga tetap dipilih saat mendaftar.'),
-        const SizedBox(height: 12),
+        const CikokoPremiumHeader(
+          title:'Wilayah Petugas RT/RW',
+          subtitle:'Kelola penugasan resmi dan wilayah pelayanan petugas.',
+          icon:Icons.map_outlined),
+        const SizedBox(height:12),
         if (rows.isEmpty) const ListTile(title: Text('Buat akun petugas berperan RT/RW terlebih dahulu.')),
         for (final officer in rows) Card(child: ListTile(
           title: Text('${officer['name'] ?? ''} (${(officer['role'] ?? '').toString().toUpperCase()})'),
