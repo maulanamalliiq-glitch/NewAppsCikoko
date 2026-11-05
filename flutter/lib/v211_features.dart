@@ -211,6 +211,62 @@ class _CivicProfileState extends State<CivicProfilePage>{
   widget.api.profile?['rt']=fields['rt']!.text.trim().padLeft(2,'0');widget.api.profile?['rw']=fields['rw']!.text.trim().padLeft(2,'0');
   currentPassword.clear();if(mounted){civicMessage(context,'Perubahan profil berhasil disimpan.');setState((){editing=false;pending=loadProfile();});}
  }catch(_){if(mounted)civicMessage(context,'Perubahan profil belum berhasil disimpan. Silakan periksa kembali isian Anda.');}finally{if(mounted)setState(()=>saving=false);}}
+ void showPersonalInfo(Map<String,dynamic> row,bool isResident){
+  final entries=<String,String>{
+   'name':'Nama lengkap','username':'Username','phone':'Nomor HP',
+   'email':'Email','address':'Alamat lengkap','nik':'NIK',
+   if(isResident)...{'rt':'RT','rw':'RW'},
+  };
+  showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
+   title:const Text('Informasi Pribadi',style:TextStyle(fontSize:19,fontWeight:FontWeight.w600)),
+   content:SizedBox(width:double.maxFinite,child:ConstrainedBox(
+    constraints:const BoxConstraints(maxHeight:440),
+    child:ListView(shrinkWrap:true,children:[
+     const Text('Data akun yang tercatat di sistem. Tampilan ini hanya untuk dibaca.',
+      style:TextStyle(fontSize:12,color:Colors.blueGrey)),
+     const SizedBox(height:12),
+     for(final e in entries.entries)Padding(
+      padding:const EdgeInsets.symmetric(vertical:7),
+      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+       Text(e.value,style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
+       const SizedBox(height:3),
+       SelectableText((row[e.key]??'').toString().trim().isEmpty
+        ?'Belum diisi':(row[e.key]??'').toString(),
+        style:const TextStyle(fontSize:13,color:civicNavy)),
+       const Divider(height:12),
+      ])),
+    ]))),
+   actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext),
+    child:const Text('Tutup'))],
+  ));
+ }
+ void showPrivacyPolicy(){
+  showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
+   title:const Text('Kebijakan Privasi',style:TextStyle(fontSize:19,fontWeight:FontWeight.w600)),
+   content:SizedBox(width:double.maxFinite,child:ConstrainedBox(
+    constraints:const BoxConstraints(maxHeight:480),
+    child:ListView(shrinkWrap:true,children:const [
+     Text('Informasi privasi Cikoko Smart',
+      style:TextStyle(fontSize:14,fontWeight:FontWeight.w600,color:civicNavy)),
+     SizedBox(height:10),
+     Text('Cikoko Smart menggunakan informasi akun dan data yang Anda kirimkan untuk menyediakan layanan administrasi, memproses permohonan, serta menindaklanjuti laporan warga.'),
+     SizedBox(height:12),
+     Text('Data yang digunakan',style:TextStyle(fontWeight:FontWeight.w600)),
+     Text('Data profil, kontak, identitas, wilayah RT/RW, dokumen permohonan, dan dokumentasi laporan sesuai layanan yang digunakan.'),
+     SizedBox(height:12),
+     Text('Akses dan keamanan',style:TextStyle(fontWeight:FontWeight.w600)),
+     Text('Akses informasi dibatasi berdasarkan peran akun. Jangan membagikan kata sandi atau kode akses kepada pihak lain.'),
+     SizedBox(height:12),
+     Text('Penyimpanan dan hak pengguna',style:TextStyle(fontWeight:FontWeight.w600)),
+     Text('Data layanan dapat disimpan sebagai arsip administrasi. Untuk permintaan koreksi data atau informasi pengelolaan data, hubungi pengelola layanan Kelurahan Cikoko.'),
+     SizedBox(height:12),
+     Text('Catatan: ringkasan informasi ini bukan pengganti kebijakan privasi resmi yang disahkan pengelola aplikasi.',
+      style:TextStyle(fontSize:11,color:Colors.blueGrey)),
+    ]))),
+   actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext),
+    child:const Text('Tutup'))],
+  ));
+ }
  Future<void> uploadAvatar()async{final f=await ImagePicker().pickImage(source:ImageSource.gallery,imageQuality:80,maxWidth:1400);if(f==null)return;
   try{await widget.api.upload('v211_profile_upload',{}, {'photo':[f.path]});if(mounted){setState((){imageVersion++;avatarReady=true;});civicMessage(context,'Foto profil berhasil diperbarui.');}}catch(_){if(mounted)civicMessage(context,'Foto profil belum berhasil diperbarui.');}}
  @override Widget build(BuildContext c)=>FutureBuilder<Map<String,dynamic>>(
@@ -226,6 +282,9 @@ class _CivicProfileState extends State<CivicProfilePage>{
    final photoUrl='${CikokoApi.root.replaceFirst('index.php','v211.php')}?action=v211_profile_photo&v=$imageVersion';
    final displayName=fields['name']!.text.isNotEmpty?fields['name']!.text:'Pengguna Cikoko';
    final photo=(row['has_photo']==true||avatarReady);
+   final requiredKeys=<String>['name','phone','email','address','nik',if(isResident)...['rt','rw']];
+   final complete=requiredKeys.every((key)=>(row[key]??'').toString().trim().isNotEmpty);
+   final verified=complete&&(row['verified']==true||row['is_verified']==true||row['verification_status']=='verified');
    Widget profileRow(IconData icon,String label,{VoidCallback? onTap,Color? color,String? subtitle}){
     return ListTile(
      contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:3),
@@ -282,10 +341,11 @@ class _CivicProfileState extends State<CivicProfilePage>{
       const SizedBox(height:18),
       Row(children:[
        Expanded(child:_ProfileQuickAction(
-        icon:Icons.verified_user_outlined,
-        title:isResident?'Verifikasi NIK':'Identitas Akun',
-        detail:fields['nik']!.text.isEmpty?'Lengkapi profil':'Lihat data',
-        onTap:()=>setState(()=>editing=true))),
+        icon:verified?Icons.verified_rounded:Icons.verified_user_outlined,
+        iconColor:verified?const Color(0xFF119A69):null,
+        title:'Identitas Akun',
+        detail:verified?'Terverifikasi':complete?'Menunggu verifikasi':'Lengkapi profil',
+        onTap:()=>showPersonalInfo(row,isResident))),
        const SizedBox(width:10),
        Expanded(child:_ProfileQuickAction(
         icon:Icons.manage_accounts_outlined,title:'Informasi Akun',
@@ -298,9 +358,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
      group([
       profileRow(Icons.person_outline_rounded,'Informasi pribadi',
        subtitle:'Nama, kontak, alamat dan identitas',
-       onTap:()=>setState(()=>editing=true)),
-      profileRow(Icons.account_circle_outlined,'Akun dan username',
-       subtitle:fields['username']!.text,onTap:()=>setState(()=>editing=true)),
+       onTap:()=>showPersonalInfo(row,isResident)),
      ]),
      const SizedBox(height:12),
      group([
@@ -321,9 +379,9 @@ class _CivicProfileState extends State<CivicProfilePage>{
         ]),
         actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Close'))],
        ))),
-      profileRow(Icons.privacy_tip_outlined,'Privasi akun',
-       subtitle:'Kelola data pribadi Anda',
-       onTap:()=>setState(()=>editing=true)),
+      profileRow(Icons.privacy_tip_outlined,'Kebijakan Privasi',
+       subtitle:'Informasi penggunaan dan perlindungan data',
+       onTap:showPrivacyPolicy),
      ]),
     ]else...[
      Row(children:[
@@ -367,14 +425,14 @@ class _CivicProfileState extends State<CivicProfilePage>{
 }
 
 class _ProfileQuickAction extends StatelessWidget{
- final IconData icon;final String title,detail;final VoidCallback onTap;
- const _ProfileQuickAction({required this.icon,required this.title,
+ final IconData icon;final Color? iconColor;final String title,detail;final VoidCallback onTap;
+ const _ProfileQuickAction({required this.icon,this.iconColor,required this.title,
   required this.detail,required this.onTap});
  @override Widget build(BuildContext context)=>Material(
   color:Colors.white,borderRadius:BorderRadius.circular(13),
   child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(13),
    child:Padding(padding:const EdgeInsets.all(11),child:Row(children:[
-    Icon(icon,color:const Color(0xFF2375D3),size:23),
+    Icon(icon,color:iconColor??const Color(0xFF2375D3),size:23),
     const SizedBox(width:8),
     Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
      Text(title,maxLines:1,overflow:TextOverflow.ellipsis,
