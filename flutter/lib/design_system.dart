@@ -11,6 +11,10 @@ abstract final class CikokoDesign {
   static const muted = Color(0xFF64748B);
   static const outline = Color(0xFFE4EAF2);
   static const radius = 20.0;
+  static const softBlue = Color(0xFFEAF3FF);
+  static const success = Color(0xFF148A55);
+  static const warning = Color(0xFFE39B21);
+  static const danger = Color(0xFFC43C4B);
 
   static ThemeData get light {
     final scheme = ColorScheme.fromSeed(
@@ -31,6 +35,7 @@ abstract final class CikokoDesign {
       colorScheme: scheme,
       primaryColor: royal,
       scaffoldBackgroundColor: canvas,
+      splashFactory: InkRipple.splashFactory,
       visualDensity: VisualDensity.standard,
       appBarTheme: const AppBarTheme(
         backgroundColor: canvas,
@@ -43,6 +48,16 @@ abstract final class CikokoDesign {
           letterSpacing: -.35,
         ),
         iconTheme: IconThemeData(color: navy),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
@@ -68,6 +83,15 @@ abstract final class CikokoDesign {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: const BorderSide(color: royal, width: 1.5),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: royal,
+          foregroundColor: Colors.white,
+          minimumSize: const Size(0, 48),
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -98,6 +122,9 @@ abstract final class CikokoDesign {
         iconColor: royal,
         textColor: ink,
         contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(foregroundColor: navy),
       ),
       dividerTheme: const DividerThemeData(color: outline, thickness: .8),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
