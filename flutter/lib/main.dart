@@ -337,6 +337,7 @@ class _HomeState extends State<HomePage> {
   Widget _page(){switch(section){
     case 'Dashboard':return home();
     case 'Menu Cikoko':return menuPage();
+    case 'Pusat Laporan':return reportHub();
     case 'Berita & Kegiatan':return feed('berita');
     case 'Pengumuman':return feed('pengumuman');
     case 'Layanan Online':return guest ? feed('layanan') : CikokoIntegratedServices(api:api);
@@ -456,6 +457,32 @@ class _HomeState extends State<HomePage> {
     }
     return modules.take(6).toList();
   }
+  Widget reportHub(){
+    final reportFeatures=modules.where((f)=>f.route.startsWith('Laporan ')).toList();
+    return ListView(padding:const EdgeInsets.fromLTRB(14,12,14,28),children:[
+      const CikokoPremiumHeader(title:'Pusat Laporan',
+        subtitle:'Pilih jenis laporan yang sesuai dengan tugas dan akun Anda.',
+        icon:Icons.assignment_turned_in_outlined),
+      const SizedBox(height:12),
+      const CikokoPremiumSection(title:'Jenis Laporan',
+        subtitle:'Menu yang tersedia sesuai akses akun'),
+      if(reportFeatures.isEmpty)
+        const Card(child:ListTile(
+          leading:Icon(Icons.info_outline,color:blue),
+          title:Text('Belum ada layanan laporan untuk peran ini'),
+          subtitle:Text('Silakan gunakan layanan yang tersedia di Menu.'))),
+      for(var i=0;i<reportFeatures.length;i++)Padding(
+        padding:const EdgeInsets.only(bottom:9),
+        child:CikokoPremiumTile(
+          icon:iconFor(reportFeatures[i].route),
+          title:reportFeatures[i].title,
+          subtitle:reportFeatures[i].description,
+          accent:const [Color(0xFF1A7FD5),Color(0xFF15A98C),
+            Color(0xFFE9A02E),Color(0xFF8A56D4)][i%4],
+          onTap:()=>switchTo(reportFeatures[i].route))),
+      const SizedBox(height:22),const _PageCopyright(),
+    ]);
+  }
   Widget home()=>ListView(padding:const EdgeInsets.fromLTRB(12,10,12,20),children:[
     if(isStaff) CikokoStaffHero(
       roleName:roleLabel,
@@ -467,7 +494,7 @@ class _HomeState extends State<HomePage> {
       onService:()=>switchTo('Layanan Online'),
       onStatus:()=>showPublicLetterStatus(context,api,category:'all'),
       onAgenda:()=>switchTo('Berita & Kegiatan'),
-      onAspirations:()=>switchTo('Menu Cikoko'),
+      onAspirations:()=>switchTo('Pusat Laporan'),
       onInnovations:()=>switchTo('Inovasi'),
     )
     else CikokoGuestHero(
