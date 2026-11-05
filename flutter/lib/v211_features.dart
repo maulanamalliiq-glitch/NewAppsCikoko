@@ -471,7 +471,7 @@ class _ProfileQuickAction extends StatelessWidget{
      Icon(Icons.chevron_right_rounded,size:16,
       color:highlighted?const Color(0xFF098B4D):Colors.blueGrey),
     ]),
-   ))),
+   )),
  );
 }
 
