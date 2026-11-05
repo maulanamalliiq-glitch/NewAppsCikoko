@@ -136,6 +136,58 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
     }
   }
 
+  Future<void> deleteAccount(Map<String, dynamic> account) async {
+    if (busy) return;
+    final id = (account['id'] ?? '').toString();
+    final username = (account['username'] ?? '').toString();
+    if (id.isEmpty || username.isEmpty || account['role'] == 'admin' ||
+        account['role'] == 'warga') return;
+    final confirm = TextEditingController();
+    try {
+      final approved = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: const Text('Hapus akun permanen?'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('Akun $username akan dihapus permanen. Riwayat laporan tetap disimpan.'),
+            const SizedBox(height: 12),
+            TextField(controller: confirm,
+              decoration: const InputDecoration(labelText: 'Ketik username akun')),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Batal')),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: confirm,
+              builder: (_, value, __) => FilledButton(
+                onPressed: value.text.trim() == username
+                    ? () => Navigator.pop(dialogContext, true) : null,
+                style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+                child: const Text('Hapus Permanen')),
+            ),
+          ],
+        ),
+      );
+      if (approved != true || !mounted) return;
+      setState(() => busy = true);
+      try {
+        await widget.api.call('accounts_delete',
+          body: {'id': id, 'confirm_username': username});
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Akun berhasil dihapus permanen.')));
+        await load();
+      } catch (e) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal menghapus akun: $e')));
+      } finally {
+        if (mounted) setState(() => busy = false);
+      }
+    } finally {
+      confirm.dispose();
+    }
+  }
+
   InputDecoration decoration(String label, {String? hint}) =>
       InputDecoration(
         labelText: label,
@@ -334,8 +386,15 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
               '${(account['rt'] ?? '').toString().isNotEmpty ? ' • RT ${account['rt']}' : ''}'
               '${(account['rw'] ?? '').toString().isNotEmpty ? ' / RW ${account['rw']}' : ''}',
             ),
-            trailing: Text(account['active'] == true ? 'Aktif' : 'Nonaktif',
-                style: const TextStyle(fontSize: 11)),
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              Text(account['active'] == true ? 'Aktif' : 'Nonaktif',
+                  style: const TextStyle(fontSize: 11)),
+              IconButton(
+                tooltip: 'Hapus permanen akun',
+                onPressed: busy ? null : () => deleteAccount(account),
+                icon: const Icon(Icons.delete_outline_rounded,
+                  color: Color(0xFFC13B49), size: 21)),
+            ]),
           )),
       ],
     );
