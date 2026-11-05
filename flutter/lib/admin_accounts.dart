@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'api.dart';
 
 /// Hanya Admin Utama yang mendapat menu ini. Server tetap melakukan
@@ -225,23 +226,16 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
       ));
     }
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(14,12,14,26),
       children: [
-        Text(
-          widget.bendaharaOnly ? 'Manajemen Bendahara RT/RW' : 'Kelola Akun Petugas',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          widget.bendaharaOnly
-              ? 'Khusus Admin Utama. Buat akun Bendahara RT/RW sesuai wilayah '
-                'dan lihat status aktifnya. Login, akun lain, serta data LPJ '
-                'tidak berubah.'
-              : 'Hanya Admin Utama dapat membuat akun dan menetapkan '
-                'jabatan resmi Ketua/Bendahara RT/RW. '
-                'Username dan password disampaikan secara pribadi.',
-          style: const TextStyle(color: Colors.blueGrey, fontSize: 12),
-        ),
+        CikokoPremiumHeader(
+          title:widget.bendaharaOnly?'Manajemen Bendahara RT/RW':'Kelola Akun Petugas',
+          subtitle:widget.bendaharaOnly
+            ?'Kelola akun bendahara sesuai wilayah secara aman.'
+            :'Tambah, cari, dan kelola akun petugas serta pegawai.',
+          icon:Icons.manage_accounts_outlined,
+          start:const Color(0xFF143D85),end:const Color(0xFF407FE0)),
+        const SizedBox(height:14),
         if (widget.bendaharaOnly && roles.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 12),
