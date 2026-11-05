@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'api.dart';
 
@@ -44,9 +45,10 @@ class _RtRwSignerPageState extends State<RtRwSignerPage> {
   @override Widget build(BuildContext context)=>Scaffold(
     appBar:AppBar(title:const Text('TTD & Stempel Petugas')),
     body:ListView(padding:const EdgeInsets.all(16),children:[
-      Text('Tanda Tangan & Stempel',
-        style:Theme.of(context).textTheme.titleLarge),
-      const SizedBox(height:8),
+      const CikokoPremiumHeader(title:'Tanda Tangan & Stempel',
+        subtitle:'Kelola berkas penandatanganan resmi untuk surat wilayah.',
+        icon:Icons.verified_user_outlined),
+      const SizedBox(height:12),
       const Text('Hanya unggah gambar tanda tangan dan cap yang secara resmi Anda berwenang gunakan. '
         'Gambar ini akan direkam saat Anda menyetujui surat, bukan digunakan otomatis tanpa persetujuan.'),
       const SizedBox(height:14),
@@ -74,6 +76,7 @@ class _RtRwSignerPageState extends State<RtRwSignerPage> {
       const Text('Berkas privat dan diverifikasi saat persetujuan. '
         'TTD/cap gambar tidak sama dengan tanda tangan elektronik tersertifikasi.',
         style:TextStyle(fontSize:12,color:Colors.blueGrey)),
+      const CikokoPageSignature(),
     ]),
   );
 }
