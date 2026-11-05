@@ -523,12 +523,42 @@ class _PpsuReportState extends State<PpsuReportPage>{
    TextField(controller:name,decoration:const InputDecoration(labelText:'Nama Lengkap')),const SizedBox(height:12),
    DropdownButtonFormField<String>(initialValue:team,decoration:const InputDecoration(labelText:'Tim PPSU'),items:['Jalur','Hilux','Penataan','Taman'].map((v)=>DropdownMenuItem(value:v,child:Text(v))).toList(),onChanged:(v)=>setState(()=>team=v??team)),const SizedBox(height:12),
    TextField(controller:activity,minLines:3,maxLines:5,decoration:const InputDecoration(labelText:'Uraian Kegiatan')),const SizedBox(height:10),
-   for(var i=0;i<3;i++)Padding(padding:const EdgeInsets.only(bottom:9),child:Row(children:[
-    if(photos[i]!=null)ClipRRect(borderRadius:BorderRadius.circular(8),child:Image.file(File(photos[i]!),width:55,height:55,fit:BoxFit.cover))else const SizedBox(width:55,height:55,child:Icon(Icons.add_a_photo_outlined,color:civicBlue)),
-    const SizedBox(width:8),Expanded(child:Text('Dokumentasi ${i+1} dari 3',style:const TextStyle(fontSize:12))),
-    IconButton(tooltip:'Kamera',onPressed:()=>pick(i,ImageSource.camera),icon:const Icon(Icons.camera_alt_outlined)),
-    IconButton(tooltip:'Galeri',onPressed:()=>pick(i,ImageSource.gallery),icon:const Icon(Icons.photo_library_outlined)),
-   ])),
+   for(var i=0;i<3;i++)Container(
+    margin:const EdgeInsets.only(bottom:12),
+    padding:const EdgeInsets.all(11),
+    decoration:BoxDecoration(
+      borderRadius:BorderRadius.circular(14),
+      color:Theme.of(context).colorScheme.surfaceContainerLow,
+      border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
+    child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Row(children:[
+        Expanded(child:Text('Dokumentasi '+(i+1).toString()+' dari 3',
+          style:const TextStyle(fontSize:12,fontWeight:FontWeight.w700))),
+        if(photos[i]!=null)const Icon(Icons.check_circle_rounded,
+          color:Color(0xFF1AA27C),size:18),
+      ]),
+      const SizedBox(height:9),
+      ClipRRect(borderRadius:BorderRadius.circular(10),
+        child:SizedBox(width:double.infinity,height:132,
+          child:photos[i]==null
+            ?ColoredBox(color:Theme.of(context).colorScheme.surfaceContainerHighest,
+              child:const Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+                Icon(Icons.add_photo_alternate_outlined,size:31),
+                SizedBox(height:5),Text('Foto belum dipilih',
+                  style:TextStyle(fontSize:11))]))
+            :Image.file(File(photos[i]!),fit:BoxFit.contain,
+              errorBuilder:(_,__,___)=>const Center(
+                child:Text('Pratinjau foto belum tersedia'))))),
+      const SizedBox(height:8),
+      Wrap(spacing:8,runSpacing:6,children:[
+        OutlinedButton.icon(onPressed:()=>pick(i,ImageSource.camera),
+          icon:const Icon(Icons.camera_alt_outlined,size:17),
+          label:Text(photos[i]==null?'Kamera':'Foto Ulang')),
+        OutlinedButton.icon(onPressed:()=>pick(i,ImageSource.gallery),
+          icon:const Icon(Icons.photo_library_outlined,size:17),
+          label:Text(photos[i]==null?'Galeri':'Ganti Foto')),
+      ]),
+    ])),
    SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:sending?null:send,icon:const Icon(Icons.send_outlined),label:Text(sending?'Mengirim laporan…':'Kirim Laporan PPSU'))),
   ]))),const SizedBox(height:12),
   OutlinedButton.icon(onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>Scaffold(appBar:AppBar(title:const Text('Riwayat Kegiatan PPSU')),body:PpsuHistoryPage(api:widget.api)))) ,icon:const Icon(Icons.history),label:const Text('Lihat Riwayat Kegiatan')),
