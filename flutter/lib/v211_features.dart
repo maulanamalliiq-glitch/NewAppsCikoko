@@ -289,7 +289,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
        const SizedBox(height:3),
        SelectableText((row[e.key]??'').toString().trim().isEmpty
         ?'Belum diisi':(row[e.key]??'').toString(),
-        style:const TextStyle(fontSize:13,color:civicNavy)),
+        style:TextStyle(fontSize:13,color:Theme.of(context).colorScheme.onSurface)),
        const Divider(height:12),
       ])),
     ]))),
@@ -303,7 +303,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
    content:SizedBox(width:double.maxFinite,height:MediaQuery.sizeOf(dialogContext).height*.63,
     child:Scrollbar(thumbVisibility:true,child:SingleChildScrollView(
      padding:const EdgeInsets.only(right:9),
-     child:SelectableText(content,style:const TextStyle(fontSize:13,height:1.55,color:civicNavy))))),
+     child:SelectableText(content,style:TextStyle(fontSize:13,height:1.55,color:Theme.of(context).colorScheme.onSurface))))),
    actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Tutup'))],
   ));
  }
@@ -329,11 +329,11 @@ class _CivicProfileState extends State<CivicProfilePage>{
    Widget profileRow(IconData icon,String label,{VoidCallback? onTap,Color? color,String? subtitle}){
     return ListTile(
      contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:3),
-     leading:Icon(icon,color:color??const Color(0xFF5B719A),size:23),
-     title:Text(label,style:TextStyle(color:color??const Color(0xFF25344A),fontSize:14)),
+     leading:Icon(icon,color:color??Theme.of(context).colorScheme.primary,size:23),
+     title:Text(label,style:TextStyle(color:color??Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w600)),
      subtitle:subtitle==null?null:Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,
-      style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
-     trailing:const Icon(Icons.chevron_right_rounded,color:Color(0xFF8D9BAC),size:20),
+      style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),
+     trailing:Icon(Icons.chevron_right_rounded,color:Theme.of(context).colorScheme.onSurfaceVariant,size:20),
      onTap:onTap,
     );
    }
@@ -355,7 +355,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
         ?const [Color(0xFF173455),Color(0xFF152940),Color(0xFF111E30)]
         :const [Color(0xFFFFFFFF),Color(0xFFE8F1FF),Color(0xFFDCEBFF)]),
       borderRadius:BorderRadius.circular(20),
-      border:Border.all(color:const Color(0xFFE0EAF8))),
+      border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[
        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
@@ -385,7 +385,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
       Row(children:[
        Expanded(child:_ProfileQuickAction(
         icon:complete?Icons.check_circle_rounded:Icons.verified_user_outlined,
-        iconColor:complete?const Color(0xFF0C9657):null,
+        iconColor:complete?(Theme.of(context).brightness==Brightness.dark?const Color(0xFF66DE9F):const Color(0xFF0C9657)):null,
         highlighted:complete,
         title:CikokoSettings.tr('Identitas Akun','Account Identity'),
         detail:verified?CikokoSettings.tr('Terverifikasi','Verified'):complete?CikokoSettings.tr('Data lengkap','Complete'):isResident?CikokoSettings.tr('Lengkapi RT/RW','Complete RT/RW'):CikokoSettings.tr('Lengkapi profil','Complete profile'),
@@ -464,8 +464,8 @@ class _CivicProfileState extends State<CivicProfilePage>{
      ]),
      const SizedBox(height:10),
      Container(padding:const EdgeInsets.all(14),
-      decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16),
-       border:Border.all(color:const Color(0xFFE5EAF2))),
+      decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(16),
+       border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
       child:Column(children:[
        for(final e in <String,String>{
         'name':'Nama Lengkap','username':'Username','phone':'Nomor HP',
