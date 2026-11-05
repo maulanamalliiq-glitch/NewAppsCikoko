@@ -387,7 +387,7 @@ class _HomeState extends State<HomePage> {
       Icon(Icons.search,color:blue,size:20),SizedBox(width:10),
       Expanded(child:Padding(padding:EdgeInsets.symmetric(vertical:15),
        child:Text('Jelajahi layanan dan fitur',
-        style:TextStyle(color:CikokoDesign.muted,fontSize:12))),
+        style:TextStyle(color:CikokoDesign.muted,fontSize:12)))),
      ])),
     const SizedBox(height:14),
     LayoutBuilder(builder:(context,constraints)=>GridView.builder(
