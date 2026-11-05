@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -30,6 +32,22 @@ class _RtRwPdfPageState extends State<RtRwPdfPage> {
       throw ApiError('Isi berkas bukan PDF yang valid.');
     return bytes;
   }
+  Future<void> savePdf(BuildContext context) async {
+    try {
+      final bytes=await file;
+      final directory=await getDownloadsDirectory();
+      if(directory==null)throw const FileSystemException('Folder unduhan tidak tersedia');
+      final output=File('${directory.path}/$fileName');
+      await output.writeAsBytes(bytes,flush:true);
+      if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content:Text('PDF disimpan: ${output.path}')));
+    }catch(_) {
+      if(!context.mounted)return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content:Text('Penyimpanan langsung tidak tersedia. Pilih Simpan melalui menu berbagi PDF.')));
+      try{await Printing.sharePdf(bytes:await file,filename:fileName);}catch(_){}
+    }
+  }
   @override Widget build(BuildContext context)=>Scaffold(
     appBar:AppBar(title:const Text('Surat Pengantar PDF')),
     body:FutureBuilder<Uint8List>(future:file,builder:(ctx,s){
@@ -43,25 +61,22 @@ class _RtRwPdfPageState extends State<RtRwPdfPage> {
           ])));
         return const Center(child:CircularProgressIndicator());
       }
-      return Column(children:[
-        Expanded(child:PdfPreview(
-          build:(format)async=>s.data!,
-          initialPageFormat:PdfPageFormat.a4,
-          canChangeOrientation:false,canChangePageFormat:false,
-          allowPrinting:false,allowSharing:true,
-          pdfFileName:fileName,
-        )),
-        Padding(padding:const EdgeInsets.all(10),child:SizedBox(width:double.infinity,
-          child:FilledButton.icon(
-            onPressed:()async{
-              try{await Printing.sharePdf(bytes:s.data!,filename:fileName);}
-              catch(e){if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content:Text('Dokumen belum dapat disimpan. Silakan coba kembali.')));}
-            },
+      return PdfPreview(
+        build:(format)async=>s.data!,
+        initialPageFormat:PdfPageFormat.a4,
+        canChangeOrientation:false,
+        canChangePageFormat:false,
+        allowPrinting:false,
+        allowSharing:true,
+        pdfFileName:fileName,
+        actions:[
+          IconButton(
+            tooltip:'Simpan berkas PDF',
+            onPressed:()=>savePdf(context),
             icon:const Icon(Icons.download_outlined),
-            label:const Text('Unduh / Simpan PDF'),
-          ))),
-      ]);
+          ),
+        ],
+      );
     }),
   );
 }
