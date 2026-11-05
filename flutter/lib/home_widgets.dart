@@ -179,66 +179,103 @@ class CikokoStaffHero extends StatelessWidget {
     required this.onManagement, required this.onServices});
 
   @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(22),
-    child: SizedBox(
-      height: 208,
-      width: double.infinity,
-      child: Stack(fit: StackFit.expand, children: [
-        Image.asset('assets/kantor-cikoko.jpg', fit: BoxFit.cover),
-        const DecoratedBox(decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xF008326A), Color(0xD0115BA3), Color(0x95008BDD)]))),
-        Padding(
-          padding: const EdgeInsets.all(17),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Row(children: [
-              Icon(Icons.verified_user_rounded, color: Color(0xFFFFD27B), size: 18),
-              SizedBox(width: 7),
-              Expanded(child: Text('PUSAT PELAYANAN KELURAHAN',
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.white, fontSize: 10.5,
-                  letterSpacing: .7, fontWeight: FontWeight.w800))),
-            ]),
-            const SizedBox(height: 12),
-            Text(roleName, maxLines: 2, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.white,
-                fontSize: 23, fontWeight: FontWeight.w800)),
-            const SizedBox(height: 5),
-            const Text('Kelola tugas dan pelayanan warga secara efisien.',
-              style: TextStyle(color: Color(0xFFE7F3FF), fontSize: 12)),
-            const Spacer(),
-            Row(children: [
-              Expanded(child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white, foregroundColor: homeNavy,
-                  minimumSize: const Size(0, 39),
-                  padding: const EdgeInsets.symmetric(horizontal: 7)),
-                onPressed: onManagement,
-                icon: const Icon(Icons.dashboard_customize_outlined, size: 17),
-                label: const Text('Kelola Tugas',
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)))),
-              const SizedBox(width: 9),
-              Expanded(child: OutlinedButton.icon(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(0, 39),
-                  side: const BorderSide(color: Colors.white70),
-                  padding: const EdgeInsets.symmetric(horizontal: 7)),
-                onPressed: onServices,
-                icon: const Icon(Icons.description_outlined, size: 17),
-                label: const Text('Layanan',
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700)))),
-            ]),
-          ]),
-        ),
+  Widget build(BuildContext context) {
+    final admin=roleName.toLowerCase().contains('admin');
+    final cards=admin
+      ? <({String title,String value,Color color})>[
+          (title:'Pengguna',value:'Kelola',color:const Color(0xFF6653CC)),
+          (title:'Laporan',value:'Pantau',color:const Color(0xFFD34D8B)),
+          (title:'Layanan',value:'Atur',color:const Color(0xFF2585E8)),
+        ]
+      : <({String title,String value,Color color})>[
+          (title:'Laporan Baru',value:'Periksa',color:const Color(0xFFE45D72)),
+          (title:'Dalam Proses',value:'Tindak lanjut',color:const Color(0xFF168ED4)),
+          (title:'Selesai',value:'Riwayat',color:const Color(0xFF0FAE94)),
+        ];
+    return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Padding(padding:const EdgeInsets.fromLTRB(3,7,3,14),
+       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Text(admin?'Hai, Administrator':'Hai, Petugas',
+          style:const TextStyle(color:homeNavy,fontSize:23,fontWeight:FontWeight.w700)),
+        const SizedBox(height:3),
+        Text(admin?'Kelola sistem Cikoko SmartAPP':'Status tugas dan pelayanan hari ini',
+          style:const TextStyle(color:homeMuted,fontSize:12)),
+       ])),
+      Row(children:[
+        for(final card in cards)
+         Expanded(child:Container(
+          margin:const EdgeInsets.only(right:7),
+          padding:const EdgeInsets.symmetric(horizontal:10,vertical:13),
+          decoration:BoxDecoration(
+           color:card.color,borderRadius:BorderRadius.circular(13),
+           boxShadow:[BoxShadow(color:card.color.withValues(alpha:.16),
+             blurRadius:9,offset:const Offset(0,4))]),
+          child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+           Text(card.title,maxLines:1,overflow:TextOverflow.ellipsis,
+            style:const TextStyle(color:Colors.white,fontSize:10,fontWeight:FontWeight.w500)),
+           const SizedBox(height:7),
+           Text(card.value,maxLines:1,overflow:TextOverflow.ellipsis,
+            style:const TextStyle(color:Colors.white,fontSize:15,fontWeight:FontWeight.w700)),
+          ]))),
       ]),
-    ),
-  );
+      const SizedBox(height:15),
+      Row(children:[
+       Expanded(child:_StaffAction(icon:admin?Icons.manage_accounts_outlined:Icons.assignment_outlined,
+        title:admin?'Manajemen Pengguna':'Daftar Laporan',
+        subtitle:admin?'Warga, petugas & pegawai':'Kelola laporan masuk',
+        color:const Color(0xFF3479D8),onTap:onManagement)),
+       const SizedBox(width:9),
+       Expanded(child:_StaffAction(icon:Icons.description_outlined,
+        title:admin?'Manajemen Layanan':'Layanan Administrasi',
+        subtitle:admin?'Tambah & kelola layanan':'Pelayanan warga',
+        color:const Color(0xFF13A58B),onTap:onServices)),
+      ]),
+      const SizedBox(height:12),
+      Material(color:const Color(0xFFE5F2FF),borderRadius:BorderRadius.circular(15),
+       child:InkWell(onTap:onManagement,borderRadius:BorderRadius.circular(15),
+        child:Padding(padding:const EdgeInsets.all(13),child:Row(children:[
+         const Icon(Icons.shield_outlined,color:Color(0xFF1769D2),size:26),
+         const SizedBox(width:10),
+         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Text(admin?'Pusat Pengelolaan Cikoko':'Penanganan Laporan',
+           style:const TextStyle(color:homeNavy,fontSize:13,fontWeight:FontWeight.w600)),
+          const SizedBox(height:2),
+          const Text('Cepat, tepat, dan terpantau',
+           style:TextStyle(color:homeMuted,fontSize:11)),
+         ])),
+         const Icon(Icons.chevron_right_rounded,color:homeBlue),
+        ])))),
+    ]);
+  }
 }
+class _StaffAction extends StatelessWidget {
+ final IconData icon;
+ final String title,subtitle;
+ final Color color;
+ final VoidCallback onTap;
+ const _StaffAction({required this.icon,required this.title,required this.subtitle,
+  required this.color,required this.onTap});
+ @override Widget build(BuildContext context)=>Material(color:Colors.white,
+  borderRadius:BorderRadius.circular(15),child:InkWell(onTap:onTap,
+   borderRadius:BorderRadius.circular(15),child:Container(
+    padding:const EdgeInsets.all(11),
+    decoration:BoxDecoration(borderRadius:BorderRadius.circular(15),
+     border:Border.all(color:homeBorder)),
+    child:Row(children:[
+     Container(width:34,height:36,decoration:BoxDecoration(
+      color:color.withValues(alpha:.12),borderRadius:BorderRadius.circular(10)),
+      child:Icon(icon,color:color,size:20)),
+     const SizedBox(width:8),
+     Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Text(title,maxLines:2,overflow:TextOverflow.ellipsis,
+       style:const TextStyle(color:homeNavy,fontSize:11,fontWeight:FontWeight.w600)),
+      const SizedBox(height:3),
+      Text(subtitle,maxLines:2,overflow:TextOverflow.ellipsis,
+       style:const TextStyle(color:homeMuted,fontSize:9.5)),
+     ])),
+    ])),
+  ));
+
 
 /// Kategori pelayanan pada website, diterjemahkan menjadi kartu Flutter.
 class CikokoServiceTile extends StatelessWidget {
