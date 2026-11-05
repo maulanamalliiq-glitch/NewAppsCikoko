@@ -119,7 +119,7 @@ abstract final class CikokoDesign {
         selectedColor: const Color(0xFFE6F0FF),
         side: const BorderSide(color: outline),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        labelStyle: const TextStyle(fontWeight: FontWeight.w600, color: ink),
+        labelStyle: const TextStyle(fontWeight: FontWeight.w500, color: ink),
       ),
       listTileTheme: const ListTileThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
@@ -175,4 +175,20 @@ abstract final class CikokoDesign {
       ),
     );
   }
+}
+
+class CikokoCopyrightFooter extends StatelessWidget {
+ const CikokoCopyrightFooter({super.key});
+ @override Widget build(BuildContext context) => Container(
+  width: double.infinity,
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+  decoration: const BoxDecoration(
+   color: Colors.white,
+   border: Border(top: BorderSide(color: CikokoDesign.outline, width: .7)),
+  ),
+  child: const Text('Copyright © Cikoko Smart',
+   textAlign: TextAlign.center,
+   style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w400,
+    letterSpacing: .2, color: CikokoDesign.muted)),
+ );
 }
