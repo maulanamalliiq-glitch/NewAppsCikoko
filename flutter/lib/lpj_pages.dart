@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:printing/printing.dart';
@@ -34,9 +35,9 @@ class LpjLmkMenu extends StatelessWidget {
   final void Function(String route) onOpen;
   const LpjLmkMenu({super.key,required this.onOpen});
   @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-    Text('Laporan LPJ LMK',style:Theme.of(context).textTheme.titleLarge),
-    const SizedBox(height:8),
-    const Text('Pilih format laporan sesuai dokumen pertanggungjawaban LMK. Setiap modul memiliki riwayat terpisah.'),
+    const CikokoPremiumHeader(title:'Laporan LPJ LMK',
+      subtitle:'Pilih modul pertanggungjawaban dan pantau statusnya.',
+      icon:Icons.receipt_long_outlined,start:Color(0xFF114788),end:Color(0xFF177FE0)),
     const SizedBox(height:16),
     for(final mod in const [('Modul A','Laporan LPJ LMK A'),('Modul B','Laporan LPJ LMK B')])
       Card(child:ListTile(
@@ -103,7 +104,7 @@ class _LpjPageState extends State<LpjPage> {
  Widget financialSummary(){
   final total=(amountValue(opening.text)??0)+(amountValue(income.text)??0),spent=spentPreview;
   return Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   const Text('REKAPITULASI LPJ',style:TextStyle(fontWeight:FontWeight.bold,fontSize:16)),
+   const Text('REKAPITULASI LPJ',style:TextStyle(fontWeight:FontWeight.w600,fontSize:16)),
    const SizedBox(height:10),
    Text('JUMLAH PENERIMAAN (saldo + penerimaan): '+rupiah(total)),
    const SizedBox(height:6),Text('JUMLAH PENGELUARAN: '+rupiah(spent)),
@@ -152,9 +153,11 @@ class _LpjPageState extends State<LpjPage> {
   decoration:InputDecoration(labelText:label,prefixText:'Rp ',border:const OutlineInputBorder()),
  ));
  Widget form()=>ListView(padding:const EdgeInsets.all(14),children:[
-  Text(lpjLabels[widget.kind]??'LPJ',style:Theme.of(context).textTheme.titleLarge),
-  const SizedBox(height:4),Text('Wilayah dari akun: '+region),
-  const SizedBox(height:16),
+  CikokoPremiumHeader(title:lpjLabels[widget.kind]??'Formulir LPJ',
+   subtitle:'Wilayah $region · Laporan pertanggungjawaban keuangan',
+   icon:Icons.edit_document,start:const Color(0xFF104F99),
+   end:const Color(0xFF0B91BD)),
+  const SizedBox(height:14),
   Text(widget.kind.startsWith('lpj_lmk')?'Sesuai format LPJ LMK Kelurahan Cikoko • A4 potret':'Sesuai format LPJ RT/RW Kelurahan Cikoko • A4 potret',style:const TextStyle(fontWeight:FontWeight.w600)),
   const SizedBox(height:12),
   TextField(controller:period,decoration:const InputDecoration(labelText:'BULAN & TAHUN (YYYY-MM)',helperText:'Contoh: 2026-01 = JANUARI 2026',border:OutlineInputBorder())),
@@ -202,14 +205,15 @@ class _LpjPageState extends State<LpjPage> {
   ])));
   if(creating)return form();
   return RefreshIndicator(onRefresh:reload,child:ListView(padding:const EdgeInsets.all(14),children:[
-   Text(lpjLabels[widget.kind]??'LPJ',style:Theme.of(context).textTheme.titleLarge),
-   const SizedBox(height:8),Text(region),
+   CikokoPremiumHeader(title:lpjLabels[widget.kind]??'Laporan LPJ',
+     subtitle:'Wilayah $region · Daftar dan status pertanggungjawaban',
+     icon:Icons.receipt_long_outlined),
    const SizedBox(height:12),
    if(canCreate)FilledButton.icon(onPressed:()=>setState(()=>creating=true),icon:const Icon(Icons.add_circle_outline),label:const Text('Buat LPJ baru'))
    else if(scope?['duty']=='admin')
      const Card(child:ListTile(leading:Icon(Icons.visibility_outlined),title:Text('Pemantauan LPJ • hanya baca'),subtitle:Text('Admin Utama melihat LPJ seluruh wilayah. Hanya Bendahara berwenang mengirim, dan Ketua/Bendahara terkait yang menyetujui.')))
    else Card(child:ListTile(leading:const Icon(Icons.verified_user_outlined),title:const Text('LPJ disusun oleh Bendahara'),subtitle:Text(widget.kind.startsWith('lpj_lmk')?'Anggota LMK memeriksa dan menandatangani LPJ yang masuk sesuai ketentuan.':'Ketua RT/RW memeriksa dan menandatangani LPJ yang masuk sesuai wilayah.'))),
-   const SizedBox(height:16),const Text('Daftar dan status LPJ',style:TextStyle(fontSize:16,fontWeight:FontWeight.w700)),
+   const SizedBox(height:16),const CikokoPremiumSection(title:'Daftar & Status LPJ',subtitle:'Laporan yang tersimpan di sistem'),
    if(records.isEmpty)const Card(child:ListTile(title:Text('Belum ada LPJ'),subtitle:Text('LPJ yang dikirim petugas berwenang akan tampil di sini.'))),
    for(final doc in records)
     Card(child:ListTile(
