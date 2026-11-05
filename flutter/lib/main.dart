@@ -1,4 +1,5 @@
 import 'design_system.dart';
+import 'premium_ui.dart';
 import 'profile_editor.dart';
 import 'dart:async';
 import 'dart:io';
@@ -65,8 +66,9 @@ class Entry extends StatefulWidget{const Entry({super.key});@override State<Entr
 class _EntryState extends State<Entry>{bool loading=true;@override void initState(){super.initState();api.restore().whenComplete((){if(mounted)setState(()=>loading=false);});}
  @override Widget build(BuildContext c)=>loading?const Scaffold(body:Center(child:Column(mainAxisSize:MainAxisSize.min,children:[Logo(size:110),SizedBox(height:18),Text('Kelurahan Cikoko',style:TextStyle(fontSize:19,color:navy,fontWeight:FontWeight.w800)),SizedBox(height:20),CircularProgressIndicator()]))):HomePage(key:ValueKey(api.token??'guest'),onAuthenticated:()=>setState((){}),onLogout:()=>setState((){}));}
 class Logo extends StatelessWidget{final double size;const Logo({super.key,this.size=58});@override Widget build(BuildContext c)=>ClipOval(child:Image.asset('assets/logo.png',width:size,height:size,fit:BoxFit.cover));}
-class LoginPage extends StatefulWidget{final VoidCallback onLogin;const LoginPage({super.key,required this.onLogin});@override State<LoginPage> createState()=>_LoginState();}
+class LoginPage extends StatefulWidget{final VoidCallback onLogin;final bool startWithRegistration;const LoginPage({super.key,required this.onLogin,this.startWithRegistration=false});@override State<LoginPage> createState()=>_LoginState();}
 class _LoginState extends State<LoginPage>{final user=TextEditingController(),pass=TextEditingController();bool busy=false,signup=false;final fields=<String,TextEditingController>{};
+ @override void initState(){super.initState();signup=widget.startWithRegistration;}
  @override void dispose(){user.dispose();pass.dispose();for(final c in fields.values){c.dispose();}super.dispose();}
  TextEditingController ctrl(String key)=>fields.putIfAbsent(key,()=>TextEditingController());
  Future<void> submit() async{setState(()=>busy=true);try{if(signup){if(ctrl('password').text!=ctrl('confirm').text)throw ApiError('Konfirmasi password tidak sama');await api.register({for(final k in ['name','username','password','confirm','address','rt','rw','phone','email']) k:ctrl(k).text.trim()});if(mounted){setState(()=>signup=false);notify(context,'Akun warga aktif. Silakan login.');}}else{await api.login(user.text.trim(),pass.text);widget.onLogin();}}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>busy=false);}}
@@ -100,7 +102,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
                        child:Column(mainAxisAlignment:MainAxisAlignment.end,
                         crossAxisAlignment:CrossAxisAlignment.start,children:[
                          Row(children:[
-                          const Logo(size:38),const SizedBox(width:9),
+                          const CikokoBrandMark(size:38),const SizedBox(width:9),
                           const Expanded(child:Text('Cikoko SmartAPP',
                            style:TextStyle(color:Colors.white,fontSize:21,fontWeight:FontWeight.w700))),
                          ]),
@@ -237,6 +239,14 @@ class _HomeState extends State<HomePage> {
     ));
     if(loggedIn==true&&mounted){widget.onAuthenticated();}
   }
+  Future<void> openRegistration() async {
+    if(!mounted)return;
+    final loggedIn=await Navigator.of(context).push<bool>(MaterialPageRoute<bool>(
+      builder:(pageContext)=>LoginPage(startWithRegistration:true,
+        onLogin:()=>Navigator.of(pageContext).pop(true)),
+    ));
+    if(loggedIn==true&&mounted)widget.onAuthenticated();
+  }
   void switchTo(String s) {
     if(s=='Persyaratan Ahli Waris'){
       showCikokoWarisRequirements(context,
@@ -310,7 +320,11 @@ class _HomeState extends State<HomePage> {
         widget.onLogout();
       },
     )),
-    body:loading?const Center(child:CircularProgressIndicator()):_page(),
+    body:loading?const Center(child:CircularProgressIndicator()):
+      DecoratedBox(decoration:const BoxDecoration(gradient:LinearGradient(
+        begin:Alignment.topCenter,end:Alignment.bottomCenter,
+        colors:[Color(0xFFEFF6FF),Color(0xFFF6F8FD),Color(0xFFF7FAFF)],
+        stops:[0,.30,1])),child:_page()),
     bottomNavigationBar:NavigationBar(height:67,selectedIndex:nav,labelBehavior:NavigationDestinationLabelBehavior.alwaysShow,onDestinationSelected:selectNav,destinations:[
       const NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:'Menu'),
       const NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:'Berita'),
@@ -456,22 +470,15 @@ class _HomeState extends State<HomePage> {
       onAspirations:()=>switchTo('Menu Cikoko'),
       onInnovations:()=>switchTo('Inovasi'),
     )
-    else CikokoResidentHero(
-      name:'Pengunjung',
-      onService:()=>switchTo('Layanan Online'),
-      onStatus:openLogin,
-      onAgenda:()=>switchTo('Berita & Kegiatan'),
-      onAspirations:()=>switchTo('Menu Cikoko'),
+    else CikokoGuestHero(
+      onLogin:openLogin,
+      onRegister:openRegistration,
+      onServices:()=>switchTo('Layanan Online'),
+      onNews:()=>switchTo('Berita & Kegiatan'),
       onInnovations:()=>switchTo('Inovasi'),
+      onAbout:showOfficeProfile,
     ),
-    if(guest)Padding(padding:const EdgeInsets.only(top:8),child:Material(
-      color:const Color(0xffe9f1fa),borderRadius:BorderRadius.circular(11),
-      child:ListTile(dense:true,contentPadding:const EdgeInsets.symmetric(horizontal:10),
-        leading:const Icon(Icons.lock_open_outlined,color:blue,size:20),
-        title:const Text('Masuk untuk mengajukan surat dan memantau layanan.',style:TextStyle(fontSize:11.5)),
-        trailing:TextButton(onPressed:openLogin,child:const Text('Masuk',style:TextStyle(fontSize:11))),
-      ),
-    )),
+
     if(guest||role=='warga'||role=='admin')Padding(padding:const EdgeInsets.only(top:8),child:CikokoLetterCounters(
       counts:letterCounts,onStatusTap:(category)=>
           role=='admin' && category=='all'
