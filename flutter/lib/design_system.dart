@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 
 /// Shared premium minimalist design system for every Material page.
 /// This layer changes appearance only; routes, APIs and permissions remain intact.
 abstract final class CikokoDesign {
-  static const navy = Color(0xFF102A56);
-  static const royal = Color(0xFF1769D2);
-  static const gold = Color(0xFFF2B84B);
-  static const canvas = Color(0xFFF6F8FC);
-  static const ink = Color(0xFF182C47);
-  static const muted = Color(0xFF64748B);
-  static const outline = Color(0xFFE4EAF2);
-  static const radius = 20.0;
-  static const softBlue = Color(0xFFEAF3FF);
+  static const navy = CikokoPalette.navy;
+  static const royal = CikokoPalette.blue;
+  static const gold = CikokoPalette.gold;
+  static const canvas = Color(0xFFF5F8FF);
+  static const ink = Color(0xFF243650);
+  static const muted = CikokoPalette.muted;
+  static const outline = CikokoPalette.border;
+  static const radius = 17.0;
+  static const softBlue = CikokoPalette.sky;
   static const success = Color(0xFF148A55);
   static const warning = Color(0xFFE39B21);
   static const danger = Color(0xFFC43C4B);
@@ -47,7 +48,7 @@ abstract final class CikokoDesign {
         elevation: 0,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          fontSize: 19, fontWeight: FontWeight.w600, color: navy,
+          fontSize: 17, fontWeight: FontWeight.w600, color: navy,
           letterSpacing: -.35,
         ),
         iconTheme: IconThemeData(color: navy),
@@ -55,28 +56,33 @@ abstract final class CikokoDesign {
       dialogTheme: DialogThemeData(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.transparent,
         showDragHandle: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        margin: const EdgeInsets.symmetric(vertical: 6),
+        margin: const EdgeInsets.symmetric(vertical: 5),
         shape: shape,
       ),
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        labelStyle: const TextStyle(fontSize: 12.5, color: muted),
+        floatingLabelStyle: const TextStyle(fontSize: 12, color: royal),
+        prefixIconColor: royal,
+        suffixIconColor: royal,
         hintStyle: const TextStyle(color: muted, fontSize: 13.5),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(13),
           borderSide: const BorderSide(color: outline),
         ),
         enabledBorder: OutlineInputBorder(
@@ -92,9 +98,9 @@ abstract final class CikokoDesign {
         style: ElevatedButton.styleFrom(
           backgroundColor: royal,
           foregroundColor: Colors.white,
-          minimumSize: const Size(0, 48),
+          minimumSize: const Size(0, 45),
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
@@ -103,7 +109,7 @@ abstract final class CikokoDesign {
           foregroundColor: Colors.white,
           minimumSize: const Size(0, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: .1),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, letterSpacing: .05),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -119,13 +125,14 @@ abstract final class CikokoDesign {
         selectedColor: const Color(0xFFE6F0FF),
         side: const BorderSide(color: outline),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        labelStyle: const TextStyle(fontWeight: FontWeight.w500, color: ink),
+        labelStyle: const TextStyle(fontWeight: FontWeight.w500, fontSize: 11.5, color: ink),
       ),
       listTileTheme: const ListTileThemeData(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
         iconColor: royal,
         textColor: ink,
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 3),
+        dense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 15, vertical: 2),
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(foregroundColor: navy),
@@ -150,11 +157,11 @@ abstract final class CikokoDesign {
         surfaceTintColor: Colors.transparent,
         indicatorColor: const Color(0xFFE6F0FF),
         elevation: 0,
-        height: 72,
+        height: 68,
         labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
           fontSize: 11,
           fontWeight: states.contains(WidgetState.selected)
-              ? FontWeight.w700 : FontWeight.w500,
+              ? FontWeight.w600 : FontWeight.w400,
           color: states.contains(WidgetState.selected) ? royal : muted,
         )),
       ),
@@ -166,11 +173,11 @@ abstract final class CikokoDesign {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
       textTheme: const TextTheme(
-        headlineSmall: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: navy, letterSpacing: -.5),
+        headlineSmall: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: navy, letterSpacing: -.45),
         titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: navy, letterSpacing: -.3),
         titleMedium: TextStyle(fontSize: 15.5, fontWeight: FontWeight.w600, color: navy),
-        bodyLarge: TextStyle(fontSize: 15, color: ink, height: 1.45),
-        bodyMedium: TextStyle(fontSize: 13.5, color: ink, height: 1.45),
+        bodyLarge: TextStyle(fontSize: 14, color: ink, height: 1.4),
+        bodyMedium: TextStyle(fontSize: 13, color: ink, height: 1.4),
         bodySmall: TextStyle(fontSize: 12, color: muted, height: 1.4),
       ),
     );
