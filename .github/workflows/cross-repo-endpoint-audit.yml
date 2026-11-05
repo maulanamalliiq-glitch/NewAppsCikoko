@@ -1,0 +1,41 @@
+name: QA - Cross Repo Flutter PHP Endpoint Hardcheck
+on:
+  push:
+    branches:
+      - fix/release-hardcheck-ui-20261106
+    paths:
+      - 'flutter/lib/**'
+      - 'qa/backend_contract_audit.py'
+      - '.github/workflows/cross-repo-endpoint-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check-mobile-backend-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout latest Flutter application
+        uses: actions/checkout@v4
+        with:
+          path: application
+      - name: Checkout backend audit branch
+        uses: actions/checkout@v4
+        with:
+          repository: maulanamalliiq-glitch/CikokoSmartAPPS
+          ref: fix/release-hardcheck-backend-20261106
+          path: backend
+          persist-credentials: false
+      - name: Check every Flutter endpoint exists in PHP source
+        run: |
+          python3 application/qa/backend_contract_audit.py \
+            application/flutter/lib backend/cpanel/mobile-api
+      - name: PHP syntax for both new and existing endpoints
+        run: |
+          find backend/cpanel/mobile-api -maxdepth 1 -name '*.php' \
+            -print0 | xargs -0 -n 1 php -l
+      - name: Validate backend role and security contracts
+        run: |
+          cd backend
+          php qa/release_endpoint_contract_test.php
+          php qa/account_isolation_contract_test.php

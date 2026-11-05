@@ -39,7 +39,7 @@ Future<void> main()async{WidgetsFlutterBinding.ensureInitialized();await CikokoS
 class CikokoApp extends StatelessWidget {
  const CikokoApp({super.key});
  @override Widget build(BuildContext c)=>AnimatedBuilder(
-  animation:Listenable.merge([CikokoSettings.themeMode,CikokoSettings.language]),
+  animation:CikokoSettings.themeMode,
   builder:(context,_)=>MaterialApp(title:'Cikoko',debugShowCheckedModeBanner:false,
  builder:(ctx,child)=>Stack(children:[
    if(child!=null)child,
@@ -208,8 +208,7 @@ class _HomeState extends State<HomePage> {
   bool get isStaff=>role!='warga'&&role!='guest';
   bool get isAdmin=>capabilities['reports:view']==true;
   List<RoleFeature> get modules=>role=='guest'?[roleFeatures['services']!,roleFeatures['waris']!,roleFeatures['waris_requirements']!,roleFeatures['jumantik']!,roleFeatures['news']!,roleFeatures['announcements']!,roleFeatures['gallery']!]:modulesForRole(role,capabilities);
-  void _refreshSettings(){if(mounted)setState((){});}
-  @override void initState(){super.initState();CikokoSettings.language.addListener(_refreshSettings);load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
+  @override void initState(){super.initState();load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
       WidgetsBinding.instance.addPostFrameCallback((_){
         if(!mounted || !cikokoPushBelongsToAccount(message.data,api.profile?['id']))return;
         final pushId=int.tryParse('${message.data['event_id']??''}')??0;
@@ -217,7 +216,7 @@ class _HomeState extends State<HomePage> {
         switchTo(destinationForPushCategory('${message.data['category']??''}',isStaff:isStaff));
       });
     });timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());}}
-  @override void dispose(){CikokoSettings.language.removeListener(_refreshSettings);timer?.cancel();push?.dispose();super.dispose();}
+  @override void dispose(){timer?.cancel();push?.dispose();super.dispose();}
   Future<void> refresh() async {
     try {if(api.token==null)return;final v=await api.call('events');final incoming=cikokoEventsForAccount(List<dynamic>.from(v['events']??[]),api.profile?['id']);await push?.onEvents(incoming);if(mounted)setState(()=>events=incoming);}
     catch(_) {}
@@ -323,18 +322,13 @@ class _HomeState extends State<HomePage> {
   }
   @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
     appBar:guest && section=='Dashboard'?null:AppBar(
-      title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[const Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:navy)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.5,color:Colors.blueGrey))]))]),
+      title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:15,fontWeight:FontWeight.w700,color:Theme.of(c).colorScheme.onSurface)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:10.5,color:Theme.of(c).colorScheme.onSurfaceVariant))]))]),
       actions:[
         IconButton(
           tooltip:CikokoSettings.tr('Ganti tema gelap/terang','Switch dark/light theme'),
           onPressed:CikokoSettings.toggleTheme,
           icon:Icon(CikokoSettings.themeMode.value==ThemeMode.dark
             ?Icons.light_mode_outlined:Icons.dark_mode_outlined)),
-        TextButton(
-          onPressed:CikokoSettings.toggleLanguage,
-          child:Text(CikokoSettings.isEnglish?'ID':'EN',
-            style:TextStyle(fontWeight:FontWeight.w800,
-              color:Theme.of(c).colorScheme.primary))),
         IconButton(tooltip:CikokoSettings.tr('Notifikasi','Notifications'),onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
     ),
     drawer:Drawer(child:CikokoStructuredDrawer(
@@ -425,10 +419,10 @@ class _HomeState extends State<HomePage> {
       feature.title.toLowerCase().contains(query)||
       feature.description.toLowerCase().contains(query)).toList();
     return ListView(padding:const EdgeInsets.fromLTRB(15,16,15,24),children:[
-    const Text('Menu Layanan',style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w700)),
+    Text('Menu Layanan',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:22,fontWeight:FontWeight.w700)),
     const SizedBox(height:4),
     Text('Pilih layanan sesuai akses $roleLabel',
-     style:const TextStyle(color:Colors.blueGrey,fontSize:12)),
+     style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:12)),
     const SizedBox(height:14),
     if(!permissionsOk)const Card(child:ListTile(
      leading:Icon(Icons.warning_amber_rounded,color:Colors.orange),
@@ -456,12 +450,12 @@ class _HomeState extends State<HomePage> {
       const colors=[Color(0xFF8653D7),Color(0xFFED6A38),
        Color(0xFF2187DB),Color(0xFF17A983),Color(0xFFE3A12A),Color(0xFFB857CB)];
       final accent=colors[i%colors.length];
-      return Material(color:Colors.white,borderRadius:BorderRadius.circular(15),
+      return Material(color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(15),
        child:InkWell(onTap:()=>switchTo(f.route),borderRadius:BorderRadius.circular(15),
         child:Container(
          padding:const EdgeInsets.all(11),
          decoration:BoxDecoration(borderRadius:BorderRadius.circular(15),
-          border:Border.all(color:CikokoDesign.outline)),
+          border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
          child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
           Container(width:36,height:36,
            decoration:BoxDecoration(color:accent.withValues(alpha:.12),
@@ -483,7 +477,7 @@ class _HomeState extends State<HomePage> {
       showDragHandle:true,builder:(sheetContext)=>SafeArea(child:Padding(
         padding:const EdgeInsets.fromLTRB(20,0,20,24),child:Column(mainAxisSize:MainAxisSize.min,
           crossAxisAlignment:CrossAxisAlignment.start,children:[
-            const Text('Profil Kelurahan Cikoko',style:TextStyle(fontSize:19,color:navy,fontWeight:FontWeight.w800)),
+            Text('Profil Kelurahan Cikoko',style:TextStyle(fontSize:19,color:Theme.of(context).colorScheme.onSurface,fontWeight:FontWeight.w800)),
             const SizedBox(height:8),
             const Text('Kecamatan Pancoran, Kota Administrasi Jakarta Selatan. Pelayanan publik, informasi, dan pengajuan surat tersedia melalui Cikoko.'),
             const SizedBox(height:14),
@@ -557,7 +551,7 @@ class _HomeState extends State<HomePage> {
             : showPublicLetterStatus(context,api,category:category))),
     Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Row(
       mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:const TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w600)),
+        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w600)),
         TextButton(onPressed:()=>switchTo(role=='warga'?'Layanan Online':'Menu Cikoko'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11))),
       ])),
     if(role=='warga')
@@ -593,7 +587,7 @@ class _HomeState extends State<HomePage> {
               child:Container(
                 padding:const EdgeInsets.all(9),
                 decoration:BoxDecoration(
-                  border:Border.all(color:const Color(0xFFE3EAF4)),
+                  border:Border.all(color:Theme.of(context).colorScheme.outlineVariant),
                   borderRadius:BorderRadius.circular(16)),
                 child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
                   if(Uri.tryParse(logo)?.scheme=='https')
@@ -603,7 +597,7 @@ class _HomeState extends State<HomePage> {
                   const SizedBox(height:8),
                   Text('${service['title']??''}',textAlign:TextAlign.center,
                     maxLines:2,overflow:TextOverflow.ellipsis,
-                    style:const TextStyle(color:navy,fontSize:11.5,fontWeight:FontWeight.w700)),
+                    style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:11.5,fontWeight:FontWeight.w700)),
                 ]),
               ),
             ),
@@ -637,13 +631,13 @@ class _HomeState extends State<HomePage> {
       ActionChip(avatar:const Icon(Icons.history,size:16,color:blue),label:const Text('Riwayat',style:TextStyle(fontSize:11)),onPressed:()=>switchTo('Riwayat')),
     ])),
     Padding(padding:const EdgeInsets.only(top:17,bottom:8),child:Row(children:[
-      const Expanded(child:Text('Berita & Informasi',style:TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w800))),
+      Expanded(child:Text('Berita & Informasi',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w800))),
       TextButton(onPressed:()=>switchTo('Berita & Kegiatan'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11)))
     ])),
     for(final x in items.where((x)=>x['type']=='berita'||x['type']=='pengumuman').take(3))contentCard(Map<String,dynamic>.from(x)),
     if(items.isEmpty)const Card(child:ListTile(dense:true,title:Text('Belum ada berita atau pengumuman.'))),
     if(!guest&&events.isNotEmpty)...[
-      const Padding(padding:EdgeInsets.only(top:12,bottom:7),child:Text('Aktivitas Terbaru',style:TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w800))),
+      Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Text('Aktivitas Terbaru',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w800))),
       for(final e in events.take(2))Card(child:ListTile(dense:true,leading:const Icon(Icons.notifications_outlined,color:blue),
         title:Text('${e['title']??''}',maxLines:1),subtitle:Text('${e['created_at']??''}',style:const TextStyle(fontSize:10)))),
     ],
@@ -689,7 +683,7 @@ class _HomeState extends State<HomePage> {
          Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
            Text('${item['type']??''}'.toUpperCase(),style:const TextStyle(fontSize:9.5,letterSpacing:.65,color:blue,fontWeight:FontWeight.w700)),
            const SizedBox(height:4),
-           Text(title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:13.5,height:1.23,fontWeight:FontWeight.w600,color:navy)),
+           Text(title,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:13.5,height:1.23,fontWeight:FontWeight.w600,color:Theme.of(context).colorScheme.onSurface)),
            const SizedBox(height:5),
            Text(description,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.8,height:1.22,color:Color(0xff647992))),
            const SizedBox(height:7),
@@ -1042,7 +1036,7 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
        'document_format':'split_v1'};
      late final Map<String,dynamic> response;
      if(staged){
-       // Shared hosting may limit each POST to 20 files. Send 8 per request.
+       // Shared hosting may limit each POST to 20 files. Send one compressed document per request.
        final random=Random.secure();
        final draftKey=List.generate(16,
          (_)=>random.nextInt(256).toRadixString(16).padLeft(2,'0')).join();
@@ -1050,7 +1044,7 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
          for(final entry in mainPhotos.entries)
             for(final path in entry.value)MapEntry(entry.key,path),
        ];
-       const batchSize=8;
+       const batchSize=1;
        final steps=(photos.length+batchSize-1)~/batchSize;
        for(var i=0;i<photos.length;i+=batchSize){
          final chunk=photos.skip(i).take(batchSize);
@@ -1097,7 +1091,7 @@ const CikokoPremiumHeader(title:'Pengajuan Ahli Waris',
  subtitle:'Lengkapi identitas dan dokumen untuk proses administrasi.',
  icon:Icons.family_restroom_outlined),
 const SizedBox(height:11),
-const Card(child:Padding(padding:EdgeInsets.all(16),child:Text('Permohonan Pencatatan Ahli Waris\nSemua data dan foto dokumen akan diperiksa petugas. Pastikan foto terbaca.',style:TextStyle(color:navy,fontWeight:FontWeight.w600)))),Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Identitas Pemohon dan Pewaris',style:Theme.of(c).textTheme.titleMedium),const SizedBox(height:14),for(final e in names.entries)Field(e.value,v(e.key),lines:e.key=='heirs'||e.key=='address'?3:1,date:const ['birthdate','marriage_date','deathdate'].contains(e.key),keyboard:e.key=='nik'?TextInputType.number:e.key=='phone'?TextInputType.phone:TextInputType.text)]))),const SizedBox(height:12),Text('Foto Persyaratan Wajib',style:Theme.of(c).textTheme.titleMedium),for(final e in requiredPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
+Card(child:Padding(padding:const EdgeInsets.all(16),child:Text('Permohonan Pencatatan Ahli Waris\nSemua data dan foto dokumen akan diperiksa petugas. Pastikan foto terbaca.',style:TextStyle(color:Theme.of(c).colorScheme.onSurface,fontWeight:FontWeight.w600)))),Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Identitas Pemohon dan Pewaris',style:Theme.of(c).textTheme.titleMedium),const SizedBox(height:14),for(final e in names.entries)Field(e.value,v(e.key),lines:e.key=='heirs'||e.key=='address'?3:1,date:const ['birthdate','marriage_date','deathdate'].contains(e.key),keyboard:e.key=='nik'?TextInputType.number:e.key=='phone'?TextInputType.phone:TextInputType.text)]))),const SizedBox(height:12),Text('Foto Persyaratan Wajib',style:Theme.of(c).textTheme.titleMedium),for(final e in requiredPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
 const SizedBox(height:12),
 Text('Dua Orang Saksi',style:Theme.of(c).textTheme.titleMedium),
 for(final e in witnessPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
@@ -1356,14 +1350,14 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
       child:Icon(Icons.fact_check_outlined,size:22,
        color:CikokoStatusBadge.accentFor((r['status']??'').toString()))),
      title:Text('${r['title']??r['reference']??'Pengajuan'}',
-       style:const TextStyle(fontWeight:FontWeight.w800,fontSize:13,color:navy)),
+       style:TextStyle(fontWeight:FontWeight.w800,fontSize:13,color:Theme.of(context).colorScheme.onSurface)),
      subtitle:Padding(padding:const EdgeInsets.only(top:7),
        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
          CikokoStatusBadge(status:(r['status']??'').toString()),
          const SizedBox(height:5),
          Text('${r['name']??''}  •  ${cikokoDateOnly(r['created_at']??'-')}',
            maxLines:2,overflow:TextOverflow.ellipsis,
-           style:const TextStyle(fontSize:11,color:CikokoPalette.muted)),
+           style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),
        ])),
     onTap:(){
       final row=Map<String,dynamic>.from(r);

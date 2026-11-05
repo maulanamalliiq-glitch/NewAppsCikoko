@@ -53,7 +53,7 @@ class _InnovationPageState extends State<InnovationPage>{
   Navigator.of(context).push(MaterialPageRoute(builder:(detailContext)=>Scaffold(
    appBar:AppBar(title:const Text('Detail Inovasi')),
    body:ListView(padding:const EdgeInsets.all(16),children:[
-    Text('${item['title']??''}',style:const TextStyle(fontSize:22,color:civicNavy,fontWeight:FontWeight.w600)),
+    Text('${item['title']??''}',style:TextStyle(fontSize:22,color:Theme.of(context).colorScheme.onSurface,fontWeight:FontWeight.w600)),
     const SizedBox(height:8),
     Text('${item['summary']??''}',style:const TextStyle(fontSize:13,color:Colors.blueGrey)),
     const SizedBox(height:16),
@@ -97,7 +97,7 @@ class _InnovationPageState extends State<InnovationPage>{
          color:Colors.white,fontSize:10,fontWeight:FontWeight.w600))))),
      ])),
     Padding(padding:const EdgeInsets.all(13),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Text('${item['title']}',style:const TextStyle(fontWeight:FontWeight.w600,color:civicNavy,fontSize:15)),const SizedBox(height:5),
+      Text('${item['title']}',style:TextStyle(fontWeight:FontWeight.w600,color:Theme.of(context).colorScheme.onSurface,fontSize:15)),const SizedBox(height:5),
       Text('${item['summary']??''}',style:const TextStyle(fontSize:12)),const SizedBox(height:10),
       Row(children:[Expanded(child:OutlinedButton.icon(onPressed:()=>detail(item),icon:const Icon(Icons.arrow_forward_outlined,size:16),label:const Text('Lihat Selengkapnya'))),
       if(widget.api.profile?['role']=='admin')IconButton(tooltip:'Sunting inovasi',onPressed:()=>edit(item),icon:const Icon(Icons.edit_outlined,color:civicBlue))]),
@@ -289,7 +289,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
        const SizedBox(height:3),
        SelectableText((row[e.key]??'').toString().trim().isEmpty
         ?'Belum diisi':(row[e.key]??'').toString(),
-        style:const TextStyle(fontSize:13,color:civicNavy)),
+        style:TextStyle(fontSize:13,color:Theme.of(context).colorScheme.onSurface)),
        const Divider(height:12),
       ])),
     ]))),
@@ -303,7 +303,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
    content:SizedBox(width:double.maxFinite,height:MediaQuery.sizeOf(dialogContext).height*.63,
     child:Scrollbar(thumbVisibility:true,child:SingleChildScrollView(
      padding:const EdgeInsets.only(right:9),
-     child:SelectableText(content,style:const TextStyle(fontSize:13,height:1.55,color:civicNavy))))),
+     child:SelectableText(content,style:TextStyle(fontSize:13,height:1.55,color:Theme.of(context).colorScheme.onSurface))))),
    actions:[TextButton(onPressed:()=>Navigator.pop(dialogContext),child:const Text('Tutup'))],
   ));
  }
@@ -329,11 +329,11 @@ class _CivicProfileState extends State<CivicProfilePage>{
    Widget profileRow(IconData icon,String label,{VoidCallback? onTap,Color? color,String? subtitle}){
     return ListTile(
      contentPadding:const EdgeInsets.symmetric(horizontal:16,vertical:3),
-     leading:Icon(icon,color:color??const Color(0xFF5B719A),size:23),
-     title:Text(label,style:TextStyle(color:color??const Color(0xFF25344A),fontSize:14)),
+     leading:Icon(icon,color:color??Theme.of(context).colorScheme.primary,size:23),
+     title:Text(label,style:TextStyle(color:color??Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w600)),
      subtitle:subtitle==null?null:Text(subtitle,maxLines:1,overflow:TextOverflow.ellipsis,
-      style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
-     trailing:const Icon(Icons.chevron_right_rounded,color:Color(0xFF8D9BAC),size:20),
+      style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),
+     trailing:Icon(Icons.chevron_right_rounded,color:Theme.of(context).colorScheme.onSurfaceVariant,size:20),
      onTap:onTap,
     );
    }
@@ -355,7 +355,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
         ?const [Color(0xFF173455),Color(0xFF152940),Color(0xFF111E30)]
         :const [Color(0xFFFFFFFF),Color(0xFFE8F1FF),Color(0xFFDCEBFF)]),
       borderRadius:BorderRadius.circular(20),
-      border:Border.all(color:const Color(0xFFE0EAF8))),
+      border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[
        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
@@ -385,7 +385,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
       Row(children:[
        Expanded(child:_ProfileQuickAction(
         icon:complete?Icons.check_circle_rounded:Icons.verified_user_outlined,
-        iconColor:complete?const Color(0xFF0C9657):null,
+        iconColor:complete?(Theme.of(context).brightness==Brightness.dark?const Color(0xFF66DE9F):const Color(0xFF0C9657)):null,
         highlighted:complete,
         title:CikokoSettings.tr('Identitas Akun','Account Identity'),
         detail:verified?CikokoSettings.tr('Terverifikasi','Verified'):complete?CikokoSettings.tr('Data lengkap','Complete'):isResident?CikokoSettings.tr('Lengkapi RT/RW','Complete RT/RW'):CikokoSettings.tr('Lengkapi profil','Complete profile'),
@@ -436,9 +436,6 @@ class _CivicProfileState extends State<CivicProfilePage>{
       profileRow(Icons.dark_mode_outlined,CikokoSettings.label('Tema tampilan'),
        subtitle:CikokoSettings.themeMode.value==ThemeMode.dark?'Gelap':'Terang',
        onTap:(){CikokoSettings.toggleTheme();setState((){});}),
-      profileRow(Icons.language_outlined,CikokoSettings.label('Bahasa aplikasi'),
-       subtitle:CikokoSettings.isEnglish?'English':'Bahasa Indonesia',
-       onTap:(){CikokoSettings.toggleLanguage();setState((){});}),
      ]),
      const SizedBox(height:12),
      group([
@@ -461,14 +458,14 @@ class _CivicProfileState extends State<CivicProfilePage>{
     ]else...[
      Row(children:[
       Expanded(child:Text(CikokoSettings.tr('Edit Informasi Profil','Edit Profile'),style:TextStyle(
-       fontSize:16,fontWeight:FontWeight.w600,color:civicNavy))),
+       fontSize:16,fontWeight:FontWeight.w600,color:Theme.of(context).colorScheme.onSurface))),
       TextButton.icon(onPressed:(){fill(row);setState(()=>editing=false);},
        icon:const Icon(Icons.close,size:17),label:const Text('Tutup')),
      ]),
      const SizedBox(height:10),
      Container(padding:const EdgeInsets.all(14),
-      decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16),
-       border:Border.all(color:const Color(0xFFE5EAF2))),
+      decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(16),
+       border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
       child:Column(children:[
        for(final e in <String,String>{
         'name':'Nama Lengkap','username':'Username','phone':'Nomor HP',
@@ -677,13 +674,13 @@ class _CivicNewsState extends State<CivicNewsDetail>{late Future<Map<String,dyna
     const SizedBox(height:6),
     Text('${page+1} / ${photos.length}',textAlign:TextAlign.center,style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
   ],
-  const SizedBox(height:14),Text('${x['title']??''}',style:const TextStyle(fontSize:19,fontWeight:FontWeight.w800,color:civicNavy)),const SizedBox(height:10),Text('${x['body']??''}'),const SizedBox(height:12),
+  const SizedBox(height:14),Text('${x['title']??''}',style:TextStyle(fontSize:19,fontWeight:FontWeight.w800,color:Theme.of(context).colorScheme.onSurface)),const SizedBox(height:10),Text('${x['body']??''}'),const SizedBox(height:12),
   Row(mainAxisAlignment:MainAxisAlignment.spaceEvenly,children:[
    _shareIcon(Icons.chat_outlined,'WhatsApp',Colors.green,()=>share('wa')),
    _shareIcon(Icons.facebook,'Facebook',Colors.blue,()=>share('fb')),
    _shareIcon(Icons.camera_alt_outlined,'Instagram',Colors.deepPurple,()=>share('instagram')),
    _shareIcon(Icons.link,'Salin tautan',Colors.blueGrey,()=>share('copy')),
-  ]),const Divider(height:26),const Text('Komentar dan Tanggapan',style:TextStyle(fontWeight:FontWeight.w800,fontSize:15,color:civicNavy)),const SizedBox(height:8),
+  ]),const Divider(height:26),Text('Komentar dan Tanggapan',style:TextStyle(fontWeight:FontWeight.w800,fontSize:15,color:Theme.of(context).colorScheme.onSurface)),const SizedBox(height:8),
   if(replyTo!=null)Row(children:[Expanded(child:Text('Membalas komentar #$replyTo',style:const TextStyle(fontSize:11))),TextButton(onPressed:()=>setState(()=>replyTo=null),child:const Text('Batal'))]),
   Row(children:[Expanded(child:TextField(controller:comment,maxLines:3,minLines:1,decoration:const InputDecoration(hintText:'Tulis komentar yang santun…'))),IconButton(onPressed:send,tooltip:'Kirim komentar',icon:const Icon(Icons.send_rounded,color:civicBlue))]),const SizedBox(height:8),
   FutureBuilder<Map<String,dynamic>>(future:comments,builder:(ctx,s){if(!s.hasData)return const Padding(padding:EdgeInsets.all(12),child:Text('Memuat komentar…'));final rows=List<dynamic>.from(s.data?['items']??[]);return Column(children:[for(final r in rows)Card(child:ListTile(dense:true,leading:const CircleAvatar(radius:17,child:Icon(Icons.person_outline,size:18)),title:Text('${r['display_name']??'Pengguna'}',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w700)),subtitle:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('${r['body']??''}'),const SizedBox(height:5),TextButton(onPressed:()=>setState(()=>replyTo=int.tryParse('${r['id']}')),child:const Text('Balas',style:TextStyle(fontSize:11)))]),trailing:widget.api.profile?['role']=='admin'||widget.api.profile?['role']=='admin_kelurahan'?IconButton(tooltip:'Sembunyikan komentar',icon:const Icon(Icons.visibility_off_outlined,size:18),onPressed:()async{await widget.api.call('v211_comment_moderate',body:{'id':r['id']});if(mounted)setState(reload);}):null)),if(rows.isEmpty)const Text('Belum ada komentar.',style:TextStyle(color:Colors.blueGrey,fontSize:12))]);}),
@@ -704,7 +701,7 @@ class _ArchiveEditorState extends State<ArchiveEditorPage>{
  final files={for(final e in photos.entries)e.key:[e.value]};await widget.api.upload('v211_archive_save',fields,files);if(mounted){civicMessage(context,'Arsip Ahli Waris berhasil disimpan.');if(widget.editId!=null)Navigator.of(context).pop(true);else{for(final c in data.values){c.clear();}data['archive_year']!.text='${DateTime.now().year}';for(final c in children){c.dispose();}children.clear();setState(()=>photos.clear());}}}catch(_){if(mounted)civicMessage(context,'Arsip belum berhasil disimpan. Mohon periksa kembali data dan lampiran.');}finally{if(mounted)setState(()=>saving=false);}}
  String _quote(String v)=>'"${v.replaceAll('\\','\\\\').replaceAll('"','\\"').replaceAll('\n',' ')}"';
  Widget field(String key,String label,{int lines=1})=>Padding(padding:const EdgeInsets.only(bottom:10),child:TextField(controller:data[key],maxLines:lines,decoration:InputDecoration(labelText:label)));
- @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(14),children:[Text(widget.editId==null?'Tambah Arsip Ahli Waris':'Edit Arsip Ahli Waris',style:const TextStyle(color:civicNavy,fontSize:19,fontWeight:FontWeight.w800)),if(widget.editId!=null&&!loaded)const LinearProgressIndicator(),const SizedBox(height:10),
+ @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(14),children:[Text(widget.editId==null?'Tambah Arsip Ahli Waris':'Edit Arsip Ahli Waris',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:19,fontWeight:FontWeight.w800)),if(widget.editId!=null&&!loaded)const LinearProgressIndicator(),const SizedBox(height:10),
   const Text('Data Surat dan Pemohon',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800)),
   field('archive_year','Tahun Surat'),field('reference_no','Nomor Surat'),field('name','Nama Pemohon'),field('nik','NIK Pemohon'),field('phone','Nomor HP'),field('address','Alamat Pemohon',lines:2),field('relation','Hubungan dengan Pewaris'),
   const Text('Data Pewaris',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800)),field('deceased_name','Nama Almarhum/Almarhumah'),field('birthplace','Tempat Lahir'),field('birthdate','Tanggal Lahir (YYYY-MM-DD)'),field('marriage_date','Tanggal Menikah (YYYY-MM-DD)'),field('marital_status','Status Perkawinan'),field('deathdate','Tanggal Meninggal (YYYY-MM-DD)'),field('heirs','Daftar Ahli Waris',lines:3),field('notes','Catatan Arsip',lines:3),
@@ -725,7 +722,7 @@ class PpsuHighlights extends StatelessWidget {
    final rows=List<dynamic>.from(s.data?['items']??[]).take(3).toList();
    if(rows.isEmpty)return const SizedBox.shrink();
    return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-    const Padding(padding:EdgeInsets.symmetric(vertical:10),child:Text('Kegiatan PPSU',style:TextStyle(fontSize:15,color:civicNavy,fontWeight:FontWeight.w800))),
+    Padding(padding:const EdgeInsets.symmetric(vertical:10),child:Text('Kegiatan PPSU',style:TextStyle(fontSize:15,color:Theme.of(context).colorScheme.onSurface,fontWeight:FontWeight.w800))),
     for(final r in rows)Card(child:ListTile(dense:true,leading:ClipRRect(borderRadius:BorderRadius.circular(7),child:Image.network(api.photoUrl('v211_ppsu_photo',{'id':'${r['id']}','index':'0'}),headers:api.authHeaders(),width:52,height:52,fit:BoxFit.cover,errorBuilder:(_,__,___)=>const Icon(Icons.cleaning_services_outlined,color:civicBlue))),title:Text('${r['team']} · ${r['work_date']}',style:const TextStyle(fontSize:12.5,fontWeight:FontWeight.w700)),subtitle:Text('${r['activity']}',maxLines:2,overflow:TextOverflow.ellipsis),trailing:const Icon(Icons.chevron_right,size:19),onTap:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>PpsuDetailPage(api:api,id:int.parse('${r['id']}')))))),
    ]);
   });
