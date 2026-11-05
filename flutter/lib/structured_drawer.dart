@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'role_catalog.dart';
+import 'premium_ui.dart';
 
 const _navy = Color(0xff10375f);
 const _blue = Color(0xff226fda);
@@ -285,8 +286,9 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
     return SafeArea(child:Column(children: [
       Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
-        decoration: const BoxDecoration(color: _panel, border: Border(
-            bottom: BorderSide(color: Color(0xffdfe8f3)))),
+        decoration: const BoxDecoration(gradient: LinearGradient(
+          begin:Alignment.topLeft,end:Alignment.bottomRight,
+          colors:[Color(0xFF10448F),Color(0xFF1478DB)])),
         child: Row(children: [
           widget.avatar,
           const SizedBox(width: 12),
@@ -295,15 +297,15 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
               Text(widget.accountName, maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 15.5,
-                      fontWeight: FontWeight.w800, color: _navy)),
+                      fontWeight: FontWeight.w600, color: Colors.white)),
               const SizedBox(height: 3),
               Text(widget.roleLabel, maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11.5, color: _muted)),
+                  style: const TextStyle(fontSize: 11.5, color: Color(0xFFE3F1FF))),
 
             ])),
           IconButton(onPressed:widget.onClose,
-            tooltip: 'Tutup menu', icon:const Icon(Icons.close_rounded, size:20)),
+            tooltip: 'Tutup menu', icon:const Icon(Icons.close_rounded, color:Colors.white,size:20)),
         ]),
       ),
       Expanded(child: ListView(
@@ -314,11 +316,12 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
             padding: EdgeInsets.fromLTRB(24, 6, 12, 8),
             child: Text('KATEGORI MENU',
               style: TextStyle(color: _muted, letterSpacing: 1.05,
-                  fontSize: 10, fontWeight: FontWeight.w800))),
+                  fontSize: 10, fontWeight: FontWeight.w600))),
           for (final group in groups) _group(group),
           if (groups.isEmpty) const Padding(
             padding: EdgeInsets.all(18),
             child: Text('Belum ada menu untuk hak akses akun ini.')),
+          const CikokoPageSignature(),
         ],
       )),
       const Divider(height: 1),
