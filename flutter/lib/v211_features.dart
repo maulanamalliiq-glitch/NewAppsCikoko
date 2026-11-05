@@ -112,7 +112,22 @@ class _PpsuReportState extends State<PpsuReportPage>{
  try{await widget.api.upload('v211_ppsu_submit',{'name':name.text.trim(),'team':team,'work_date':date.toIso8601String().substring(0,10),'activity':activity.text.trim()}, {'photo1':[photos[0]!],'photo2':[photos[1]!],'photo3':[photos[2]!]});
   if(mounted){setState((){for(var i=0;i<3;i++){photos[i]=null;}activity.clear();});civicMessage(context,'Laporan PPSU telah diterima untuk ditindaklanjuti.');}
  }catch(_){if(mounted)civicMessage(context,'Laporan belum berhasil dikirim. Mohon coba kembali.');}finally{if(mounted)setState(()=>sending=false);}}
- @override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(14),children:[const Text('Laporan Kegiatan PPSU',style:TextStyle(fontSize:19,fontWeight:FontWeight.bold,color:civicNavy)),const SizedBox(height:7),
+ @override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.fromLTRB(12,12,12,28),children:[
+  Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(
+    gradient:const LinearGradient(colors:[Color(0xFF10549F),Color(0xFF0C9B9A)]),
+    borderRadius:BorderRadius.circular(18)),
+    child:const Row(children:[
+      Icon(Icons.cleaning_services_outlined,color:Colors.white,size:28),
+      SizedBox(width:12),
+      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Text('Laporan Kegiatan PPSU',style:TextStyle(
+          fontSize:16,fontWeight:FontWeight.w600,color:Colors.white)),
+        SizedBox(height:3),
+        Text('Isi kegiatan dan dokumentasi lapangan',
+          style:TextStyle(fontSize:11.5,color:Color(0xFFE5F7FA))),
+      ])),
+    ])),
+  const SizedBox(height:10),
   Card(child:Padding(padding:const EdgeInsets.all(13),child:Column(children:[
    ListTile(dense:true,leading:const Icon(Icons.calendar_today,color:civicBlue),title:Text('Hari dan tanggal: ${date.day}/${date.month}/${date.year}'),trailing:const Icon(Icons.edit_calendar),onTap:()async{final d=await showDatePicker(context:context,initialDate:date,firstDate:DateTime(2020),lastDate:DateTime.now());if(d!=null && mounted)setState(()=>date=d);}),
    TextField(controller:name,decoration:const InputDecoration(labelText:'Nama Lengkap')),const SizedBox(height:12),
@@ -120,7 +135,7 @@ class _PpsuReportState extends State<PpsuReportPage>{
    TextField(controller:activity,minLines:3,maxLines:5,decoration:const InputDecoration(labelText:'Uraian Kegiatan')),const SizedBox(height:10),
    for(var i=0;i<3;i++)Padding(padding:const EdgeInsets.only(bottom:9),child:Row(children:[
     if(photos[i]!=null)ClipRRect(borderRadius:BorderRadius.circular(8),child:Image.file(File(photos[i]!),width:55,height:55,fit:BoxFit.cover))else const SizedBox(width:55,height:55,child:Icon(Icons.add_a_photo_outlined,color:civicBlue)),
-    const SizedBox(width:8),Expanded(child:Text('Foto kegiatan ${i+1}',style:const TextStyle(fontSize:12))),
+    const SizedBox(width:8),Expanded(child:Text('Dokumentasi ${i+1} dari 3',style:const TextStyle(fontSize:12))),
     IconButton(tooltip:'Kamera',onPressed:()=>pick(i,ImageSource.camera),icon:const Icon(Icons.camera_alt_outlined)),
     IconButton(tooltip:'Galeri',onPressed:()=>pick(i,ImageSource.gallery),icon:const Icon(Icons.photo_library_outlined)),
    ])),
