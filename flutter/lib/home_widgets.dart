@@ -70,6 +70,95 @@ class CikokoOfficeHero extends StatelessWidget {
   );
 }
 
+/// Beranda warga premium: identitas kelurahan, sapaan, dan empat akses utama.
+class CikokoResidentHero extends StatelessWidget {
+  final String name;
+  final VoidCallback onService;
+  final VoidCallback onStatus;
+  final VoidCallback onAgenda;
+  final VoidCallback onAspirations;
+  const CikokoResidentHero({super.key,required this.name,required this.onService,
+    required this.onStatus,required this.onAgenda,required this.onAspirations});
+
+  @override Widget build(BuildContext context)=>Column(children:[
+    Container(
+      width:double.infinity,
+      clipBehavior:Clip.antiAlias,
+      decoration:BoxDecoration(
+        borderRadius:BorderRadius.circular(24),
+        gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+          colors:[Color(0xFF064C9D),Color(0xFF1596E8)])),
+      child:Stack(children:[
+        Positioned(right:-35,bottom:-55,child:Container(width:210,height:210,
+          decoration:BoxDecoration(shape:BoxShape.circle,
+            border:Border.all(color:Colors.white.withValues(alpha:.15),width:38)))),
+        Padding(padding:const EdgeInsets.all(20),child:Column(
+          crossAxisAlignment:CrossAxisAlignment.start,children:[
+            const Text('SELAMAT DATANG DI CIKOKO SMART',style:TextStyle(
+              color:Color(0xFFDCEEFF),fontSize:10.5,letterSpacing:1.1,fontWeight:FontWeight.w700)),
+            const SizedBox(height:10),
+            Text('Halo, ${name.trim().isEmpty?'Warga Cikoko':name} 👋',
+              maxLines:2,overflow:TextOverflow.ellipsis,
+              style:const TextStyle(color:Colors.white,fontSize:22,fontWeight:FontWeight.w800)),
+            const SizedBox(height:6),
+            const Text('Layanan digital warga Kelurahan Cikoko',
+              style:TextStyle(color:Color(0xFFE7F3FF),fontSize:12.5)),
+            const SizedBox(height:20),
+            Container(padding:const EdgeInsets.all(12),
+              decoration:BoxDecoration(color:Colors.white,
+                borderRadius:BorderRadius.circular(16)),
+              child:Row(children:[
+                Image.asset('assets/logo.png',width:40,height:40),
+                const SizedBox(width:10),
+                const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,
+                  children:[
+                    Text('Kelurahan Cikoko',style:TextStyle(color:homeNavy,
+                      fontSize:13,fontWeight:FontWeight.w800)),
+                    Text('Kecamatan Pancoran · Jakarta Selatan',
+                      style:TextStyle(color:homeMuted,fontSize:10.5)),
+                  ])),
+                const Icon(Icons.verified_rounded,color:Color(0xFF1875D4),size:22),
+              ])),
+          ])),
+      ]),
+    ),
+    const SizedBox(height:14),
+    GridView.count(
+      crossAxisCount:2,mainAxisSpacing:12,crossAxisSpacing:12,
+      childAspectRatio:1.65,shrinkWrap:true,
+      physics:const NeverScrollableScrollPhysics(),
+      children:[
+        _PremiumQuickAction(icon:Icons.description_outlined,title:'Ajukan Surat',onTap:onService),
+        _PremiumQuickAction(icon:Icons.manage_search_rounded,title:'Cek Status Pengajuan',onTap:onStatus),
+        _PremiumQuickAction(icon:Icons.calendar_month_outlined,title:'Agenda Kegiatan',onTap:onAgenda),
+        _PremiumQuickAction(icon:Icons.campaign_outlined,title:'Aspirasi & Pengaduan',onTap:onAspirations),
+      ]),
+  ]);
+}
+class _PremiumQuickAction extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+  const _PremiumQuickAction({required this.icon,required this.title,required this.onTap});
+  @override Widget build(BuildContext context)=>Material(
+    color:Colors.white,
+    borderRadius:BorderRadius.circular(18),
+    child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(18),
+      child:Container(
+        padding:const EdgeInsets.all(12),
+        decoration:BoxDecoration(border:Border.all(color:homeBorder),
+          borderRadius:BorderRadius.circular(18)),
+        child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+          Icon(icon,color:homeBlue,size:28),
+          const SizedBox(height:8),
+          Text(title,maxLines:2,overflow:TextOverflow.ellipsis,
+            textAlign:TextAlign.center,style:const TextStyle(
+              color:homeNavy,fontSize:12,fontWeight:FontWeight.w800)),
+        ]),
+      )),
+  );
+}
+
 /// Kategori pelayanan pada website, diterjemahkan menjadi kartu Flutter.
 class CikokoServiceTile extends StatelessWidget {
   final String title;
