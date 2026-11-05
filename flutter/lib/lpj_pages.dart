@@ -347,7 +347,7 @@ class _LpjDetailPageState extends State<LpjDetailPage>{
    ]),
    const SizedBox(height:9),
    OutlinedButton.icon(onPressed:busy?null:printPdf,icon:const Icon(Icons.print_outlined),label:const Text('Lihat / Cetak PDF')),
-   const SizedBox(height:26),
+   const SizedBox(height:18),const CikokoPageSignature(),
   ]));
  }
 }
