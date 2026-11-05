@@ -45,6 +45,7 @@ class _MobileEditorState extends State<MobileEditor> {
    ]],
   SizedBox(height:48,child:FilledButton.icon(onPressed:sending?null:submit,icon:const Icon(Icons.save_outlined),label:Text(sending?'Menyimpan...':'Simpan'))),
   const SizedBox(height:10),if(archive)const Text('Lampiran foto arsip lama tetap dikelola melalui panel cPanel. Fitur ini khusus pencatatan metadata.',style:TextStyle(fontSize:12,color:Colors.blueGrey)),
+  const CikokoPageSignature(),
  ]);
 }
 class ArchiveList extends StatefulWidget {final CikokoApi api;const ArchiveList({super.key,required this.api});@override State<ArchiveList> createState()=>_ArchiveListState();}
