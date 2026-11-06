@@ -62,15 +62,15 @@ Future<void> showCikokoWarisRequirements(
           width:MediaQuery.sizeOf(popup).width*.94,
           height:double.infinity,
           child:Material(
-            color:const Color(0xfff5f8fc),
+            color:Theme.of(popup).colorScheme.surface,
             elevation:14,
             child:SafeArea(child:Column(children:[
-              Container(color:Colors.white,padding:const EdgeInsets.fromLTRB(18,14,9,14),
+              Container(color:Theme.of(popup).colorScheme.surfaceContainerHigh,padding:const EdgeInsets.fromLTRB(18,14,9,14),
                 child:Row(children:[
                   const Icon(Icons.fact_check_outlined,color:_actionColor),
                   const SizedBox(width:10),
-                  const Expanded(child:Text('Persyaratan Pelayanan Surat',
-                    style:TextStyle(fontSize:17,fontWeight:FontWeight.w800,color:_headingColor))),
+                  Expanded(child:Text('Persyaratan Pelayanan Surat',
+                    style:TextStyle(fontSize:17,fontWeight:FontWeight.w800,color:Theme.of(popup).colorScheme.onSurface))),
                   IconButton(tooltip:'Tutup',onPressed:()=>Navigator.of(popup).pop(),
                     icon:const Icon(Icons.close)),
                 ])),
@@ -85,14 +85,14 @@ Future<void> showCikokoWarisRequirements(
                       padding:const EdgeInsets.all(12),child:Column(
                       crossAxisAlignment:CrossAxisAlignment.start,children:[
                         Text('Persyaratan ${group.title}',
-                          style:const TextStyle(fontWeight:FontWeight.w800,
-                            color:_headingColor,fontSize:14)),
+                          style:TextStyle(fontWeight:FontWeight.w800,
+                            color:Theme.of(popup).colorScheme.onSurface,fontSize:14)),
                         const SizedBox(height:10),
                         Table(
                           border:TableBorder.all(color:const Color(0xffdbe5f0)),
                           columnWidths:const {0:FixedColumnWidth(40),1:FlexColumnWidth()},
                           children:[
-                            const TableRow(decoration:BoxDecoration(color:Color(0xffe7eff9)),
+                            TableRow(decoration:BoxDecoration(color:Theme.of(popup).colorScheme.surfaceContainerHighest),
                               children:[
                                 Padding(padding:EdgeInsets.all(8),
                                   child:Text('No.',style:TextStyle(fontWeight:FontWeight.bold))),
