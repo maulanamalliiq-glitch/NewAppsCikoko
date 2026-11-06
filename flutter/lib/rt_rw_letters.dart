@@ -218,7 +218,7 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
         Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text('RT '+cikokoAreaLabel(widget.api.profile?['rt'])+
                ' / RW '+cikokoAreaLabel(widget.api.profile?['rw']),
-            style:const TextStyle(fontWeight:FontWeight.w600,color:CikokoPalette.navy)),
+            style:TextStyle(fontWeight:FontWeight.w600,color:Theme.of(context).colorScheme.onSurface)),
           const SizedBox(height:10),
           Form(key:formKey,child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
             const CikokoPremiumSection(title:'Identitas Pemohon',subtitle:'Lengkapi data sesuai dokumen asli'),
@@ -284,7 +284,7 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
                      Expanded(child:Padding(
                        padding:const EdgeInsets.only(top:10,right:8),
                        child:Text('Dokumen PDF telah diverifikasi dan siap digunakan.',
-                         style:TextStyle(color:Colors.blueGrey.shade700,fontSize:11.5)))),
+                         style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:11.5)))),
                      TextButton.icon(
                        icon:const Icon(Icons.visibility_outlined,size:17),
                        label:const Text('Lihat',style:TextStyle(fontSize:12)),
