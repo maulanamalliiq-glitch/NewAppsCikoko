@@ -443,7 +443,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
        onTap:()=>showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
         title:const Text('Cikoko Smart'),
         content:const Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text('2.5.39',style:TextStyle(fontSize:13,color:Colors.blueGrey)),
+          Text('2.5.40',style:TextStyle(fontSize:13,color:Colors.blueGrey)),
           SizedBox(height:20),
           Text('Layanan digital Cikoko Smart app'),
         ]),
