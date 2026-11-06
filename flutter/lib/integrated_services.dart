@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
 import 'package:image_picker/image_picker.dart';
@@ -85,7 +87,19 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
       final data=jsonDecode(utf8.decode(response.bodyBytes)) as Map<String,dynamic>;
       if(response.statusCode!=200||data['ok']!=true)throw Exception('${data['error']??'Upload gagal'}');
       return '${data['url']??''}';
-    }catch(_){_message('Logo belum berhasil diunggah. Pastikan API upload logo sudah tersedia.');return null;}
+    }on TimeoutException{
+      _message('Unggah logo terlalu lama. Periksa jaringan dan coba kembali.');
+      return null;
+    }on SocketException{
+      _message('Koneksi terputus saat mengunggah logo. Coba kembali.');
+      return null;
+    }on FormatException{
+      _message('Server mengirim balasan tidak valid. Periksa versi API pada hosting.');
+      return null;
+    }catch(e){
+      _message('Unggah logo gagal: ${cikokoFormalMessage(e)}');
+      return null;
+    }
   }
   Future<void> edit([Map<String,dynamic>? old])async{
     final title=TextEditingController(text:'${old?['title']??''}');
@@ -177,10 +191,10 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
         SizedBox(width:44,height:44,child:Center(child:logoFor(entry))),
         const SizedBox(width:6),
         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text('${entry['title']??''}',style:const TextStyle(fontSize:13.5,fontWeight:FontWeight.w700,color:_ink)),
-          Text('${entry['description']??''}',style:const TextStyle(fontSize:11,color:Colors.blueGrey),maxLines:1,overflow:TextOverflow.ellipsis),
+          Text('${entry['title']??''}',style:TextStyle(fontSize:13.5,fontWeight:FontWeight.w700,color:Theme.of(context).colorScheme.onSurface)),
+          Text('${entry['description']??''}',style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant),maxLines:1,overflow:TextOverflow.ellipsis),
           if(widget.admin)Text(entry['active']==false?'Disembunyikan':'Aktif',
-            style:const TextStyle(fontSize:10,color:Colors.blueGrey)),
+            style:TextStyle(fontSize:10,color:Theme.of(context).colorScheme.onSurfaceVariant)),
         ])),
         if(!widget.admin)const Icon(Icons.chevron_right_rounded,color:_accent,size:20),
         if(widget.admin)PopupMenuButton<String>(enabled:!saving,onSelected:(v)=>v=='edit'?edit(entry):remove(entry),

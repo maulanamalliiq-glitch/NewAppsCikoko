@@ -7,7 +7,7 @@ abstract final class CikokoSettings {
   static final themeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
   static final language = ValueNotifier<String>('id');
 
-  static bool get isEnglish => language.value == 'en';
+  static bool get isEnglish => false;
   static String tr(String indonesia, String english) =>
       isEnglish ? english : indonesia;
 
@@ -70,8 +70,7 @@ abstract final class CikokoSettings {
     try {
       themeMode.value = await _storage.read(key: 'cikoko_theme') == 'dark'
           ? ThemeMode.dark : ThemeMode.light;
-      language.value = await _storage.read(key: 'cikoko_language') == 'en'
-          ? 'en' : 'id';
+      language.value = 'id';
     } catch (_) {
       // A locked credential store should never prevent starting the app.
     }
@@ -87,7 +86,7 @@ abstract final class CikokoSettings {
   }
 
   static Future<void> toggleLanguage() async {
-    language.value = isEnglish ? 'id' : 'en';
+    language.value = 'id';
     try {
       await _storage.write(key: 'cikoko_language', value: language.value);
     } catch (_) {}

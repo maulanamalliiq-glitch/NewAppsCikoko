@@ -10,7 +10,7 @@ import 'api.dart';
 // Bottom sheet preview: only details returned by authenticated PHP endpoint.
 Future<void> showCikokoDocument(BuildContext context, CikokoApi api, {required int id, required String kind, String reference='', VoidCallback? onChanged}) {
   return showModalBottomSheet<void>(
-    context:context,isScrollControlled:true,useSafeArea:true,backgroundColor:Colors.white,
+    context:context,isScrollControlled:true,useSafeArea:true,backgroundColor:Theme.of(context).colorScheme.surface,
     shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(22))),
     builder:(ctx)=>SizedBox(height:MediaQuery.sizeOf(ctx).height*.90,
       child:DocumentDetailSheet(api:api,id:id,kind:kind,reference:reference,onChanged:onChanged)),
@@ -101,8 +101,8 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
     }catch(e){message('$e',error:true);}finally{if(mounted)setState(()=>submitting=false);}
   }
   void message(String s,{bool error=false}){if(!mounted)return;ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),backgroundColor:error?Colors.red.shade700:const Color(0xff165a8a)));}
-  Widget pair(String label,dynamic val)=>Padding(padding:const EdgeInsets.symmetric(vertical:5),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:const TextStyle(fontSize:11,color:Colors.blueGrey)),Text(v(val),style:const TextStyle(fontWeight:FontWeight.w500,fontSize:13))]));
-  Widget section(String text)=>Padding(padding:const EdgeInsets.fromLTRB(0,16,0,8),child:Text(text,style:const TextStyle(fontSize:16,fontWeight:FontWeight.bold,color:Color(0xff123d65))));
+  Widget pair(String label,dynamic val)=>Padding(padding:const EdgeInsets.symmetric(vertical:5),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),Text(v(val),style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontWeight:FontWeight.w500,fontSize:13))]));
+  Widget section(String text)=>Padding(padding:const EdgeInsets.fromLTRB(0,16,0,8),child:Text(text,style:TextStyle(fontSize:16,fontWeight:FontWeight.bold,color:Theme.of(context).colorScheme.onSurface)));
   @override Widget build(BuildContext context)=>Column(children:[
     Padding(padding:const EdgeInsets.fromLTRB(12,12,12,7),
       child:CikokoPremiumHeader(title:'Detail & Progres Pengajuan',
@@ -112,7 +112,7 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
           icon:const Icon(Icons.close_rounded,color:Colors.white)))),
     const Divider(height:2),
     Expanded(child:FutureBuilder<Map<String,dynamic>>(future:request,builder:(ctx,s){
-      if(s.hasError)return Center(child:Padding(padding:const EdgeInsets.all(16),child:Text('Detail belum bisa dibuka: ${s.error}',textAlign:TextAlign.center)));
+      if(s.hasError)return Center(child:Padding(padding:const EdgeInsets.all(18),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(Icons.cloud_off_outlined,size:36,color:Theme.of(ctx).colorScheme.primary),const SizedBox(height:12),Text('Detail pengajuan belum tersedia. ${cikokoFormalMessage(s.error)}',textAlign:TextAlign.center,style:TextStyle(color:Theme.of(ctx).colorScheme.onSurface)),const SizedBox(height:12),FilledButton.icon(onPressed:reload,icon:const Icon(Icons.refresh),label:const Text('Coba lagi'))])));
       if(!s.hasData)return const Center(child:CircularProgressIndicator());
       final data=s.data!, detail=Map<String,dynamic>.from(data['detail'] as Map);
       final timeline=List<dynamic>.from(data['timeline']??[]), docs=List<dynamic>.from(data['documents']??[]);
@@ -134,7 +134,7 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
       final stages=['masuk','proses','selesai'];
       final step=status=='selesai'?3:status=='masuk'?1:2;
       return ListView(padding:EdgeInsets.fromLTRB(16,10,16,MediaQuery.viewPaddingOf(context).bottom+42),children:[
-        Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:const Color(0xfff2f7ff),borderRadius:BorderRadius.circular(14)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(color:Theme.of(context).colorScheme.surfaceContainerHigh,borderRadius:BorderRadius.circular(14)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
           Text(isWaris?'Surat Ahli Waris':'Laporan Kegiatan',style:const TextStyle(fontSize:16,fontWeight:FontWeight.bold)),
           Text(v(detail['reference_no']??detail['id']),style:const TextStyle(fontSize:12,color:Colors.blueGrey)),
           const SizedBox(height:8),
@@ -177,7 +177,7 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
           ],
           section('Kelengkapan Dokumen'),
           if(corrections.isEmpty)const Text('Belum ada permintaan perbaikan dokumen.',style:TextStyle(fontSize:12,color:Colors.blueGrey)),
-          for(final p in corrections)Card(color:p['resolved_at']==null?Colors.orange.shade50:Colors.green.shade50,child:ListTile(dense:true,leading:Icon(p['resolved_at']==null?Icons.warning_amber_rounded:Icons.check_circle_outline,color:p['resolved_at']==null?Colors.orange:Colors.green),title:Text('${labels[p['requirement_code']]??p['requirement_code']}'),subtitle:Text('${p['reason']}\n${p['resolved_at']==null?'Belum diperbaiki':'Foto perbaikan telah dikirim'}'))),
+          for(final p in corrections)Card(color:Theme.of(context).brightness==Brightness.dark?(p['resolved_at']==null?const Color(0xFF423423):const Color(0xFF1B3C32)):(p['resolved_at']==null?Colors.orange.shade50:Colors.green.shade50),child:ListTile(dense:true,leading:Icon(p['resolved_at']==null?Icons.warning_amber_rounded:Icons.check_circle_outline,color:p['resolved_at']==null?Colors.orange:Colors.green),title:Text('${labels[p['requirement_code']]??p['requirement_code']}'),subtitle:Text('${p['reason']}\n${p['resolved_at']==null?'Belum diperbaiki':'Foto perbaikan telah dikirim'}'))),
           if(canReview&&status!='selesai'&&status!='ditolak')...[
             section('Minta Perbaikan kepada Warga'),
             const Text('Pilih persyaratan yang perlu diunggah ulang. Warga akan mendapat notifikasi.',style:TextStyle(fontSize:12,color:Colors.blueGrey)),

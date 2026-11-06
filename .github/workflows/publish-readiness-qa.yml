@@ -1,0 +1,38 @@
+name: QA - Publish Readiness Flutter
+on:
+  push:
+    branches:
+      - fix/publish-readiness-hardcheck-20261106
+    paths:
+      - 'flutter/**'
+      - '.github/workflows/publish-readiness-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flutter-all-pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Restore Android project
+        working-directory: flutter
+        run: flutter create --platforms=android --project-name=cikoko .
+      - name: Resolve dependencies
+        working-directory: flutter
+        run: flutter pub get
+      - name: Analyze all Dart files
+        working-directory: flutter
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Run all unit and widget tests
+        working-directory: flutter
+        run: flutter test
+      - name: Reject incomplete language controls
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -R -n 'onPressed:CikokoSettings.toggleLanguage' flutter/lib
+          ! grep -R -n 'profileRow(Icons.language_outlined' flutter/lib
