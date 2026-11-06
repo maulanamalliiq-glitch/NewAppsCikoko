@@ -247,15 +247,15 @@ class CikokoStageIndicator extends StatelessWidget {
  @override Widget build(BuildContext context)=>Row(children:[
   for(var i=0;i<labels.length;i++)...[
     if(i>0)Expanded(child:Container(height:2,color:i<=current?
-      CikokoPalette.blue:CikokoPalette.border)),
+      CikokoPalette.blue:Theme.of(context).colorScheme.outlineVariant)),
     Column(children:[
       CircleAvatar(radius:13,backgroundColor:i<=current?
-       CikokoPalette.blue:const Color(0xFFE8EEF6),
+       CikokoPalette.blue:Theme.of(context).colorScheme.surfaceContainerHigh,
        child:Text('${i+1}',style:TextStyle(fontSize:11,
-         color:i<=current?Colors.white:CikokoPalette.muted,
+         color:i<=current?Colors.white:Theme.of(context).colorScheme.onSurfaceVariant,
          fontWeight:FontWeight.w600))),
       const SizedBox(height:4),
-      Text(labels[i],style:const TextStyle(color:CikokoPalette.muted,fontSize:10)),
+      Text(labels[i],style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:10)),
     ]),
   ],
  ]);
