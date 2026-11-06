@@ -174,8 +174,8 @@ class _InnovationEditorState extends State<InnovationEditor>{
      decoration:InputDecoration(labelText:codeView?'Editor kode HTML / teks':'Konten detail',
       alignLabelWithHint:true,helperText:'Maksimum 16.000 karakter')),
     const SizedBox(height:16),
-    Row(children:[const Expanded(child:Text('Galeri Foto',style:TextStyle(
-      color:civicNavy,fontWeight:FontWeight.w600,fontSize:15))),
+    Row(children:[Expanded(child:Text('Galeri Foto',style:TextStyle(
+      color:Theme.of(context).colorScheme.onSurface,fontWeight:FontWeight.w600,fontSize:15))),
       Text('${photos.length}/5',style:const TextStyle(color:Colors.blueGrey)),
     ]),
     const SizedBox(height:8),
