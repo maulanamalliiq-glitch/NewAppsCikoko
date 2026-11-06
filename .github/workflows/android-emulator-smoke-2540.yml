@@ -58,10 +58,7 @@ jobs:
             adb pull /sdcard/cikoko-launch.png android-smoke/cikoko-launch.png
             test -s android-smoke/cikoko-launch.png
             adb logcat -d -v time > android-smoke/startup-logcat.txt
-            if grep -A8 'FATAL EXCEPTION' android-smoke/startup-logcat.txt | grep -F 'Process: com.KelurahanCikoko.malik'; then
-              echo 'Android app crashed during emulator launch' >&2
-              exit 1
-            fi
+            ! grep -A8 'FATAL EXCEPTION' android-smoke/startup-logcat.txt | grep -F 'Process: com.KelurahanCikoko.malik'
             echo 'PASS: app installed, launched, process running, screenshot captured.'
       - name: Upload smoke screenshot and startup log
         if: always()
