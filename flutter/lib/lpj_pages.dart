@@ -386,10 +386,10 @@ class _LpjSummaryRow extends StatelessWidget {
    Icon(icon,color:highlight?CikokoPalette.blue:CikokoPalette.orange,size:19),
    const SizedBox(width:10),
    Expanded(child:Text(label,style:TextStyle(
-     color:highlight?CikokoPalette.navy:CikokoPalette.muted,
+     color:highlight?Theme.of(context).colorScheme.onSurface:Theme.of(context).colorScheme.onSurfaceVariant,
      fontWeight:highlight?FontWeight.w800:FontWeight.w500))),
    Text('Rp ${amount??0}',style:TextStyle(
-     color:highlight?CikokoPalette.blue:CikokoPalette.navy,
+     color:highlight?CikokoPalette.blue:Theme.of(context).colorScheme.onSurface,
      fontWeight:FontWeight.w800)),
   ]));
 }
