@@ -223,13 +223,13 @@ class CikokoCopyrightFooter extends StatelessWidget {
  @override Widget build(BuildContext context) => Container(
   width: double.infinity,
   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-  decoration: const BoxDecoration(
-   color: Colors.white,
-   border: Border(top: BorderSide(color: CikokoDesign.outline, width: .7)),
+  decoration: BoxDecoration(
+   color: Theme.of(context).colorScheme.surface,
+   border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: .7)),
   ),
-  child: const Text('Copyright © Cikoko Smart',
+  child: Text('Copyright © Cikoko Smart',
    textAlign: TextAlign.center,
    style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w400,
-    letterSpacing: .2, color: CikokoDesign.muted)),
+    letterSpacing: .2, color: Theme.of(context).colorScheme.onSurfaceVariant)),
  );
 }

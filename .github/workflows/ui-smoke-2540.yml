@@ -1,0 +1,35 @@
+name: QA - Dark Mode and Indonesian UI 2540
+on:
+  push:
+    branches:
+      - test/ui-dark-mode-2540-20261106
+    paths:
+      - 'flutter/**'
+      - '.github/workflows/ui-smoke-2540.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flutter-widget:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Restore Android files
+        working-directory: flutter
+        run: flutter create --platforms=android --project-name=cikoko .
+      - name: Resolve dependencies
+        working-directory: flutter
+        run: flutter pub get
+      - name: Check Flutter source
+        working-directory: flutter
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Phone-size theme and contrast smoke tests
+        working-directory: flutter
+        run: flutter test test/ui_theme_contrast_smoke_test.dart
+      - name: Entire Flutter test suite
+        working-directory: flutter
+        run: flutter test
