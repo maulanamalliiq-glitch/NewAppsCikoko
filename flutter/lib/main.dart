@@ -420,10 +420,10 @@ class _HomeState extends State<HomePage> {
       feature.title.toLowerCase().contains(query)||
       feature.description.toLowerCase().contains(query)).toList();
     return ListView(padding:const EdgeInsets.fromLTRB(15,16,15,24),children:[
-    const Text('Menu Layanan',style:TextStyle(color:navy,fontSize:22,fontWeight:FontWeight.w700)),
+    Text('Menu Layanan',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:22,fontWeight:FontWeight.w700)),
     const SizedBox(height:4),
     Text('Pilih layanan sesuai akses $roleLabel',
-     style:const TextStyle(color:Colors.blueGrey,fontSize:12)),
+     style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:12)),
     const SizedBox(height:14),
     if(!permissionsOk)const Card(child:ListTile(
      leading:Icon(Icons.warning_amber_rounded,color:Colors.orange),
@@ -465,7 +465,7 @@ class _HomeState extends State<HomePage> {
           const SizedBox(height:8),
           Text(f.title,maxLines:2,overflow:TextOverflow.ellipsis,
            textAlign:TextAlign.center,
-           style:const TextStyle(color:navy,fontSize:11.5,
+           style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:11.5,
             fontWeight:FontWeight.w500,height:1.2)),
          ]))),
       );
@@ -478,7 +478,7 @@ class _HomeState extends State<HomePage> {
       showDragHandle:true,builder:(sheetContext)=>SafeArea(child:Padding(
         padding:const EdgeInsets.fromLTRB(20,0,20,24),child:Column(mainAxisSize:MainAxisSize.min,
           crossAxisAlignment:CrossAxisAlignment.start,children:[
-            const Text('Profil Kelurahan Cikoko',style:TextStyle(fontSize:19,color:navy,fontWeight:FontWeight.w800)),
+            Text('Profil Kelurahan Cikoko',style:TextStyle(fontSize:19,color:Theme.of(context).colorScheme.onSurface,fontWeight:FontWeight.w800)),
             const SizedBox(height:8),
             const Text('Kecamatan Pancoran, Kota Administrasi Jakarta Selatan. Pelayanan publik, informasi, dan pengajuan surat tersedia melalui Cikoko.'),
             const SizedBox(height:14),
@@ -552,7 +552,7 @@ class _HomeState extends State<HomePage> {
             : showPublicLetterStatus(context,api,category:category))),
     Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Row(
       mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:const TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w600)),
+        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w600)),
         TextButton(onPressed:()=>switchTo(role=='warga'?'Layanan Online':'Menu Cikoko'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11))),
       ])),
     if(role=='warga')
@@ -588,7 +588,7 @@ class _HomeState extends State<HomePage> {
               child:Container(
                 padding:const EdgeInsets.all(9),
                 decoration:BoxDecoration(
-                  border:Border.all(color:const Color(0xFFE3EAF4)),
+                  border:Border.all(color:Theme.of(context).colorScheme.outlineVariant),
                   borderRadius:BorderRadius.circular(16)),
                 child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
                   if(Uri.tryParse(logo)?.scheme=='https')
@@ -598,7 +598,7 @@ class _HomeState extends State<HomePage> {
                   const SizedBox(height:8),
                   Text('${service['title']??''}',textAlign:TextAlign.center,
                     maxLines:2,overflow:TextOverflow.ellipsis,
-                    style:const TextStyle(color:navy,fontSize:11.5,fontWeight:FontWeight.w700)),
+                    style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:11.5,fontWeight:FontWeight.w700)),
                 ]),
               ),
             ),
@@ -632,13 +632,13 @@ class _HomeState extends State<HomePage> {
       ActionChip(avatar:const Icon(Icons.history,size:16,color:blue),label:const Text('Riwayat',style:TextStyle(fontSize:11)),onPressed:()=>switchTo('Riwayat')),
     ])),
     Padding(padding:const EdgeInsets.only(top:17,bottom:8),child:Row(children:[
-      const Expanded(child:Text('Berita & Informasi',style:TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w800))),
+      Expanded(child:Text('Berita & Informasi',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w800))),
       TextButton(onPressed:()=>switchTo('Berita & Kegiatan'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11)))
     ])),
     for(final x in items.where((x)=>x['type']=='berita'||x['type']=='pengumuman').take(3))contentCard(Map<String,dynamic>.from(x)),
     if(items.isEmpty)const Card(child:ListTile(dense:true,title:Text('Belum ada berita atau pengumuman.'))),
     if(!guest&&events.isNotEmpty)...[
-      const Padding(padding:EdgeInsets.only(top:12,bottom:7),child:Text('Aktivitas Terbaru',style:TextStyle(color:navy,fontSize:14,fontWeight:FontWeight.w800))),
+      Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Text('Aktivitas Terbaru',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w800))),
       for(final e in events.take(2))Card(child:ListTile(dense:true,leading:const Icon(Icons.notifications_outlined,color:blue),
         title:Text('${e['title']??''}',maxLines:1),subtitle:Text('${e['created_at']??''}',style:const TextStyle(fontSize:10)))),
     ],
@@ -684,9 +684,9 @@ class _HomeState extends State<HomePage> {
          Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
            Text('${item['type']??''}'.toUpperCase(),style:const TextStyle(fontSize:9.5,letterSpacing:.65,color:blue,fontWeight:FontWeight.w700)),
            const SizedBox(height:4),
-           Text(title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:13.5,height:1.23,fontWeight:FontWeight.w600,color:navy)),
+           Text(title,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:13.5,height:1.23,fontWeight:FontWeight.w600,color:Theme.of(context).colorScheme.onSurface)),
            const SizedBox(height:5),
-           Text(description,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:10.8,height:1.22,color:Color(0xff647992))),
+           Text(description,maxLines:2,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:10.8,height:1.22,color:Theme.of(context).colorScheme.onSurfaceVariant)),
            const SizedBox(height:7),
            const Text('Baca selengkapnya →',style:TextStyle(fontSize:10.4,fontWeight:FontWeight.w700,color:blue)),
          ])),
