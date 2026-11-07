@@ -240,6 +240,132 @@ class CikokoPremiumTile extends StatelessWidget {
     )));
 }
 
+
+abstract final class CikokoMenuAccent {
+  static Color forRoute(String route) {
+    final value = route.toLowerCase();
+    if (value.contains('surat') || value.contains('waris') ||
+        value.contains('arsip')) return CikokoPalette.blue;
+    if (value.contains('laporan') || value.contains('verifikasi') ||
+        value.contains('lpj')) return CikokoPalette.purple;
+    if (value.contains('akun') || value.contains('role') ||
+        value.contains('wilayah')) return CikokoPalette.green;
+    if (value.contains('berita') || value.contains('galeri') ||
+        value.contains('pengumuman')) return CikokoPalette.orange;
+    return CikokoPalette.blue;
+  }
+}
+
+/// One tappable grid tile for the complete role-filtered Menu screen.
+class CikokoMenuGridCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const CikokoMenuGridCard({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: scheme.outlineVariant, width: .9),
+          ),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Container(
+              height: 41, width: 41,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: .14),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(icon, color: accent, size: 23),
+            ),
+            const SizedBox(height: 8),
+            Flexible(child: Text(
+              CikokoSettings.label(title),
+              maxLines: 2,
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: scheme.onSurface,
+                fontSize: 11.4,
+                height: 1.17,
+                fontWeight: FontWeight.w700,
+              ),
+            )),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
+class CikokoEmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? action;
+
+  const CikokoEmptyState({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.action,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 26, 18, 26),
+        child: Column(children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: scheme.primary.withValues(alpha: .11),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: scheme.primary, size: 29),
+          ),
+          const SizedBox(height: 12),
+          Text(title, textAlign: TextAlign.center,
+            style: TextStyle(color: scheme.onSurface, fontSize: 14,
+              fontWeight: FontWeight.w800)),
+          if (subtitle != null) ...[
+            const SizedBox(height: 6),
+            Text(subtitle!, textAlign: TextAlign.center,
+              style: TextStyle(color: scheme.onSurfaceVariant,
+                fontSize: 11.5, height: 1.4)),
+          ],
+          if (action != null) ...[
+            const SizedBox(height: 14),
+            action!,
+          ],
+        ]),
+      ),
+    );
+  }
+}
+
 class CikokoStageIndicator extends StatelessWidget {
  final int current;
  final List<String> labels;
@@ -364,10 +490,11 @@ class CikokoPremiumCanvas extends StatelessWidget {
 
 class CikokoPageSignature extends StatelessWidget {
  const CikokoPageSignature({super.key});
- @override Widget build(BuildContext context)=>const Padding(
-  padding:EdgeInsets.fromLTRB(10,20,10,24),
+ @override Widget build(BuildContext context)=>Padding(
+  padding:const EdgeInsets.fromLTRB(10,20,10,24),
   child:Text('Copyright © Cikoko Smart',textAlign:TextAlign.center,
-   style:TextStyle(fontSize:10.5,color:CikokoPalette.muted,
+   style:TextStyle(fontSize:10.5,
+    color:Theme.of(context).colorScheme.onSurfaceVariant,
     fontWeight:FontWeight.w400)));
 }
 
