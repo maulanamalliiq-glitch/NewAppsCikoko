@@ -574,6 +574,67 @@ class CikokoQuickMenu extends StatelessWidget {
   );
 }
 
+
+class CikokoPortalBanner extends StatelessWidget {
+  final VoidCallback onOpen;
+  const CikokoPortalBanner({super.key, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: CikokoPalette.navy,
+      borderRadius: BorderRadius.circular(19),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: const Key('cikoko_portal_banner'),
+        onTap: onOpen,
+        child: SizedBox(
+          height: 117,
+          child: Stack(fit: StackFit.expand, children: [
+            Image.asset('assets/kantor-cikoko.jpg', fit: BoxFit.cover,
+              alignment: Alignment.centerRight),
+            const DecoratedBox(decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Color(0xFF082B5D), Color(0xF20B438B),
+                  Color(0x302671BC)],
+                stops: [0, .62, 1],
+              ),
+            )),
+            Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Portal Layanan', style: TextStyle(
+                    color: Colors.white, fontSize: 16,
+                    fontWeight: FontWeight.w800)),
+                  const Text('Kecamatan Pancoran', style: TextStyle(
+                    color: Colors.white, fontSize: 13,
+                    fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text(CikokoSettings.tr(
+                    'Layanan administrasi dan informasi dalam satu aplikasi.',
+                    'Public services and information in one app.'),
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Color(0xFFE2EFFF),
+                      fontSize: 10.5, height: 1.3)),
+                ],
+              ),
+            ),
+            const Positioned(
+              bottom: 10, right: 10,
+              child: Icon(Icons.arrow_circle_right_outlined,
+                color: Colors.white, size: 23)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 /// Angka rekap dari API publik: tidak membocorkan identitas dan lampiran.
 class CikokoLetterCounters extends StatelessWidget {
   final Map<String,int>? counts;
@@ -582,8 +643,9 @@ class CikokoLetterCounters extends StatelessWidget {
   @override
   Widget build(BuildContext context)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Row(children:[
-      const Expanded(child:Text('Status Pelayanan Surat',
-        style:TextStyle(fontWeight:FontWeight.w800,color:homeNavy,fontSize:13.5))),
+      Expanded(child:Text('Status Pelayanan Surat',
+        style:TextStyle(fontWeight:FontWeight.w800,
+          color:Theme.of(context).colorScheme.onSurface,fontSize:13.5))),
       TextButton(onPressed:()=>onStatusTap('all'),
         child:const Text('Lihat Status →',style:TextStyle(fontSize:11.2,fontWeight:FontWeight.w700))),
     ]),
@@ -597,15 +659,19 @@ class CikokoLetterCounters extends StatelessWidget {
           borderRadius:BorderRadius.circular(11),
           child:Container(
             padding:const EdgeInsets.symmetric(horizontal:10,vertical:9),
-            decoration:BoxDecoration(color:Colors.white,border:Border.all(color:homeBorder),
-              borderRadius:BorderRadius.circular(11)),
+            decoration:BoxDecoration(
+              color:Theme.of(context).colorScheme.surface,
+              border:Border.all(color:Theme.of(context).colorScheme.outlineVariant),
+              borderRadius:BorderRadius.circular(13)),
             child:Row(children:[
               Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
                 Text(counts==null?'—':'${counts![pair.$1]??0}',
                   style:TextStyle(color:pair.$3,fontSize:19,fontWeight:FontWeight.w900)),
                 const SizedBox(height:2),
                 Text(pair.$2,maxLines:1,overflow:TextOverflow.ellipsis,
-                  style:const TextStyle(fontSize:9.6,color:homeNavy,fontWeight:FontWeight.w600)),
+                  style:TextStyle(fontSize:9.6,
+                    color:Theme.of(context).colorScheme.onSurface,
+                    fontWeight:FontWeight.w600)),
               ])),
               Icon(Icons.chevron_right_rounded,size:16,color:pair.$3),
             ]),
