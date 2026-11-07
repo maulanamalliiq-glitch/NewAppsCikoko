@@ -1396,71 +1396,68 @@ class _ReportState extends State<ReportForm>{final address=TextEditingController
  @override void dispose(){address.dispose();phone.dispose();notes.dispose();super.dispose();}
  Future<void> send()async{if(address.text.trim().isEmpty||notes.text.trim().isEmpty||photo==null){notify(context,'Lengkapi alamat, keterangan dan foto',error:true);return;}setState(()=>sending=true);try{await api.upload('report',{'kind':widget.kind,'address':address.text,'phone':phone.text,'notes':notes.text},{'photo':[photo!]},progress:(p){if(mounted)setState(()=>progress=p);});if(mounted)notify(context,'Laporan berhasil dikirim');}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>sending=false);}}
  @override
- Widget build(BuildContext c)=>ListView(
-   padding:const EdgeInsets.fromLTRB(14,12,14,32),
-   children:[
-     CikokoPremiumHeader(
-       title:switch(widget.kind){
-        'jumantik'=>'Laporan Jumantik',
-        'fkdm'=>'Laporan FKDM',
-        'lmk'=>'Laporan LMK',
-        'posyandu'=>'Laporan Posyandu',
-        'pkk'=>'Laporan Dasawisma',
-        'kerja_bakti'=>'Laporan Kerja Bakti',
-        _=>'Laporan Kegiatan',
-       },
-       subtitle:'Lengkapi lokasi, uraian kegiatan, dan foto dokumentasi.',
-       icon:Icons.assignment_turned_in_outlined,
-       start:const Color(0xFF104F9C),end:const Color(0xFF1685D8)),
-     const SizedBox(height:13),
-     const CikokoPremiumSection(title:'Data Laporan',subtitle:'Informasi yang diperlukan untuk tindak lanjut'),
-     Card(child:Padding(
-       padding:const EdgeInsets.all(14),
-       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-         const Row(children:[
-           Icon(Icons.location_on_outlined,color:Color(0xFF1874CB),size:19),
-           SizedBox(width:8),
-           Text('Lokasi & kontak',style:TextStyle(fontSize:14,color:navy,fontWeight:FontWeight.w600)),
-         ]),
-         const SizedBox(height:11),
-         Field('Alamat / Lokasi',address),
-         const SizedBox(height:9),
-         Field('Nomor telepon (opsional)',phone),
-       ]),
-     )),
-     const SizedBox(height:10),
-     Card(child:Padding(
-       padding:const EdgeInsets.all(14),
-       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-         const Row(children:[
-           Icon(Icons.edit_note_outlined,color:Color(0xFF0E947E),size:20),
-           SizedBox(width:8),
-           Text('Uraian laporan',style:TextStyle(fontSize:14,color:navy,fontWeight:FontWeight.w600)),
-         ]),
-         const SizedBox(height:11),
-         Field('Keterangan kegiatan / hasil pemantauan',notes,lines:4),
-         const SizedBox(height:10),
-         PhotoInput(label:'Foto bukti kegiatan',onChanged:(f)=>photo=f),
-       ]),
-     )),
-     const SizedBox(height:12),
-     if(sending)...[
-       LinearProgressIndicator(value:progress>0?progress:null,minHeight:5),
-       const SizedBox(height:6),
-       Text('Mengunggah laporan ${(progress*100).round()}%',
-         style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
-       const SizedBox(height:10),
-     ],
-     SizedBox(height:48,child:FilledButton.icon(
-       onPressed:sending?null:send,
-       icon:const Icon(Icons.send_rounded,size:18),
-       label:Text(sending?'Mengirim laporan…':'Kirim Laporan'),
-     )),
+ Widget build(BuildContext context) => ListView(
+  padding:const EdgeInsets.fromLTRB(14,12,14,30),
+  children:[
+   CikokoPremiumHeader(
+    title:switch(widget.kind){
+     'jumantik'=>'Laporan Jumantik',
+     'fkdm'=>'Laporan FKDM',
+     'lmk'=>'Laporan LMK',
+     'posyandu'=>'Laporan Posyandu',
+     'pkk'=>'Laporan Dasawisma',
+     'kerja_bakti'=>'Laporan Kerja Bakti',
+     _=>'Laporan Kegiatan',
+    },
+    subtitle:'Kirim laporan kegiatan dengan lokasi dan dokumentasi asli.',
+    icon:Icons.assignment_turned_in_outlined),
+   const SizedBox(height:13),
+   CikokoFlowSection(
+    title:'01 · Lokasi dan Kontak',
+    subtitle:'Alamat kejadian serta nomor yang dapat dihubungi.',
+    icon:Icons.location_on_outlined,
+    child:Column(children:[
+     Field('Alamat / Lokasi',address),
+     Field('Nomor telepon (opsional)',phone,
+       keyboard:TextInputType.phone),
+    ]),
+   ),
+   CikokoFlowSection(
+    title:'02 · Uraian Kegiatan',
+    subtitle:'Jelaskan kondisi atau kegiatan yang dilaporkan.',
+    icon:Icons.edit_note_outlined,
+    child:Field('Keterangan kegiatan / hasil pemantauan',notes,lines:4),
+   ),
+   const CikokoPremiumSection(
+    title:'03 · Foto Dokumentasi',
+    subtitle:'Foto asli dapat ditinjau atau diganti sebelum dikirim.'),
+   PhotoInput(label:'Foto bukti kegiatan',
+     onChanged:(file)=>photo=file),
+   const SizedBox(height:13),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+     Text('Konfirmasi Pengiriman',
+       style:Theme.of(context).textTheme.titleMedium),
      const SizedBox(height:7),
-     const Text('Periksa kembali data dan dokumentasi sebelum mengirim.',
-       textAlign:TextAlign.center,
-       style:TextStyle(fontSize:11,color:Colors.blueGrey)),
-   ],
+     Text('Periksa lokasi, keterangan, dan foto sebelum mengirim laporan.',
+       style:Theme.of(context).textTheme.bodySmall),
+     if(sending)...[
+      const SizedBox(height:12),
+      LinearProgressIndicator(value:progress>0?progress:null,minHeight:5),
+      const SizedBox(height:6),
+      Text('Mengunggah laporan ${(progress*100).round()}%',
+        style:Theme.of(context).textTheme.bodySmall),
+     ],
+     const SizedBox(height:13),
+     FilledButton.icon(
+      key:const Key('premium_report_submit'),
+      onPressed:sending?null:send,
+      icon:const Icon(Icons.send_rounded,size:18),
+      label:Text(sending?'Mengirim laporan…':'Kirim Laporan'),
+     ),
+    ])),
+   const CikokoPageSignature(),
+  ],
  );
 }
 class HistoryPage extends StatefulWidget{const HistoryPage({super.key});@override State<HistoryPage> createState()=>_HistoryState();}
