@@ -2,6 +2,7 @@ import 'event_scope.dart';
 import 'app_settings.dart';
 import 'design_system.dart';
 import 'premium_ui.dart';
+import 'premium_flow_ui.dart';
 import 'profile_editor.dart';
 import 'dart:async';
 import 'dart:io';
@@ -1274,18 +1275,121 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
         :text]);
    }finally{if(mounted)setState(()=>sending=false);}
  }
- @override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(12),children:[
-const CikokoPremiumHeader(title:'Pengajuan Ahli Waris',
- subtitle:'Lengkapi identitas dan dokumen untuk proses administrasi.',
- icon:Icons.family_restroom_outlined),
-const SizedBox(height:11),
-const Card(child:Padding(padding:EdgeInsets.all(16),child:Text('Permohonan Pencatatan Ahli Waris\nSemua data dan foto dokumen akan diperiksa petugas. Pastikan foto terbaca.',style:TextStyle(color:navy,fontWeight:FontWeight.w600)))),Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Identitas Pemohon dan Pewaris',style:Theme.of(c).textTheme.titleMedium),const SizedBox(height:14),for(final e in names.entries)Field(e.value,v(e.key),lines:e.key=='heirs'||e.key=='address'?3:1,date:const ['birthdate','marriage_date','deathdate'].contains(e.key),keyboard:e.key=='nik'?TextInputType.number:e.key=='phone'?TextInputType.phone:TextInputType.text)]))),const SizedBox(height:12),Text('Foto Persyaratan Wajib',style:Theme.of(c).textTheme.titleMedium),for(final e in requiredPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
-const SizedBox(height:12),
-Text('Dua Orang Saksi',style:Theme.of(c).textTheme.titleMedium),
-for(final e in witnessPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
-const SizedBox(height:12),Text('Dokumen Kondisional',style:Theme.of(c).textTheme.titleMedium),for(final e in optionalPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),const SizedBox(height:14),Row(children:[Expanded(child:Text('Data Anak (maksimal 10)',style:Theme.of(c).textTheme.titleMedium)),OutlinedButton(onPressed:children>=10?null:()=>setState(()=>children++),child:const Text('+ Tambah Anak'))]),for(var i=1;i<=children;i++)Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[Field('Nama anak ke-$i',v('child_name_$i')),for(final e in childPhotos.entries)PhotoInput(key:ValueKey('child_${i}_${e.key}'),label:'${e.value} anak ke-$i',currentPath:photoFor('child_${i}_${e.key}'),onChanged:(f)=>setState(()=>files['child_${i}_${e.key}']=[f]))]))),CheckboxListTile(value:agree,onChanged:(v)=>setState(()=>agree=v??false),title:const Text('Saya menyatakan seluruh data dan foto dokumen sesuai keadaan sebenarnya.',style:TextStyle(fontSize:12))),if(sending)...[LinearProgressIndicator(value:progress),Padding(padding:const EdgeInsets.all(8),child:Text('Mengirim ${(progress*100).toStringAsFixed(0)}%'))],FilledButton.icon(onPressed:sending||completed?null:send,
- icon:Icon(completed?Icons.check_circle:savedReference!=null?Icons.cloud_upload_outlined:Icons.send),
- label:Padding(padding:const EdgeInsets.all(12),child:Text(completed?'Pengajuan dan KTP Saksi Tersimpan':savedReference!=null?'Coba Lengkapi KTP Saksi':'Kirim Permohonan Ahli Waris'))),const SizedBox(height:24)]);
+ @override
+ Widget build(BuildContext context) => ListView(
+  padding: const EdgeInsets.fromLTRB(13, 12, 13, 30),
+  children: [
+   const CikokoPremiumHeader(
+    title: 'Pengajuan Ahli Waris',
+    subtitle: 'Identitas, foto dokumen, saksi, dan konfirmasi dalam satu layanan.',
+    icon: Icons.family_restroom_outlined),
+   const SizedBox(height: 12),
+   CikokoPremiumSurface(child:Row(children:[
+    Icon(Icons.verified_user_outlined,
+      color:Theme.of(context).colorScheme.primary,size:27),
+    const SizedBox(width:12),
+    Expanded(child:Text('Seluruh identitas dan foto dokumen akan diperiksa petugas. '
+      'Pastikan setiap dokumen terbaca dan sesuai data sebenarnya.',
+      style:Theme.of(context).textTheme.bodySmall)),
+   ])),
+   const SizedBox(height: 13),
+   CikokoFlowSection(
+    title: '01 · Identitas Pemohon dan Pewaris',
+    subtitle: 'Isi data keluarga sesuai dokumen asli.',
+    icon: Icons.badge_outlined,
+    child: Column(children:[
+     for (final e in names.entries)
+      Field(e.value,v(e.key),
+       lines:e.key=='heirs'||e.key=='address'?3:1,
+       date:const ['birthdate','marriage_date','deathdate'].contains(e.key),
+       keyboard:e.key=='nik'?TextInputType.number:
+        e.key=='phone'?TextInputType.phone:TextInputType.text),
+    ]),
+   ),
+   const CikokoPremiumSection(
+     title:'02 · Foto Persyaratan Wajib',
+     subtitle:'Setiap foto mempunyai area pratinjau dan tombol ganti.'),
+   for (final e in requiredPhotos.entries)
+    PhotoInput(key:ValueKey(e.key),label:e.value,
+      currentPath:photoFor(e.key),
+      onChanged:(file)=>setState(()=>files[e.key]=[file])),
+   const SizedBox(height: 12),
+   const CikokoPremiumSection(title:'03 · Dua Orang Saksi',
+     subtitle:'Lengkapi identitas kedua saksi.'),
+   for (final e in witnessPhotos.entries)
+    PhotoInput(key:ValueKey(e.key),label:e.value,
+      currentPath:photoFor(e.key),
+      onChanged:(file)=>setState(()=>files[e.key]=[file])),
+   const SizedBox(height: 12),
+   const CikokoPremiumSection(title:'04 · Dokumen Kondisional',
+     subtitle:'Lampirkan jika berlaku untuk permohonan Anda.'),
+   for (final e in optionalPhotos.entries)
+    PhotoInput(key:ValueKey(e.key),label:e.value,
+      currentPath:photoFor(e.key),
+      onChanged:(file)=>setState(()=>files[e.key]=[file])),
+   const SizedBox(height: 12),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+     Row(children:[
+      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+       Text('05 · Data Anak',style:Theme.of(context).textTheme.titleMedium),
+       Text('Maksimal 10 anak jika diperlukan.',
+        style:Theme.of(context).textTheme.bodySmall),
+      ])),
+      OutlinedButton.icon(
+       onPressed:children>=10?null:()=>setState(()=>children++),
+       icon:const Icon(Icons.add_rounded,size:17),
+       label:const Text('Tambah')),
+     ]),
+     for(var i=1;i<=children;i++)...[
+      const SizedBox(height: 12),
+      Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[
+       Field('Nama anak ke-$i',v('child_name_$i')),
+       for (final e in childPhotos.entries)
+        PhotoInput(key:ValueKey('child_${i}_${e.key}'),
+          label:'${e.value} anak ke-$i',
+          currentPath:photoFor('child_${i}_${e.key}'),
+          onChanged:(file)=>setState(()=>
+            files['child_${i}_${e.key}']=[file])),
+      ]))),
+     ],
+    ])),
+   const SizedBox(height: 13),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+     Text('06 · Pernyataan dan Pengiriman',
+       style:Theme.of(context).textTheme.titleMedium),
+     const SizedBox(height:8),
+     CheckboxListTile(
+      value:agree,contentPadding:EdgeInsets.zero,
+      controlAffinity:ListTileControlAffinity.leading,
+      onChanged:sending||completed?null:
+       (value)=>setState(()=>agree=value??false),
+      title:const Text('Saya menyatakan seluruh data dan foto dokumen '
+        'sesuai keadaan sebenarnya.',style:TextStyle(fontSize:12,height:1.4)),
+     ),
+     if(sending)...[
+      LinearProgressIndicator(value:progress>0?progress:null),
+      const SizedBox(height:8),
+      Text('Mengirim ${(progress*100).toStringAsFixed(0)}%',
+        style:Theme.of(context).textTheme.bodySmall),
+     ],
+     const SizedBox(height: 12),
+     FilledButton.icon(
+      key:const Key('waris_premium_submit'),
+      onPressed:sending||completed?null:send,
+      icon:Icon(completed?Icons.check_circle_rounded:
+        savedReference!=null?Icons.cloud_upload_outlined:Icons.send_outlined),
+      label:Padding(padding:const EdgeInsets.symmetric(vertical:10),
+       child:Text(completed?'Pengajuan dan KTP Saksi Tersimpan':
+         savedReference!=null?'Coba Lengkapi KTP Saksi':
+          'Kirim Permohonan Ahli Waris',
+         textAlign:TextAlign.center)),
+     ),
+    ])),
+   const CikokoPageSignature(),
+  ],
+ );
 }
 class ReportForm extends StatefulWidget{final String kind;const ReportForm({super.key,required this.kind});@override State<ReportForm> createState()=>_ReportState();}
 class _ReportState extends State<ReportForm>{final address=TextEditingController(),phone=TextEditingController(),notes=TextEditingController();String? photo;bool sending=false;double progress=0;
