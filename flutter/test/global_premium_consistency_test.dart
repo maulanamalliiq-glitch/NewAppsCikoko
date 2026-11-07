@@ -1,5 +1,6 @@
 import 'package:cikoko/design_system.dart';
 import 'package:cikoko/premium_ui.dart';
+import 'package:cikoko/permission_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -10,6 +11,13 @@ double contrast(Color foreground, Color background) {
 }
 
 void main() {
+  test('Permission labels use readable Indonesian without changing server keys', () {
+    expect(cikokoPermissionLabel('reports:verify'), 'Verifikasi Laporan');
+    expect(cikokoPermissionLabel('report:ppsu'), 'Kirim Laporan PPSU');
+    expect(cikokoPermissionLabel('waris:create'), 'Ajukan Surat Ahli Waris');
+    expect(cikokoPermissionGroup('reports:verify'), 'Pemantauan & Verifikasi');
+    expect(cikokoPermissionGroup('report:ppsu'), 'Pelaporan Wilayah');
+  });
   test('Role menu accents remain stable by feature, not screen position', () {
     expect(CikokoMenuAccent.forRoute('Surat Pengantar RT/RW'),
       CikokoPalette.blue);
