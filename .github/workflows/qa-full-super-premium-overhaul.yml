@@ -1,0 +1,44 @@
+name: QA - Full Super Premium Total Overhaul
+on:
+  push:
+    branches:
+      - feat/full-super-premium-total-overhaul-20261107
+    paths:
+      - 'flutter/**'
+      - '.github/workflows/qa-full-super-premium-overhaul.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ensure production API contracts are untouched
+        run: |
+          git diff --name-only origin/main...HEAD > /tmp/cikoko-overhaul-files.txt
+          cat /tmp/cikoko-overhaul-files.txt
+          if grep -Eq '^(flutter/lib/api.dart|cpanel/mobile-api/)' /tmp/cikoko-overhaul-files.txt; then
+            echo "Unexpected production API change"; exit 1
+          fi
+          if grep -R 'CikokoGuestHero' flutter/lib; then
+            echo "Old guest landing UI remains"; exit 1
+          fi
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Restore Android project files for Flutter tooling
+        working-directory: flutter
+        run: flutter create --platforms=android --project-name=cikoko .
+      - name: Resolve project packages
+        working-directory: flutter
+        run: flutter pub get
+      - name: Analyze all Flutter modules
+        working-directory: flutter
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Run full unit and widget regression suite (no APK build)
+        working-directory: flutter
+        run: flutter test --reporter expanded
