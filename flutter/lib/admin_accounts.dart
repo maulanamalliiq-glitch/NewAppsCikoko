@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
+import 'staff_account_ui.dart';
 import 'api.dart';
 
 /// Hanya Admin Utama yang mendapat menu ini. Server tetap melakukan
@@ -83,9 +84,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
                 account['role'] == 'bendahara_rw')
             .toList();
         if (!roles.containsKey(selectedRole)) {
-          selectedRole = roles.containsKey('bendahara_rt')
-              ? 'bendahara_rt'
-              : (roles.isEmpty ? null : roles.keys.first);
+          selectedRole = roles.isEmpty ? null : roles.keys.first;
         }
         loading = false;
         error = null;
@@ -221,183 +220,200 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text('Gagal membuka Kelola Akun: $error', textAlign: TextAlign.center),
           const SizedBox(height: 12),
-          FilledButton(onPressed: load, child: const Text('Coba Lagi')),
+          FilledButton.icon(
+            onPressed: load,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Coba Lagi'),
+          ),
         ]),
       ));
     }
+
+    final scheme = Theme.of(context).colorScheme;
+    final visibleAccounts = accounts.where((account) =>
+      cikokoAccountMatches(account, accountQuery, accountRoleFilter)).toList();
+
     return ListView(
-      padding: const EdgeInsets.fromLTRB(14,12,14,26),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 28),
       children: [
-        CikokoPremiumHeader(
-          title:widget.bendaharaOnly?'Manajemen Bendahara RT/RW':'Kelola Akun Petugas',
-          subtitle:widget.bendaharaOnly
-            ?'Kelola akun bendahara sesuai wilayah secara aman.'
-            :'Tambah, cari, dan kelola akun petugas serta pegawai.',
-          icon:Icons.manage_accounts_outlined,
-          start:const Color(0xFF143D85),end:const Color(0xFF407FE0)),
-        const SizedBox(height:14),
-        if (widget.bendaharaOnly && roles.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              'Peran Bendahara belum tersedia dari API cPanel. '
-              'Pembuatan akun dinonaktifkan hingga server mengirimkan '
-              'bendahara_rt atau bendahara_rw.',
-              style: TextStyle(color: Colors.deepOrange),
-            ),
-          ),
-        const SizedBox(height: 12),
-        Card(child: Column(children: [
-          ListTile(
-            title: const Text('Tambah Akun'),
-            subtitle: Text(widget.bendaharaOnly
-                ? 'Buat akun Bendahara RT atau Bendahara RW'
-                : 'Petugas baru, termasuk Bendahara RT dan RW'),
-            trailing: Icon(showForm ? Icons.expand_less : Icons.expand_more),
-            onTap: () => setState(() => showForm = !showForm),
-          ),
-          if (showForm && roles.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
-              child: Form(key: formKey, child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  field(name, 'Nama lengkap'),
-                  field(username, 'Username', hint: 'Minimal 4 karakter'),
-                  field(password, 'Password awal',
-                      secret: true, hint: 'Minimal 8 karakter'),
-                  DropdownButtonFormField<String>(
-                    initialValue: selectedRole,
-                    isExpanded: true,
-                    decoration: decoration('Peran akun'),
-                    items: roles.entries
-                        .map((e) => DropdownMenuItem(
-                              value: e.key,
-                              child: Text(e.value, overflow: TextOverflow.ellipsis)))
-                        .toList(),
-                    onChanged: busy ? null : (v) => setState(() => selectedRole = v),
-                  ),
-                  const SizedBox(height: 12),
-                  if (needsRt) field(rt, 'RT', hint: 'Contoh: 001',
-                      keyboard: TextInputType.number),
-                  if (needsRw) field(rw, 'RW', hint: 'Contoh: 001',
-                      keyboard: TextInputType.number),
-                  field(phone, 'Nomor telepon (opsional)', required: false,
-                      keyboard: TextInputType.phone),
-                  field(email, 'Email (opsional)', required: false,
-                      keyboard: TextInputType.emailAddress),
-                  const SizedBox(height: 4),
-                  FilledButton.icon(
-                    onPressed: busy ? null : create,
-                    icon: busy
-                        ? const SizedBox(height: 16, width: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Icon(Icons.person_add_alt_1),
-                    label: Text(busy
-                        ? 'Menyimpan...'
-                        : (widget.bendaharaOnly
-                            ? 'Buat Akun Bendahara'
-                            : 'Buat Akun Petugas')),
-                  ),
-                ],
-              )),
-            ),
-        ])),
+        const CikokoPremiumHeader(
+          title: 'Kelola Akun Petugas',
+          subtitle: 'Kelola Ketua RT/RW, Bendahara dan petugas dalam satu tempat.',
+          icon: Icons.manage_accounts_outlined,
+          start: Color(0xFF07346E),
+          end: Color(0xFF267FDF),
+        ),
         const SizedBox(height: 14),
+        CikokoAccountSummary(accounts: accounts),
+        const SizedBox(height: 14),
+        Card(
+          margin: EdgeInsets.zero,
+          child: Column(children: [
+            ListTile(
+              key: const Key('add_staff_toggle'),
+              leading: Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(
+                  color: scheme.primary.withValues(alpha: .1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.person_add_alt_1_rounded, color: scheme.primary),
+              ),
+              title: const Text('Tambah Akun Petugas',
+                style: TextStyle(fontWeight: FontWeight.w800)),
+              subtitle: const Text('Ketua RT/RW, Bendahara, ASN dan petugas lainnya'),
+              trailing: Icon(showForm
+                ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded),
+              onTap: () => setState(() => showForm = !showForm),
+            ),
+            if (showForm && roles.isEmpty)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: Text('Peran akun belum tersedia dari server. '
+                  'Silakan muat ulang sebelum membuat akun.'),
+              ),
+            if (showForm && roles.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 4, 14, 16),
+                child: Form(key: formKey, child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    field(name, 'Nama lengkap'),
+                    field(username, 'Username', hint: 'Minimal 4 karakter'),
+                    field(password, 'Password awal',
+                      secret: true, hint: 'Minimal 8 karakter'),
+                    DropdownButtonFormField<String>(
+                      key: ValueKey('new_account_role_$selectedRole'),
+                      initialValue: selectedRole,
+                      isExpanded: true,
+                      decoration: decoration('Peran akun'),
+                      items: roles.entries.map((entry) => DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value, overflow: TextOverflow.ellipsis),
+                      )).toList(),
+                      onChanged: busy ? null
+                        : (value) => setState(() => selectedRole = value),
+                    ),
+                    const SizedBox(height: 12),
+                    if (needsRt) field(rt, 'RT', hint: 'Contoh: 001',
+                      keyboard: TextInputType.number),
+                    if (needsRw) field(rw, 'RW', hint: 'Contoh: 001',
+                      keyboard: TextInputType.number),
+                    field(phone, 'Nomor telepon (opsional)', required: false,
+                      keyboard: TextInputType.phone),
+                    field(email, 'Email (opsional)', required: false,
+                      keyboard: TextInputType.emailAddress),
+                    FilledButton.icon(
+                      onPressed: busy ? null : create,
+                      icon: busy
+                        ? const SizedBox(width: 17, height: 17,
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Icon(Icons.person_add_alt_1_rounded),
+                      label: Text(busy ? 'Menyimpan...' : 'Buat Akun Petugas'),
+                    ),
+                  ],
+                )),
+              ),
+          ]),
+        ),
+        const SizedBox(height: 19),
         Row(children: [
-          Expanded(child: Text(
-              widget.bendaharaOnly
-                  ? 'Daftar Bendahara RT/RW'
-                  : 'Daftar Akun Terdaftar',
-              style: const TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.bold))),
-          IconButton(tooltip: 'Muat ulang', onPressed: load,
-              icon: const Icon(Icons.refresh)),
+          Expanded(child: Text('Daftar Akun Terdaftar',
+            style: TextStyle(color: scheme.onSurface,
+              fontSize: 16, fontWeight: FontWeight.w800))),
+          IconButton(
+            tooltip: 'Muat ulang',
+            onPressed: load,
+            icon: Icon(Icons.refresh_rounded, color: scheme.primary),
+          ),
         ]),
         const SizedBox(height: 8),
         TextField(
           key: const Key('admin_account_search'),
+          onChanged: (value) => setState(
+            () => accountQuery = value.trim().toLowerCase()),
           decoration: const InputDecoration(
-            labelText: 'Cari akun petugas',
-            hintText: 'Nama atau username',
+            hintText: 'Cari nama atau username...',
             prefixIcon: Icon(Icons.search_rounded),
           ),
-          onChanged: (value) => setState(() => accountQuery = value.trim().toLowerCase()),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 11),
         if (!widget.bendaharaOnly)
+          Wrap(spacing: 8, runSpacing: 7, children: [
+            ChoiceChip(
+              key: const Key('filter_all'),
+              label: const Text('Semua'),
+              selected: accountRoleFilter == 'all',
+              onSelected: (_) => setState(() => accountRoleFilter = 'all'),
+            ),
+            if (roles.containsKey('rt') || roles.containsKey('rw'))
+              ChoiceChip(
+                key: const Key('filter_ketua'),
+                label: const Text('Ketua RT/RW'),
+                selected: accountRoleFilter == 'ketua',
+                onSelected: (_) => setState(() => accountRoleFilter = 'ketua'),
+              ),
+            if (roles.containsKey('bendahara_rt') || roles.containsKey('bendahara_rw'))
+              ChoiceChip(
+                key: const Key('filter_bendahara'),
+                label: const Text('Bendahara'),
+                selected: accountRoleFilter == 'bendahara',
+                onSelected: (_) => setState(() => accountRoleFilter = 'bendahara'),
+              ),
+          ]),
+        if (!widget.bendaharaOnly && roles.isNotEmpty) ...[
+          const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            key: const Key('admin_account_role_filter'),
-            initialValue: accountRoleFilter,
+            key: ValueKey('admin_account_role_filter_$accountRoleFilter'),
+            initialValue: roles.containsKey(accountRoleFilter)
+              ? accountRoleFilter : 'all',
             isExpanded: true,
-            decoration: decoration('Filter berdasarkan peran'),
+            decoration: decoration('Pilih peran spesifik'),
             items: [
-              const DropdownMenuItem(value: 'all', child: Text('Semua peran')),
-              if (roles.containsKey('bendahara_rt') || roles.containsKey('bendahara_rw'))
-                const DropdownMenuItem(value: 'bendahara', child: Text('Semua Bendahara RT/RW')),
-              if (roles.containsKey('rt') || roles.containsKey('rw'))
-                const DropdownMenuItem(value: 'ketua', child: Text('Semua Ketua RT/RW')),
-              ...roles.entries.map((e) => DropdownMenuItem(
-                value: e.key,
-                child: Text(e.value, overflow: TextOverflow.ellipsis),
+              const DropdownMenuItem(
+                value: 'all', child: Text('Semua peran')),
+              ...roles.entries.map((entry) => DropdownMenuItem(
+                value: entry.key,
+                child: Text(entry.value, overflow: TextOverflow.ellipsis),
               )),
             ],
-            onChanged: (value) => setState(() => accountRoleFilter = value ?? 'all'),
+            onChanged: (value) =>
+              setState(() => accountRoleFilter = value ?? 'all'),
           ),
-        const SizedBox(height: 12),
-        const Text('Pilih akun untuk melihat informasi. Perubahan data akun '
-            'hanya tersedia jika didukung API dan hak akses server.',
-            style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
-        const SizedBox(height: 8),
-        if (accounts.isNotEmpty && !accounts.any((item) {
-          final matchesText = accountQuery.isEmpty ||
-              (item['name'] ?? '').toString().toLowerCase().contains(accountQuery) ||
-              (item['username'] ?? '').toString().toLowerCase().contains(accountQuery);
-          return matchesText && (widget.bendaharaOnly ||
-              accountRoleFilter == 'all' || item['role'] == accountRoleFilter ||
-              (accountRoleFilter == 'bendahara' && (item['role'] == 'bendahara_rt' || item['role'] == 'bendahara_rw')) ||
-              (accountRoleFilter == 'ketua' && (item['role'] == 'rt' || item['role'] == 'rw')));
-        }))
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Text('Tidak ada akun yang sesuai pencarian atau filter.'),
-          ),
-        if (accounts.isEmpty)
-          Text(widget.bendaharaOnly
-              ? 'Belum ada akun Bendahara RT/RW yang terdaftar.'
-              : 'Belum ada akun petugas.'),
-        for (final account in accounts.where((item) {
-          final matchesText = accountQuery.isEmpty ||
-              (item['name'] ?? '').toString().toLowerCase().contains(accountQuery) ||
-              (item['username'] ?? '').toString().toLowerCase().contains(accountQuery);
-          final matchesRole = widget.bendaharaOnly ||
-              accountRoleFilter == 'all' || item['role'] == accountRoleFilter ||
-              (accountRoleFilter == 'bendahara' && (item['role'] == 'bendahara_rt' || item['role'] == 'bendahara_rw')) ||
-              (accountRoleFilter == 'ketua' && (item['role'] == 'rt' || item['role'] == 'rw'));
-          return matchesText && matchesRole;
-        }))
-          Card(child: ListTile(
-            dense: true,
-            leading: Icon(account['active'] == true
-                ? Icons.verified_user_outlined
-                : Icons.person_off_outlined),
-            title: Text(account['name']?.toString() ?? ''),
-            subtitle: Text(
-              '${account['username'] ?? ''} • '
-              '${roles[account['role']] ?? account['role']}'
-              '${(account['rt'] ?? '').toString().isNotEmpty ? ' • RT ${account['rt']}' : ''}'
-              '${(account['rw'] ?? '').toString().isNotEmpty ? ' / RW ${account['rw']}' : ''}',
-            ),
-            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-              Text(account['active'] == true ? 'Aktif' : 'Nonaktif',
-                  style: const TextStyle(fontSize: 11)),
-              IconButton(
-                tooltip: 'Hapus permanen akun',
-                onPressed: busy ? null : () => deleteAccount(account),
-                icon: const Icon(Icons.delete_outline_rounded,
-                  color: Color(0xFFC13B49), size: 21)),
+        ],
+        const SizedBox(height: 13),
+        Text(
+          '${visibleAccounts.length} akun ditampilkan',
+          style: TextStyle(color: scheme.onSurfaceVariant,
+            fontSize: 11.5, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 10),
+        if (visibleAccounts.isEmpty)
+          Card(child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(children: [
+              Icon(Icons.person_search_outlined, size: 34, color: scheme.primary),
+              const SizedBox(height: 8),
+              Text(accounts.isEmpty
+                ? 'Belum ada akun petugas.'
+                : 'Tidak ada akun sesuai pencarian atau filter.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: scheme.onSurfaceVariant)),
             ]),
           )),
+        for (final account in visibleAccounts)
+          CikokoOfficerAccountCard(
+            account: account,
+            roleLabel: roles[(account['role'] ?? '').toString()]
+              ?? (account['role'] ?? '').toString(),
+            onDelete: busy ? null : () => deleteAccount(account),
+          ),
+        const SizedBox(height: 12),
+        Text(
+          'Pengubahan data akun hanya tersedia apabila didukung API dan izin server.',
+          style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11),
+        ),
+        const SizedBox(height: 18),
         const CikokoPageSignature(),
       ],
     );
