@@ -333,6 +333,10 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
             decoration: decoration('Filter berdasarkan peran'),
             items: [
               const DropdownMenuItem(value: 'all', child: Text('Semua peran')),
+              if (roles.containsKey('bendahara_rt') || roles.containsKey('bendahara_rw'))
+                const DropdownMenuItem(value: 'bendahara', child: Text('Semua Bendahara RT/RW')),
+              if (roles.containsKey('rt') || roles.containsKey('rw'))
+                const DropdownMenuItem(value: 'ketua', child: Text('Semua Ketua RT/RW')),
               ...roles.entries.map((e) => DropdownMenuItem(
                 value: e.key,
                 child: Text(e.value, overflow: TextOverflow.ellipsis),
@@ -350,7 +354,9 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
               (item['name'] ?? '').toString().toLowerCase().contains(accountQuery) ||
               (item['username'] ?? '').toString().toLowerCase().contains(accountQuery);
           return matchesText && (widget.bendaharaOnly ||
-              accountRoleFilter == 'all' || item['role'] == accountRoleFilter);
+              accountRoleFilter == 'all' || item['role'] == accountRoleFilter ||
+              (accountRoleFilter == 'bendahara' && (item['role'] == 'bendahara_rt' || item['role'] == 'bendahara_rw')) ||
+              (accountRoleFilter == 'ketua' && (item['role'] == 'rt' || item['role'] == 'rw')));
         }))
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 14),
@@ -365,7 +371,9 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
               (item['name'] ?? '').toString().toLowerCase().contains(accountQuery) ||
               (item['username'] ?? '').toString().toLowerCase().contains(accountQuery);
           final matchesRole = widget.bendaharaOnly ||
-              accountRoleFilter == 'all' || item['role'] == accountRoleFilter;
+              accountRoleFilter == 'all' || item['role'] == accountRoleFilter ||
+              (accountRoleFilter == 'bendahara' && (item['role'] == 'bendahara_rt' || item['role'] == 'bendahara_rw')) ||
+              (accountRoleFilter == 'ketua' && (item['role'] == 'rt' || item['role'] == 'rw'));
           return matchesText && matchesRole;
         }))
           Card(child: ListTile(
