@@ -3,6 +3,7 @@ import 'app_settings.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
+import 'premium_flow_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -703,7 +704,44 @@ class _ArchiveEditorState extends State<ArchiveEditorPage>{
  @override void dispose(){for(final c in data.values){c.dispose();}for(final c in children){c.dispose();}super.dispose();}
  Future<void> load()async{try{final r=await widget.api.callWithQuery('v211_archive_detail',{'id':'${widget.editId}'});final row=Map<String,dynamic>.from(r['item'] as Map);final details=Map<String,dynamic>.from(row['details']??{});for(final e in data.entries){e.value.text='${row[e.key]??details[e.key]??''}';}data['name']!.text='${row['applicant_name']??''}';final raw=List<dynamic>.from(details['children']??[]);for(final item in raw){children.add(TextEditingController(text:'${item['name']??''}'));}if(mounted)setState(()=>loaded=true);}catch(_){if(mounted)civicMessage(context,'Arsip belum dapat dimuat untuk disunting.');}}
  Future<void> photoPick(String key,ImageSource source)async{final f=await ImagePicker().pickImage(source:source,maxWidth:2300,imageQuality:85);if(f!=null&&mounted)setState(()=>photos[key]=f.path);}
- Widget photoEntry(String key,String label)=>Card(child:Padding(padding:const EdgeInsets.all(9),child:Row(children:[if(photos.containsKey(key))Image.file(File(photos[key]!),height:48,width:48,fit:BoxFit.cover)else const Icon(Icons.image_outlined,color:civicBlue),const SizedBox(width:9),Expanded(child:Text(label,style:const TextStyle(fontSize:11.5))),IconButton(onPressed:()=>photoPick(key,ImageSource.camera),tooltip:'Kamera',icon:const Icon(Icons.camera_alt_outlined)),IconButton(onPressed:()=>photoPick(key,ImageSource.gallery),tooltip:'Galeri',icon:const Icon(Icons.photo_library_outlined))])));
+ Widget photoEntry(String key,String label)=>Card(
+  margin:const EdgeInsets.only(bottom:9),
+  child:Padding(padding:const EdgeInsets.all(12),
+   child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+    Row(children:[
+     Expanded(child:Text(label,style:Theme.of(context).textTheme.titleMedium)),
+     if(photos.containsKey(key))
+      const Icon(Icons.check_circle_rounded,
+       size:19,color:Color(0xFF0AA474)),
+    ]),
+    const SizedBox(height:8),
+    ClipRRect(borderRadius:BorderRadius.circular(12),
+     child:SizedBox(height:135,child:photos.containsKey(key)
+       ?Image.file(File(photos[key]!),fit:BoxFit.contain,
+         errorBuilder:(_,__,___)=>const Center(
+          child:Text('Pratinjau foto tidak tersedia')))
+       :ColoredBox(
+         color:Theme.of(context).colorScheme.surfaceContainerHighest,
+         child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+          Icon(Icons.add_photo_alternate_outlined,
+           color:Theme.of(context).colorScheme.primary,size:30),
+          const SizedBox(height:5),
+          const Text('Foto belum dipilih',style:TextStyle(fontSize:11)),
+         ])),
+    )),
+    const SizedBox(height:9),
+    Wrap(spacing:8,runSpacing:6,children:[
+     OutlinedButton.icon(
+      onPressed:()=>photoPick(key,ImageSource.camera),
+      icon:const Icon(Icons.camera_alt_outlined,size:17),
+      label:Text(photos.containsKey(key)?'Foto Ulang':'Kamera')),
+     OutlinedButton.icon(
+      onPressed:()=>photoPick(key,ImageSource.gallery),
+      icon:const Icon(Icons.photo_library_outlined,size:17),
+      label:Text(photos.containsKey(key)?'Ganti Foto':'Galeri')),
+    ]),
+   ])),
+ );
  Future<void> save()async{if(saving)return;setState(()=>saving=true);try{final fields={for(final e in data.entries)e.key:e.value.text.trim(),'id':'${widget.editId??0}','children_json':'[${children.map((c)=>'{"name":${_quote(c.text.trim())}}').join(',')}]'};
  final files={for(final e in photos.entries)e.key:[e.value]};await widget.api.upload('v211_archive_save',fields,files);if(mounted){civicMessage(context,'Arsip Ahli Waris berhasil disimpan.');if(widget.editId!=null)Navigator.of(context).pop(true);else{for(final c in data.values){c.clear();}data['archive_year']!.text='${DateTime.now().year}';for(final c in children){c.dispose();}children.clear();setState(()=>photos.clear());}}}catch(_){if(mounted)civicMessage(context,'Arsip belum berhasil disimpan. Mohon periksa kembali data dan lampiran.');}finally{if(mounted)setState(()=>saving=false);}}
  String _quote(String v)=>'"${v.replaceAll('\\','\\\\').replaceAll('"','\\"').replaceAll('\n',' ')}"';
