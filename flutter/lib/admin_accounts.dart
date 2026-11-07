@@ -78,6 +78,10 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
         accounts = (res['items'] as List? ?? [])
             .whereType<Map>()
             .map((e) => Map<String, dynamic>.from(e))
+            // The API may include citizen accounts, but this page manages
+            // staff only. Keep resident accounts untouched and out of view.
+            .where((account) => account['role'] != 'warga' &&
+                account['role'] != 'admin')
             .where((account) =>
                 !widget.bendaharaOnly ||
                 account['role'] == 'bendahara_rt' ||
