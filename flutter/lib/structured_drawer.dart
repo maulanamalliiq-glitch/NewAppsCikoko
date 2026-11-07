@@ -276,8 +276,8 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 12.5,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  color: active ? _blue : Theme.of(context).colorScheme.onSurface)),
-          subtitle: feature.connected ? null : const Text(
+                  color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface)),
+          subtitle: feature.connected ? null : Text(
               'Modul belum tersedia',
               style: TextStyle(fontSize: 9.5, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           trailing: const Icon(Icons.chevron_right_rounded,
