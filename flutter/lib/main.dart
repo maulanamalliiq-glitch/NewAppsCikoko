@@ -452,7 +452,7 @@ class _HomeState extends State<HomePage> {
       SafeArea(top:guest && section=='Dashboard',
        child:CikokoPremiumCanvas(child:_page())),
     bottomNavigationBar: NavigationBar(
-      height: 70,
+      height: 76,
       selectedIndex: nav,
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       onDestinationSelected: selectNav,
@@ -466,8 +466,8 @@ class _HomeState extends State<HomePage> {
           selectedIcon: const Icon(Icons.grid_view_rounded),
           label: CikokoSettings.tr('Layanan', 'Services')),
         NavigationDestination(
-          icon: const Icon(Icons.dashboard_customize_outlined),
-          selectedIcon: const Icon(Icons.dashboard_customize_rounded),
+          icon: const CikokoMenuOrb(),
+          selectedIcon: const CikokoMenuOrb(selected: true),
           label: CikokoSettings.tr('Menu', 'Menu')),
         NavigationDestination(
           icon: Badge(isLabelVisible: unreadCount > 0,
@@ -481,7 +481,8 @@ class _HomeState extends State<HomePage> {
           label: CikokoSettings.tr('Akun', 'Account')),
       ],
     ),
-    floatingActionButton:section=='Hubungi Kami'?null:FloatingActionButton.small(tooltip:'Hubungi Admin',onPressed:()=>switchTo('Hubungi Kami'),backgroundColor:blue,foregroundColor:Colors.white,child:const Icon(Icons.chat_bubble_outline)),
+    // Messaging stays in the authorized Menu/Drawer; no floating button
+    // overlaps form fields or the premium bottom navigation.
   ));
   Widget _page(){switch(section){
     case 'Dashboard':return home();
@@ -655,6 +656,7 @@ class _HomeState extends State<HomePage> {
   Widget home()=>ListView(padding:EdgeInsets.zero,children:[
     if(isStaff) Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoStaffHero(
       roleName:roleLabel,
+      publicCounts:letterCounts,
       accountName:'${api.profile?['name']??'Petugas Cikoko'}',
       onManagement: () => switchTo(
         role == 'admin' && capabilities['role:manage'] == true
@@ -680,19 +682,23 @@ class _HomeState extends State<HomePage> {
 
     Padding(padding:const EdgeInsets.symmetric(horizontal:12),child:Column(
       crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-    if(guest||role=='warga'||role=='admin')Padding(padding:const EdgeInsets.only(top:8),child:CikokoLetterCounters(
+    Padding(
+      padding: const EdgeInsets.only(top: 14, bottom: 6),
+      child: CikokoSearchLauncher(onTap: () => switchTo('Menu Cikoko')),
+    ),
+    if(role=='warga')Padding(padding:const EdgeInsets.only(top:8),child:CikokoLetterCounters(
       counts:letterCounts,onStatusTap:(category)=>
           role=='admin' && category=='all'
             ? showPublicLetterPie(context,api)
             : showPublicLetterStatus(context,api,category:category))),
     Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Row(
       mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w600)),
+        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:15,fontWeight:FontWeight.w800)),
         TextButton(onPressed:()=>switchTo(role=='warga'?'Layanan Online':'Menu Cikoko'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11))),
       ])),
     if(role=='warga')
       LayoutBuilder(builder:(ctx,c)=>GridView.builder(
-        itemCount:activeServices.length,
+        itemCount:activeServices.length > 8 ? 8 : activeServices.length,
         shrinkWrap:true,
         physics:const NeverScrollableScrollPhysics(),
         gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(
