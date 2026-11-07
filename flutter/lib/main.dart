@@ -149,7 +149,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
  Widget build(BuildContext context) {
   final title=signup?'Daftar Akun Warga':'Masuk ke Cikoko SmartAPP';
   return Scaffold(
-   backgroundColor:const Color(0xFFF4F8FF),
+   backgroundColor:Theme.of(context).scaffoldBackgroundColor,
    body:SafeArea(child:LayoutBuilder(builder:(context,box)=>SingleChildScrollView(
     keyboardDismissBehavior:ScrollViewKeyboardDismissBehavior.onDrag,
     child:ConstrainedBox(constraints:BoxConstraints(minHeight:box.maxHeight),
@@ -174,25 +174,25 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
        constraints:const BoxConstraints(maxWidth:480),
        width:double.infinity,
        padding:const EdgeInsets.fromLTRB(20,16,20,16),
-       decoration:const BoxDecoration(color:Colors.white,
+       decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface,
         borderRadius:BorderRadius.only(topLeft:Radius.circular(25),
          topRight:Radius.circular(25),bottomLeft:Radius.circular(18),
          bottomRight:Radius.circular(18))),
        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Row(children:[
-         Container(width:54,height:54,decoration:BoxDecoration(color:const Color(0xFFF4F8FF),borderRadius:BorderRadius.circular(15)),child:const Center(child:CikokoBrandMark(size:44))),
+         Container(width:54,height:54,decoration:BoxDecoration(color:Theme.of(context).colorScheme.primaryContainer,borderRadius:BorderRadius.circular(15)),child:const Center(child:CikokoBrandMark(size:44))),
          const SizedBox(width:11),
-         const Expanded(child:Text('Cikoko\nSmartAPP',style:TextStyle(color:CikokoPalette.navy,fontSize:23,fontWeight:FontWeight.w900,height:1.04))),
+         Expanded(child:Text('Cikoko\nSmartAPP',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:23,fontWeight:FontWeight.w900,height:1.04))),
         ]),
         const SizedBox(height:8),
-        const Text('Layanan Digital Kelurahan Cikoko',style:TextStyle(color:CikokoPalette.blue,fontSize:12,fontWeight:FontWeight.w700)),
+        Text('Layanan Digital Kelurahan Cikoko',style:TextStyle(color:Theme.of(context).colorScheme.primary,fontSize:12,fontWeight:FontWeight.w700)),
         const SizedBox(height:12),
-        Text(title,style:const TextStyle(color:CikokoPalette.navy,
-         fontSize:23,fontWeight:FontWeight.w700)),
+        Text(title,style:TextStyle(color:Theme.of(context).colorScheme.onSurface,
+         fontSize:23,fontWeight:FontWeight.w800)),
         const SizedBox(height:5),
         Text(signup?'Daftarkan akun untuk layanan Kelurahan Cikoko.':
          'Selamat datang kembali. Masuk untuk melanjutkan layanan.',
-         style:const TextStyle(color:CikokoPalette.muted,fontSize:12,height:1.4)),
+         style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:12,height:1.4)),
         const SizedBox(height:15),
         if(signup)
          for(final entry in <String,String>{
@@ -250,13 +250,13 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
          onPressed:busy?null:()=>setState(()=>signup=!signup),
          child:Text(signup?'Sudah punya akun? Masuk':'Daftar Akun Baru'))),
         const SizedBox(height:10),
-        const Center(child:Text('Data digunakan untuk pelayanan Kelurahan Cikoko.',
+        Center(child:Text('Data digunakan untuk pelayanan Kelurahan Cikoko.',
          textAlign:TextAlign.center,style:TextStyle(
-          fontSize:10.5,color:CikokoPalette.muted))),
+          fontSize:10.5,color:Theme.of(context).colorScheme.onSurfaceVariant))),
        ]))),
-      const Padding(padding:EdgeInsets.only(top:5,bottom:10),
+      Padding(padding:const EdgeInsets.only(top:5,bottom:10),
        child:Text('Copyright © Cikoko Smart',
-        style:TextStyle(color:CikokoPalette.muted,fontSize:10.5))),
+        style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:10.5))),
      ])),
     ))),
   );
