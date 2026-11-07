@@ -372,29 +372,62 @@ class CikokoPageSignature extends StatelessWidget {
 }
 
 class CikokoStatusBadge extends StatelessWidget {
-  static Color accentFor(String status) {
-    final value=status.toLowerCase();
-    if(value.contains('tolak')||value.contains('reject')||value.contains('return'))return const Color(0xFFDC3558);
-    if(value.contains('selesai')||value.contains('approved')||value.contains('disetujui')||value.contains('complete'))return const Color(0xFF15985B);
-    return const Color(0xFFB67A00);
-  }
   final String status;
   const CikokoStatusBadge({super.key, required this.status});
-  @override Widget build(BuildContext context) {
-    final value=status.toLowerCase().replaceAll('_',' ').trim();
-    final rejected=value.contains('tolak') || value.contains('reject') || value.contains('return');
-    final completed=value.contains('selesai') || value.contains('approved') || value.contains('disetujui') || value.contains('complete');
-    final accent=rejected?const Color(0xFFDC3558):completed?const Color(0xFF15985B):const Color(0xFFB67A00);
-    final fill=rejected?const Color(0xFFFFE4EA):completed?const Color(0xFFDCF9E9):const Color(0xFFFFF1BC);
-    final label=rejected?'Ditolak':completed?'Selesai':'Dalam Proses';
+
+  static bool isReturned(String raw) {
+    final status = raw.toLowerCase();
+    return status.contains('return') || status.contains('kembali');
+  }
+
+  static bool isRejected(String raw) {
+    final status = raw.toLowerCase();
+    return status.contains('tolak') || status.contains('reject');
+  }
+
+  static bool isComplete(String raw) {
+    final status = raw.toLowerCase();
+    return status.contains('selesai') ||
+        status.contains('approved') ||
+        status.contains('disetujui') ||
+        status.contains('complete') ||
+        status.contains('terverifikasi');
+  }
+
+  static Color accentFor(String status) {
+    if (isRejected(status)) return const Color(0xFFDC3558);
+    if (isReturned(status)) return const Color(0xFFB67A00);
+    if (isComplete(status)) return const Color(0xFF15985B);
+    return const Color(0xFFB67A00);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rejected = isRejected(status);
+    final returned = isReturned(status);
+    final completed = isComplete(status);
+    final accent = accentFor(status);
+    final label = rejected ? 'Ditolak'
+        : returned ? 'Perlu Perbaikan'
+        : completed ? 'Selesai' : 'Dalam Proses';
+    final fill = rejected ? const Color(0xFFFFE4EA)
+        : completed ? const Color(0xFFDCF9E9)
+        : const Color(0xFFFFF1BC);
+
     return Container(
-      padding:const EdgeInsets.symmetric(horizontal:11,vertical:6),
-      decoration:BoxDecoration(color:fill,borderRadius:BorderRadius.circular(24)),
-      child:Row(mainAxisSize:MainAxisSize.min,children:[
-        Icon(rejected?Icons.cancel_rounded:completed?Icons.check_circle_rounded:Icons.schedule_rounded,
-          color:accent,size:16),
-        const SizedBox(width:5),
-        Text(label,style:TextStyle(color:accent,fontSize:11,fontWeight:FontWeight.w800)),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(rejected ? Icons.cancel_rounded
+          : returned ? Icons.edit_note_rounded
+          : completed ? Icons.check_circle_rounded : Icons.schedule_rounded,
+          color: accent, size: 16),
+        const SizedBox(width: 5),
+        Text(label, style: TextStyle(
+          color: accent, fontSize: 11, fontWeight: FontWeight.w800)),
       ]),
     );
   }
