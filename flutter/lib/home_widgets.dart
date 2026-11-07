@@ -402,26 +402,37 @@ class _PremiumQuickAction extends StatelessWidget {
 class CikokoStaffHero extends StatelessWidget {
   final String roleName;
   final String accountName;
+  final Map<String, int>? publicCounts;
   final VoidCallback onManagement;
   final VoidCallback onServices;
-  const CikokoStaffHero({super.key, required this.roleName,
-    required this.onManagement, required this.onServices,
-    this.accountName='Petugas Cikoko'});
+  const CikokoStaffHero({
+    super.key,
+    required this.roleName,
+    required this.onManagement,
+    required this.onServices,
+    this.accountName='Petugas Cikoko',
+    this.publicCounts,
+  });
 
   @override
   Widget build(BuildContext context) {
     final admin=roleName.toLowerCase().contains('admin');
-    final cards=admin
-      ? <({String title,String value,Color color})>[
-          (title:'Pengguna',value:'Kelola',color:const Color(0xFF6653CC)),
-          (title:'Laporan',value:'Pantau',color:const Color(0xFFD34D8B)),
-          (title:'Layanan',value:'Atur',color:const Color(0xFF2585E8)),
-        ]
-      : <({String title,String value,Color color})>[
-          (title:'Laporan Baru',value:'Periksa',color:const Color(0xFFE45D72)),
-          (title:'Dalam Proses',value:'Tindak lanjut',color:const Color(0xFF168ED4)),
-          (title:'Selesai',value:'Riwayat',color:const Color(0xFF0FAE94)),
-        ];
+    // These are real aggregate public-letter counts, not mock statistics.
+    // Missing server data is displayed as an em dash, never as zero.
+    final counts = <({String title, String value, Color color, IconData icon})>[
+      (title: 'Surat Masuk',
+       value: publicCounts?['masuk']?.toString() ?? '—',
+       color: const Color(0xFF0E83D5),
+       icon: Icons.mark_email_unread_outlined),
+      (title: 'Dalam Proses',
+       value: publicCounts?['proses']?.toString() ?? '—',
+       color: const Color(0xFFE6A03A),
+       icon: Icons.pending_actions_outlined),
+      (title: 'Selesai',
+       value: publicCounts?['selesai']?.toString() ?? '—',
+       color: const Color(0xFF0EA37C),
+       icon: Icons.verified_outlined),
+    ];
     return Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       CikokoWelcomeHero(name:accountName,roleName:roleName,
         subtitle:admin?CikokoSettings.tr('Kelola sistem Cikoko SmartAPP','Manage Cikoko SmartAPP'):CikokoSettings.tr('Status tugas dan pelayanan hari ini','Today’s services and tasks')),
@@ -429,41 +440,50 @@ class CikokoStaffHero extends StatelessWidget {
       const CikokoLiveWeather(),
       const SizedBox(height:16),
 
-      Row(children: [
-        for (final card in cards)
-          Expanded(child: Container(
-            margin: const EdgeInsets.only(right: 7),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(15),
-              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-            ),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Container(
-                width: 31, height: 31,
-                decoration: BoxDecoration(
-                  color: card.color.withValues(alpha: .13),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(
-                  admin ? Icons.dashboard_customize_outlined : Icons.assignment_outlined,
-                  color: card.color, size: 18,
-                ),
+      if (admin) ...[
+        CikokoPremiumSection(
+          title: 'Ringkasan Layanan',
+          subtitle: 'Statistik agregat dari layanan surat publik',
+        ),
+        const SizedBox(height: 7),
+        Row(children: [
+          for (var index = 0; index < counts.length; index++) ...[
+            if (index > 0) const SizedBox(width: 8),
+            Expanded(child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 11),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(17),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outlineVariant),
               ),
-              const SizedBox(height: 7),
-              Text(CikokoSettings.label(card.title),
-                maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 10, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 4),
-              Text(card.value, maxLines: 1, overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 14, fontWeight: FontWeight.w800)),
-            ]),
-          )),
-      ]),
-      const SizedBox(height:15),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: counts[index].color.withValues(alpha: .13),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(counts[index].icon,
+                    color: counts[index].color, size: 19),
+                ),
+                const SizedBox(height: 8),
+                Text(counts[index].value, maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 20, fontWeight: FontWeight.w900,
+                    color: Theme.of(context).colorScheme.onSurface)),
+                const SizedBox(height: 3),
+                Text(counts[index].title,
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              ]),
+            )),
+          ],
+        ]),
+        const SizedBox(height: 15),
+      ],
       Row(children:[
        Expanded(child:_StaffAction(icon:admin?Icons.manage_accounts_outlined:Icons.assignment_outlined,
         title:admin?'Manajemen Pengguna':'Daftar Laporan',
