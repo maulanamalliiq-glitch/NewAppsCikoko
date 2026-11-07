@@ -43,8 +43,15 @@ Sumber desain: mockup Super Premium yang disetujui (biru-putih, gold accent, lig
 - [x] Komponen kartu, formulir, laporan, dan pengelolaan berbagi desain
 - [x] Kontrol foto dengan pratinjau dan ganti foto
 - [x] Tes baru ditambahkan untuk privacy mask, role scope, dan komponen UI
-- [ ] Flutter analyzer lulus pada commit final
-- [ ] Semua widget/unit tests lulus
+- [x] Flutter analyzer lulus pada commit final
+- [x] Semua widget/unit tests lulus
 - [ ] PR masuk `main` setelah QA
 - [ ] Satu putaran APK + AAB final berhasil
 - [ ] Uji manual di HP untuk tiap role dan variasi layar
+
+## Bukti QA
+
+- Flutter analyzer, unit/widget suite dan pemeriksaan kontrak API: **LULUS**.
+- GitHub Actions: https://github.com/maulanamalliiq-glitch/NewAppsCikoko/actions/runs/42393752061
+- Satu tes struktural lama tentang penempatan saksi diperbarui agar menguji komponen judul UI baru; syarat urutan kedua KTP saksi tetap dipertahankan.
+- Belum menguji UI langsung di HP atau melakukan penetration test backend; kedua hal tersebut tidak boleh diklaim selesai.
