@@ -1,4 +1,5 @@
 import 'package:cikoko/main.dart';
+import 'package:cikoko/premium_ui.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,14 +18,14 @@ void main() {
     final labels = <String>[];
     for (final child in children) {
       if (child is PhotoInput) labels.add(child.label);
-      if (child is Text && child.data != null) labels.add(child.data!);
+      if (child is CikokoPremiumSection) labels.add(child.title);
     }
 
     final marriage = labels.indexOf('Surat nikah');
-    final heading = labels.indexOf('Dua Orang Saksi');
+    final heading = labels.indexOf('03 · Dua Orang Saksi');
     final firstWitness = labels.indexOf('KTP Saksi Pertama');
     final secondWitness = labels.indexOf('KTP Saksi Kedua');
-    final optional = labels.indexOf('Dokumen Kondisional');
+    final optional = labels.indexOf('04 · Dokumen Kondisional');
 
     expect(marriage, greaterThanOrEqualTo(0));
     expect(heading, marriage + 1);
