@@ -406,11 +406,11 @@ class _HomeState extends State<HomePage> {
     case 'Hak Akses Role':return RolePermissionPage(api:api);
     case 'Kelola Akun Petugas':return AdminAccountsPage(api:api);
     case 'Manajemen Bendahara RT/RW':
-      // UI tidak membuka menu sensitif untuk role lain; server tetap
-      // mewajibkan autentikasi Admin Utama di setiap request.
+      // Kompatibilitas rute lama: akun Bendahara kini dikelola bersama
+      // akun petugas lain, tanpa mengubah data atau peran di backend.
       return role == 'admin' && capabilities['role:manage'] == true
-          ? AdminAccountsPage(api:api, bendaharaOnly:true)
-          : const Center(child:Text('Hanya Admin Utama yang dapat mengelola Bendahara.'));
+          ? AdminAccountsPage(api:api)
+          : const Center(child:Text('Hanya Admin Utama yang dapat mengelola akun.'));
     default: return featureUnavailable(section);
   }}
   Widget featureUnavailable(String name) => Center(child:Padding(padding:const EdgeInsets.all(22),child:Card(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.construction_outlined,size:44,color:blue),const SizedBox(height:16),Text(name,style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:10),const Text('Halaman ini tercantum dalam rancangan role, tetapi modul data dan API belum tersedia. Tidak ada perubahan data yang dilakukan.',textAlign:TextAlign.center),const SizedBox(height:18),FilledButton(onPressed:()=>switchTo('Dashboard'),child:const Text('Kembali ke Beranda'))])))));
