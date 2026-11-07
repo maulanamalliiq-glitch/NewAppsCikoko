@@ -79,7 +79,7 @@ void main() {
 
   testWidgets('Dashboard aggregates show missing numbers as unavailable', (tester) async {
     await tester.binding.setSurfaceSize(const Size(360, 760));
-    await tester.pumpWidget(const MaterialApp(
+    await tester.pumpWidget(MaterialApp(
       home: Scaffold(body: SingleChildScrollView(
         child: CikokoLetterCounters(counts: null, onStatusTap: _noOp),
       )),
