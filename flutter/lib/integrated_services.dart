@@ -37,6 +37,7 @@ class CikokoIntegratedServices extends StatefulWidget {
 class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
   List<Map<String,dynamic>> entries=[];
   bool loading=true,saving=false;
+  String search='';
   String? notice;
   @override void initState(){super.initState();load();}
   Future<void> load()async{
@@ -168,44 +169,132 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
     }
     return const Icon(Icons.account_balance_outlined,color:_accent,size:25);
   }
-  @override Widget build(BuildContext context){
-    final visible=widget.admin?entries:entries.where((e)=>e['active']!=false).toList();
-    return RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(14),children:[
-      CikokoPremiumHeader(
-        title:widget.admin?'Kelola Layanan Terpadu':'Layanan Masyarakat Terpadu',
-        subtitle:widget.admin
-          ?'Atur logo, judul, tautan dan layanan aktif untuk warga.'
-          :'Pilih layanan resmi sesuai kebutuhan Anda.',
-        icon:widget.admin?Icons.tune_rounded:Icons.widgets_outlined,
-        start:const Color(0xFF134C9C),end:const Color(0xFF218AE6)),
-      const SizedBox(height:12),
-      if(notice!=null)Padding(padding:const EdgeInsets.only(top:12),child:Card(
-        child:Padding(padding:const EdgeInsets.all(12),child:Text(notice!,style:const TextStyle(fontSize:12))))),
-      if(widget.admin)Padding(padding:const EdgeInsets.symmetric(vertical:10),child:FilledButton.icon(
-        onPressed:saving?null:()=>edit(),icon:const Icon(Icons.add),label:const Text('Tambah Layanan'))),
-      if(loading)const LinearProgressIndicator(),
-      for(final entry in visible)Card(child:InkWell(
-        borderRadius:BorderRadius.circular(14),
-        onTap:widget.admin?null:()=>openLink('${entry['url']??''}'),
-        child:Padding(padding:const EdgeInsets.symmetric(horizontal:12,vertical:8),child:Row(children:[
-        SizedBox(width:44,height:44,child:Center(child:logoFor(entry))),
-        const SizedBox(width:6),
-        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text('${entry['title']??''}',style:TextStyle(fontSize:13.5,fontWeight:FontWeight.w700,color:Theme.of(context).colorScheme.onSurface)),
-          Text('${entry['description']??''}',style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant),maxLines:1,overflow:TextOverflow.ellipsis),
-          if(widget.admin)Text(entry['active']==false?'Disembunyikan':'Aktif',
-            style:TextStyle(fontSize:10,color:Theme.of(context).colorScheme.onSurfaceVariant)),
-        ])),
-        if(!widget.admin)const Icon(Icons.chevron_right_rounded,color:_accent,size:20),
-        if(widget.admin)PopupMenuButton<String>(enabled:!saving,onSelected:(v)=>v=='edit'?edit(entry):remove(entry),
-          itemBuilder:(_)=>const [
-            PopupMenuItem(value:'edit',child:Text('Edit')),
-            PopupMenuItem(value:'remove',child:Text('Hapus')),
-          ])
-      ])))),
-      if(visible.isEmpty&&!loading)const Center(child:Padding(padding:EdgeInsets.all(20),
-        child:Text('Belum ada layanan yang tersedia.'))),
-      const CikokoPageSignature(),
-    ]));
-  }
-}
+  @override
+  Widget build(BuildContext context) {
+    final scheme=Theme.of(context).colorScheme;
+    final visible=(widget.admin?entries:
+        entries.where((entry)=>entry['active']!=false))
+      .where((entry){
+        final text=search.trim().toLowerCase();
+        return text.isEmpty||
+          '${entry['title']??''}'.toLowerCase().contains(text)||
+          '${entry['description']??''}'.toLowerCase().contains(text);
+      }).toList();
+    return RefreshIndicator(
+      onRefresh:load,
+      child:ListView(
+        padding:const EdgeInsets.fromLTRB(14,12,14,28),
+        children:[
+          CikokoPremiumHeader(
+            title:widget.admin?'Kelola Layanan Terpadu':'Layanan Masyarakat Terpadu',
+            subtitle:widget.admin
+              ?'Kelola layanan, logo resmi dan tautan tujuan untuk warga.'
+              :'Temukan layanan administrasi dan informasi publik.',
+            icon:widget.admin?Icons.tune_rounded:Icons.widgets_outlined,
+          ),
+          const SizedBox(height:14),
+          if(notice!=null)
+            CikokoPremiumSurface(child:Row(children:[
+              Icon(Icons.info_outline_rounded,color:scheme.primary),
+              const SizedBox(width:10),
+              Expanded(child:Text(notice!,
+                style:TextStyle(color:scheme.onSurface,fontSize:11.5))),
+            ])),
+          if(widget.admin)...[
+            const SizedBox(height:12),
+            FilledButton.icon(
+              onPressed:saving?null:()=>edit(),
+              icon:const Icon(Icons.add_circle_outline_rounded),
+              label:const Text('Tambah Layanan Resmi')),
+          ],
+          const SizedBox(height:13),
+          TextField(
+            key:const Key('integrated_services_search'),
+            onChanged:(value)=>setState(()=>search=value),
+            decoration:const InputDecoration(
+              hintText:'Cari nama atau keterangan layanan...',
+              prefixIcon:Icon(Icons.search_rounded)),
+          ),
+          const SizedBox(height:12),
+          CikokoPremiumSection(
+            title:'Direktori Layanan',
+            subtitle:'${visible.length} layanan ditampilkan',
+          ),
+          if(loading)
+            const Padding(padding:EdgeInsets.symmetric(vertical:12),
+              child:LinearProgressIndicator()),
+          if(visible.isEmpty&&!loading)
+            const CikokoEmptyState(
+              icon:Icons.search_off_rounded,
+              title:'Layanan tidak ditemukan',
+              subtitle:'Coba kata kunci lain atau muat ulang daftar.'),
+          for(final entry in visible)
+            Padding(
+              padding:const EdgeInsets.only(bottom:9),
+              child:Material(
+                color:scheme.surface,
+                borderRadius:BorderRadius.circular(17),
+                child:InkWell(
+                  onTap:widget.admin?null:
+                    ()=>openLink('${entry['url']??''}'),
+                  borderRadius:BorderRadius.circular(17),
+                  child:Container(
+                    padding:const EdgeInsets.all(12),
+                    decoration:BoxDecoration(
+                      borderRadius:BorderRadius.circular(17),
+                      border:Border.all(color:scheme.outlineVariant),
+                    ),
+                    child:Row(children:[
+                      Container(
+                        width:51,height:51,alignment:Alignment.center,
+                        padding:const EdgeInsets.all(6),
+                        decoration:BoxDecoration(
+                          color:scheme.primaryContainer,
+                          borderRadius:BorderRadius.circular(13),
+                        ),
+                        child:logoFor(entry),
+                      ),
+                      const SizedBox(width:11),
+                      Expanded(child:Column(
+                        crossAxisAlignment:CrossAxisAlignment.start,
+                        children:[
+                          Text('${entry['title']??''}',maxLines:2,
+                            overflow:TextOverflow.ellipsis,
+                            style:TextStyle(color:scheme.onSurface,
+                              fontSize:13.4,fontWeight:FontWeight.w800)),
+                          const SizedBox(height:4),
+                          Text('${entry['description']??''}',maxLines:2,
+                            overflow:TextOverflow.ellipsis,
+                            style:TextStyle(color:scheme.onSurfaceVariant,
+                              height:1.35,fontSize:11)),
+                          if(widget.admin)...[
+                            const SizedBox(height:5),
+                            Text(entry['active']==false?'Disembunyikan':'Aktif',
+                              style:TextStyle(fontSize:10.5,fontWeight:FontWeight.w700,
+                                color:entry['active']==false
+                                  ?scheme.onSurfaceVariant:const Color(0xFF079E74))),
+                          ],
+                        ],
+                      )),
+                      if(widget.admin)
+                        PopupMenuButton<String>(
+                          enabled:!saving,
+                          onSelected:(value)=>value=='edit'
+                            ?edit(entry):remove(entry),
+                          itemBuilder:(_)=>const [
+                            PopupMenuItem(value:'edit',child:Text('Edit Layanan')),
+                            PopupMenuItem(value:'remove',child:Text('Hapus Layanan')),
+                          ],
+                        )
+                      else Icon(Icons.arrow_circle_right_outlined,
+                        size:24,color:scheme.primary),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+          const CikokoPageSignature(),
+        ],
+      ),
+    );
+  }}

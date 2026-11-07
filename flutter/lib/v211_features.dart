@@ -3,6 +3,7 @@ import 'app_settings.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
+import 'premium_flow_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -287,8 +288,10 @@ class _CivicProfileState extends State<CivicProfilePage>{
       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
        Text(e.value,style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),
        const SizedBox(height:3),
-       SelectableText((row[e.key]??'').toString().trim().isEmpty
-        ?'Belum diisi':(row[e.key]??'').toString(),
+       SelectableText(e.key=='nik'
+        ?cikokoMaskedNik(row[e.key])
+        :(row[e.key]??'').toString().trim().isEmpty
+          ?'Belum diisi':(row[e.key]??'').toString(),
         style:TextStyle(fontSize:13,color:Theme.of(context).colorScheme.onSurface)),
        const Divider(height:12),
       ])),
@@ -611,8 +614,121 @@ class _PpsuReportState extends State<PpsuReportPage>{
   OutlinedButton.icon(onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>Scaffold(appBar:AppBar(title:const Text('Riwayat Kegiatan PPSU')),body:PpsuHistoryPage(api:widget.api)))) ,icon:const Icon(Icons.history),label:const Text('Lihat Riwayat Kegiatan')),
  ]);
 }
-class PpsuHistoryPage extends StatelessWidget{final CikokoApi api;const PpsuHistoryPage({super.key,required this.api});@override Widget build(BuildContext context)=>FutureBuilder<Map<String,dynamic>>(future:api.call('v211_ppsu_list'),builder:(c,s){if(s.hasError)return const Center(child:Text('Laporan belum dapat dimuat.'));if(!s.hasData)return const Center(child:CircularProgressIndicator());final rows=List<dynamic>.from(s.data?['items']??[]);return ListView(children:[for(final raw in rows)Card(child:ListTile(title:Text('${raw['team']} · ${raw['work_date']}'),subtitle:Text('${raw['activity']}',maxLines:2,overflow:TextOverflow.ellipsis),trailing:const Icon(Icons.chevron_right),onTap:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>PpsuDetailPage(api:api,id:int.parse('${raw['id']}')))))),if(rows.isEmpty)const ListTile(title:Text('Belum ada laporan kegiatan PPSU.'))]);});}
-class PpsuDetailPage extends StatelessWidget{final CikokoApi api;final int id;const PpsuDetailPage({super.key,required this.api,required this.id});@override Widget build(BuildContext c)=>Scaffold(appBar:AppBar(title:const Text('Detail Kegiatan PPSU')),body:FutureBuilder<Map<String,dynamic>>(future:api.callWithQuery('v211_ppsu_detail',{'id':'$id'}),builder:(ctx,s){if(s.hasError)return const Center(child:Text('Detail belum dapat ditampilkan.'));if(!s.hasData)return const Center(child:CircularProgressIndicator());final r=Map<String,dynamic>.from(s.data?['item']??{});return ListView(padding:const EdgeInsets.all(16),children:[Text('${r['team']} · ${r['work_date']}',style:const TextStyle(fontWeight:FontWeight.bold,fontSize:18)),Text('Petugas: ${r['name']??''}'),const SizedBox(height:8),Text('${r['activity']??''}'),const SizedBox(height:12),for(var i=0;i<3;i++)Padding(padding:const EdgeInsets.only(bottom:12),child:GestureDetector(onTap:()=>showDialog<void>(context:c,builder:(_)=>Dialog(child:InteractiveViewer(child:Image.network(api.photoUrl('v211_ppsu_photo',{'id':'$id','index':'$i'}),headers:api.authHeaders())))),child:ClipRRect(borderRadius:BorderRadius.circular(12),child:Image.network(api.photoUrl('v211_ppsu_photo',{'id':'$id','index':'$i'}),headers:api.authHeaders(),height:180,fit:BoxFit.cover,errorBuilder:(_,__,___)=>const Text('Foto tidak tersedia')))))]);}),);
+class PpsuHistoryPage extends StatelessWidget {
+ final CikokoApi api;
+ const PpsuHistoryPage({super.key,required this.api});
+ @override
+ Widget build(BuildContext context)=>FutureBuilder<Map<String,dynamic>>(
+  future:api.call('v211_ppsu_list'),
+  builder:(context,snapshot){
+   if(snapshot.hasError)
+    return const Center(child:CikokoEmptyState(
+     icon:Icons.cloud_off_outlined,
+     title:'Riwayat belum dapat dimuat',
+     subtitle:'Periksa koneksi internet dan muat ulang halaman.'));
+   if(!snapshot.hasData)
+    return const Center(child:CircularProgressIndicator());
+   final rows=List<dynamic>.from(snapshot.data?['items']??[]);
+   return ListView(
+    padding:const EdgeInsets.fromLTRB(14,12,14,28),
+    children:[
+     const CikokoPremiumHeader(
+      title:'Riwayat Kegiatan PPSU',
+      subtitle:'Daftar laporan kegiatan sesuai data server.',
+      icon:Icons.history_rounded),
+     const SizedBox(height:14),
+     if(rows.isEmpty)
+      const CikokoEmptyState(
+       icon:Icons.assignment_outlined,
+       title:'Belum ada laporan PPSU',
+       subtitle:'Laporan yang dikirim akan tampil dalam daftar ini.'),
+     for(final raw in rows)
+      Padding(
+       padding:const EdgeInsets.only(bottom:9),
+       child:CikokoPremiumTile(
+        icon:Icons.cleaning_services_outlined,
+        title:'${raw['team']??''} · ${raw['work_date']??''}',
+        subtitle:'${raw['activity']??''}',
+        accent:CikokoPalette.blue,
+        onTap:(){
+         final id=int.tryParse('${raw['id']??''}');
+         if(id==null||id<=0){
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+           content:Text('Nomor laporan belum tersedia dari server.')));
+          return;
+         }
+         Navigator.of(context).push(MaterialPageRoute<void>(
+          builder:(_)=>PpsuDetailPage(api:api,id:id)));
+        },
+       ),
+      ),
+     const CikokoPageSignature(),
+    ],
+   );
+  });
+}
+
+class PpsuDetailPage extends StatelessWidget {
+ final CikokoApi api;
+ final int id;
+ const PpsuDetailPage({super.key,required this.api,required this.id});
+ @override
+ Widget build(BuildContext context)=>Scaffold(
+  appBar:AppBar(title:const Text('Detail Kegiatan PPSU')),
+  body:FutureBuilder<Map<String,dynamic>>(
+   future:api.callWithQuery('v211_ppsu_detail',{'id':'$id'}),
+   builder:(context,snapshot){
+    if(snapshot.hasError)
+     return const Center(child:CikokoEmptyState(
+      icon:Icons.cloud_off_outlined,
+      title:'Detail belum dapat ditampilkan'));
+    if(!snapshot.hasData)
+     return const Center(child:CircularProgressIndicator());
+    final row=Map<String,dynamic>.from(snapshot.data?['item']??{});
+    return ListView(padding:const EdgeInsets.all(14),children:[
+     CikokoPremiumHeader(
+      title:'${row['team']??'Kegiatan PPSU'}',
+      subtitle:'Tanggal kegiatan: ${row['work_date']??'-'}',
+      icon:Icons.cleaning_services_outlined),
+     const SizedBox(height:13),
+     CikokoPremiumSurface(child:Column(
+      crossAxisAlignment:CrossAxisAlignment.stretch,
+      children:[
+       Text('Pelaksana: ${row['name']??'-'}',
+        style:Theme.of(context).textTheme.titleMedium),
+       const SizedBox(height:9),
+       Text('${row['activity']??''}',
+        style:Theme.of(context).textTheme.bodyMedium),
+      ])),
+     const SizedBox(height:13),
+     const CikokoPremiumSection(title:'Foto Dokumentasi',
+      subtitle:'Ketuk foto untuk melihat lebih dekat.'),
+     for(var index=0;index<3;index++)
+      Padding(padding:const EdgeInsets.only(bottom:12),
+       child:InkWell(
+        onTap:()=>showDialog<void>(
+         context:context,
+         builder:(_)=>Dialog(
+          child:InteractiveViewer(
+           child:Image.network(
+            api.photoUrl('v211_ppsu_photo',{'id':'$id','index':'$index'}),
+            headers:api.authHeaders())))),
+        child:ClipRRect(
+         borderRadius:BorderRadius.circular(16),
+         child:Image.network(
+          api.photoUrl('v211_ppsu_photo',{'id':'$id','index':'$index'}),
+          headers:api.authHeaders(),height:190,
+          width:double.infinity,fit:BoxFit.cover,
+          errorBuilder:(_,__,___)=>const SizedBox(
+           height:100,child:Center(child:Text('Foto tidak tersedia')))),
+        ),
+       ),
+      ),
+     const CikokoPageSignature(),
+    ]);
+   },
+  ),
+ );
 }
 
 class CivicNewsDetail extends StatefulWidget{final CikokoApi api;final Map<String,dynamic> preview;const CivicNewsDetail({super.key,required this.api,required this.preview});@override State<CivicNewsDetail> createState()=>_CivicNewsState();}
@@ -703,21 +819,130 @@ class _ArchiveEditorState extends State<ArchiveEditorPage>{
  @override void dispose(){for(final c in data.values){c.dispose();}for(final c in children){c.dispose();}super.dispose();}
  Future<void> load()async{try{final r=await widget.api.callWithQuery('v211_archive_detail',{'id':'${widget.editId}'});final row=Map<String,dynamic>.from(r['item'] as Map);final details=Map<String,dynamic>.from(row['details']??{});for(final e in data.entries){e.value.text='${row[e.key]??details[e.key]??''}';}data['name']!.text='${row['applicant_name']??''}';final raw=List<dynamic>.from(details['children']??[]);for(final item in raw){children.add(TextEditingController(text:'${item['name']??''}'));}if(mounted)setState(()=>loaded=true);}catch(_){if(mounted)civicMessage(context,'Arsip belum dapat dimuat untuk disunting.');}}
  Future<void> photoPick(String key,ImageSource source)async{final f=await ImagePicker().pickImage(source:source,maxWidth:2300,imageQuality:85);if(f!=null&&mounted)setState(()=>photos[key]=f.path);}
- Widget photoEntry(String key,String label)=>Card(child:Padding(padding:const EdgeInsets.all(9),child:Row(children:[if(photos.containsKey(key))Image.file(File(photos[key]!),height:48,width:48,fit:BoxFit.cover)else const Icon(Icons.image_outlined,color:civicBlue),const SizedBox(width:9),Expanded(child:Text(label,style:const TextStyle(fontSize:11.5))),IconButton(onPressed:()=>photoPick(key,ImageSource.camera),tooltip:'Kamera',icon:const Icon(Icons.camera_alt_outlined)),IconButton(onPressed:()=>photoPick(key,ImageSource.gallery),tooltip:'Galeri',icon:const Icon(Icons.photo_library_outlined))])));
+ Widget photoEntry(String key,String label)=>Card(
+  margin:const EdgeInsets.only(bottom:9),
+  child:Padding(padding:const EdgeInsets.all(12),
+   child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+    Row(children:[
+     Expanded(child:Text(label,style:Theme.of(context).textTheme.titleMedium)),
+     if(photos.containsKey(key))
+      const Icon(Icons.check_circle_rounded,
+       size:19,color:Color(0xFF0AA474)),
+    ]),
+    const SizedBox(height:8),
+    ClipRRect(borderRadius:BorderRadius.circular(12),
+     child:SizedBox(height:135,child:photos.containsKey(key)
+       ?Image.file(File(photos[key]!),fit:BoxFit.contain,
+         errorBuilder:(_,__,___)=>const Center(
+          child:Text('Pratinjau foto tidak tersedia')))
+       :ColoredBox(
+         color:Theme.of(context).colorScheme.surfaceContainerHighest,
+         child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+          Icon(Icons.add_photo_alternate_outlined,
+           color:Theme.of(context).colorScheme.primary,size:30),
+          const SizedBox(height:5),
+          const Text('Foto belum dipilih',style:TextStyle(fontSize:11)),
+         ])),
+    )),
+    const SizedBox(height:9),
+    Wrap(spacing:8,runSpacing:6,children:[
+     OutlinedButton.icon(
+      onPressed:()=>photoPick(key,ImageSource.camera),
+      icon:const Icon(Icons.camera_alt_outlined,size:17),
+      label:Text(photos.containsKey(key)?'Foto Ulang':'Kamera')),
+     OutlinedButton.icon(
+      onPressed:()=>photoPick(key,ImageSource.gallery),
+      icon:const Icon(Icons.photo_library_outlined,size:17),
+      label:Text(photos.containsKey(key)?'Ganti Foto':'Galeri')),
+    ]),
+   ])),
+ );
  Future<void> save()async{if(saving)return;setState(()=>saving=true);try{final fields={for(final e in data.entries)e.key:e.value.text.trim(),'id':'${widget.editId??0}','children_json':'[${children.map((c)=>'{"name":${_quote(c.text.trim())}}').join(',')}]'};
  final files={for(final e in photos.entries)e.key:[e.value]};await widget.api.upload('v211_archive_save',fields,files);if(mounted){civicMessage(context,'Arsip Ahli Waris berhasil disimpan.');if(widget.editId!=null)Navigator.of(context).pop(true);else{for(final c in data.values){c.clear();}data['archive_year']!.text='${DateTime.now().year}';for(final c in children){c.dispose();}children.clear();setState(()=>photos.clear());}}}catch(_){if(mounted)civicMessage(context,'Arsip belum berhasil disimpan. Mohon periksa kembali data dan lampiran.');}finally{if(mounted)setState(()=>saving=false);}}
  String _quote(String v)=>'"${v.replaceAll('\\','\\\\').replaceAll('"','\\"').replaceAll('\n',' ')}"';
  Widget field(String key,String label,{int lines=1})=>Padding(padding:const EdgeInsets.only(bottom:10),child:TextField(controller:data[key],maxLines:lines,decoration:InputDecoration(labelText:label)));
- @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(14),children:[Text(widget.editId==null?'Tambah Arsip Ahli Waris':'Edit Arsip Ahli Waris',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:19,fontWeight:FontWeight.w800)),if(widget.editId!=null&&!loaded)const LinearProgressIndicator(),const SizedBox(height:10),
-  const Text('Data Surat dan Pemohon',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800)),
-  field('archive_year','Tahun Surat'),field('reference_no','Nomor Surat'),field('name','Nama Pemohon'),field('nik','NIK Pemohon'),field('phone','Nomor HP'),field('address','Alamat Pemohon',lines:2),field('relation','Hubungan dengan Pewaris'),
-  const Text('Data Pewaris',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800)),field('deceased_name','Nama Almarhum/Almarhumah'),field('birthplace','Tempat Lahir'),field('birthdate','Tanggal Lahir (YYYY-MM-DD)'),field('marriage_date','Tanggal Menikah (YYYY-MM-DD)'),field('marital_status','Status Perkawinan'),field('deathdate','Tanggal Meninggal (YYYY-MM-DD)'),field('heirs','Daftar Ahli Waris',lines:3),field('notes','Catatan Arsip',lines:3),
-  const SizedBox(height:8),const Text('Dokumen Persyaratan',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800)),
-  for(final item in const <String,String>{'r1':'Surat Pengantar RT/RW','r2':'Surat Permohonan','r3':'Pernyataan Keabsahan','r4':'KTP/KK/Akta Lahir Ahli Waris','r5':'Surat Kematian','r6':'Surat Nikah','r7':'Akta Cerai (jika ada)','r8':'Surat Kematian Ahli Waris (jika ada)'}.entries)photoEntry(item.key,item.value),
-  Row(children:[const Expanded(child:Text('Daftar Anak (maksimal 10)',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800))),TextButton(onPressed:children.length>=10?null:()=>setState(()=>children.add(TextEditingController())),child:const Text('+ Tambah Anak'))]),
-  for(var i=0;i<children.length;i++)Card(child:Padding(padding:const EdgeInsets.all(10),child:Column(children:[TextField(controller:children[i],decoration:InputDecoration(labelText:'Nama anak ke-${i+1}')),photoEntry('child_${i+1}','KTP, KK dan Akta Lahir anak ke-${i+1}')]))),
-  const SizedBox(height:15),FilledButton.icon(onPressed:saving?null:save,icon:const Icon(Icons.save_outlined),label:Text(saving?'Menyimpan…':'Simpan Data Arsip')),const SizedBox(height:25),
- ]);
+ @override
+ Widget build(BuildContext context)=>ListView(
+  padding:const EdgeInsets.fromLTRB(14,12,14,30),
+  children:[
+   CikokoPremiumHeader(
+    title:widget.editId==null?'Tambah Arsip Ahli Waris':'Edit Arsip Ahli Waris',
+    subtitle:'Pencatatan dokumen arsip sesuai kewenangan petugas.',
+    icon:Icons.folder_copy_outlined),
+   if(widget.editId!=null&&!loaded)
+    const Padding(padding:EdgeInsets.all(10),
+     child:LinearProgressIndicator()),
+   const SizedBox(height:13),
+   CikokoFlowSection(
+    title:'01 · Data Surat dan Pemohon',
+    subtitle:'Nomor surat dan identitas yang tercatat',
+    icon:Icons.badge_outlined,
+    child:Column(children:[
+     field('archive_year','Tahun Surat'),
+     field('reference_no','Nomor Surat'),
+     field('name','Nama Pemohon'),
+     field('nik','NIK Pemohon'),
+     field('phone','Nomor HP'),
+     field('address','Alamat Pemohon',lines:2),
+     field('relation','Hubungan dengan Pewaris'),
+    ])),
+   CikokoFlowSection(
+    title:'02 · Data Pewaris',
+    subtitle:'Informasi sesuai dokumen pendukung',
+    icon:Icons.family_restroom_outlined,
+    child:Column(children:[
+     field('deceased_name','Nama Almarhum/Almarhumah'),
+     field('birthplace','Tempat Lahir'),
+     field('birthdate','Tanggal Lahir (YYYY-MM-DD)'),
+     field('marriage_date','Tanggal Menikah (YYYY-MM-DD)'),
+     field('marital_status','Status Perkawinan'),
+     field('deathdate','Tanggal Meninggal (YYYY-MM-DD)'),
+     field('heirs','Daftar Ahli Waris',lines:3),
+     field('notes','Catatan Arsip',lines:3),
+    ])),
+   const CikokoPremiumSection(
+    title:'03 · Dokumen Persyaratan',
+    subtitle:'Unggah, lihat, atau ganti lampiran pada tiap kolom.'),
+   for(final item in const <String,String>{
+    'r1':'Surat Pengantar RT/RW',
+    'r2':'Surat Permohonan',
+    'r3':'Pernyataan Keabsahan',
+    'r4':'KTP/KK/Akta Lahir Ahli Waris',
+    'r5':'Surat Kematian',
+    'r6':'Surat Nikah',
+    'r7':'Akta Cerai (jika ada)',
+    'r8':'Surat Kematian Ahli Waris (jika ada)',
+   }.entries)photoEntry(item.key,item.value),
+   const SizedBox(height:12),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+     Row(children:[
+      Expanded(child:Text('04 · Daftar Anak',
+       style:Theme.of(context).textTheme.titleMedium)),
+      TextButton.icon(
+       onPressed:children.length>=10?null:()=>
+        setState(()=>children.add(TextEditingController())),
+       icon:const Icon(Icons.add_rounded),
+       label:const Text('Tambah Anak')),
+     ]),
+     for(var i=0;i<children.length;i++)
+      Card(child:Padding(padding:const EdgeInsets.all(10),
+       child:Column(children:[
+        TextField(controller:children[i],
+         decoration:InputDecoration(labelText:'Nama anak ke-${i+1}')),
+        photoEntry('child_${i+1}',
+         'KTP, KK dan Akta Lahir anak ke-${i+1}'),
+       ]))),
+    ])),
+   const SizedBox(height:13),
+   FilledButton.icon(
+    onPressed:saving?null:save,
+    icon:const Icon(Icons.save_outlined),
+    label:Text(saving?'Menyimpan…':'Simpan Data Arsip')),
+   const CikokoPageSignature(),
+  ],
+ );
+
 }
 
 class PpsuHighlights extends StatelessWidget {

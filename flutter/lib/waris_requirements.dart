@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'premium_ui.dart';
 
 const _headingColor = Color(0xff10375f);
 const _actionColor = Color(0xff226fda);
@@ -65,20 +66,22 @@ Future<void> showCikokoWarisRequirements(
             color:Theme.of(popup).colorScheme.surface,
             elevation:14,
             child:SafeArea(child:Column(children:[
-              Container(color:Theme.of(popup).colorScheme.surfaceContainerHigh,padding:const EdgeInsets.fromLTRB(18,14,9,14),
-                child:Row(children:[
-                  const Icon(Icons.fact_check_outlined,color:_actionColor),
-                  const SizedBox(width:10),
-                  Expanded(child:Text('Persyaratan Pelayanan Surat',
-                    style:TextStyle(fontSize:17,fontWeight:FontWeight.w800,color:Theme.of(popup).colorScheme.onSurface))),
-                  IconButton(tooltip:'Tutup',onPressed:()=>Navigator.of(popup).pop(),
-                    icon:const Icon(Icons.close)),
-                ])),
+              Padding(padding:const EdgeInsets.fromLTRB(12,12,12,4),
+                child:CikokoPremiumHeader(
+                  title:'Persyaratan Pelayanan Surat',
+                  subtitle:'Dokumen resmi sebelum mengajukan layanan.',
+                  icon:Icons.fact_check_outlined,
+                  trailing:IconButton(
+                    tooltip:'Tutup',
+                    onPressed:()=>Navigator.of(popup).pop(),
+                    icon:const Icon(Icons.close_rounded,color:Colors.white)),
+                )),
               Expanded(child:ListView(
                 padding:const EdgeInsets.fromLTRB(12,14,12,24),
                 children:[
-                  const Text('Informasi dokumen yang perlu disiapkan sebelum mengajukan layanan.',
-                    style:TextStyle(fontSize:12,color:Colors.blueGrey)),
+                  Text('Siapkan dokumen yang sesuai dan terbaca sebelum mengajukan layanan.',
+                    style:TextStyle(fontSize:12,
+                      color:Theme.of(popup).colorScheme.onSurfaceVariant)),
                   const SizedBox(height:12),
                   for(final group in cikokoWarisRequirements)
                     Card(margin:const EdgeInsets.only(bottom:14),child:Padding(
@@ -88,27 +91,34 @@ Future<void> showCikokoWarisRequirements(
                           style:TextStyle(fontWeight:FontWeight.w800,
                             color:Theme.of(popup).colorScheme.onSurface,fontSize:14)),
                         const SizedBox(height:10),
-                        Table(
-                          border:TableBorder.all(color:const Color(0xffdbe5f0)),
-                          columnWidths:const {0:FixedColumnWidth(40),1:FlexColumnWidth()},
-                          children:[
-                            TableRow(decoration:BoxDecoration(color:Theme.of(popup).colorScheme.surfaceContainerHighest),
-                              children:[
-                                Padding(padding:EdgeInsets.all(8),
-                                  child:Text('No.',style:TextStyle(fontWeight:FontWeight.bold))),
-                                Padding(padding:EdgeInsets.all(8),
-                                  child:Text('Dokumen Persyaratan',style:TextStyle(fontWeight:FontWeight.bold))),
-                              ]),
-                            for(var i=0;i<group.requirements.length;i++)
-                              TableRow(children:[
-                                Padding(padding:const EdgeInsets.all(8),
-                                  child:Text('${i+1}.',style:const TextStyle(fontSize:11))),
-                                Padding(padding:const EdgeInsets.all(8),
-                                  child:Text(group.requirements[i],
-                                    style:const TextStyle(fontSize:11.5))),
-                              ]),
-                          ],
-                        ),
+                        for(var i=0;i<group.requirements.length;i++)
+                          Container(
+                            margin:const EdgeInsets.only(bottom:7),
+                            padding:const EdgeInsets.fromLTRB(9,10,9,10),
+                            decoration:BoxDecoration(
+                              color:Theme.of(popup).colorScheme.surfaceContainerLow,
+                              borderRadius:BorderRadius.circular(12),
+                              border:Border.all(
+                                color:Theme.of(popup).colorScheme.outlineVariant)),
+                            child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
+                              Container(
+                                width:25,height:25,
+                                alignment:Alignment.center,
+                                decoration:BoxDecoration(
+                                  color:Theme.of(popup).colorScheme.primaryContainer,
+                                  shape:BoxShape.circle),
+                                child:Text('${i+1}',
+                                  style:TextStyle(
+                                    color:Theme.of(popup).colorScheme.primary,
+                                    fontSize:11,fontWeight:FontWeight.w800)),
+                              ),
+                              const SizedBox(width:10),
+                              Expanded(child:Text(group.requirements[i],
+                                style:TextStyle(
+                                  color:Theme.of(popup).colorScheme.onSurface,
+                                  fontSize:11.8,height:1.4))),
+                            ]),
+                          ),
                         if(group.allowApply)...[
                           const SizedBox(height:12),
                           SizedBox(width:double.infinity,child:FilledButton.icon(

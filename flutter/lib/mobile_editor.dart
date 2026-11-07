@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
 import 'api.dart';
@@ -16,6 +17,13 @@ class _MobileEditorState extends State<MobileEditor> {
  bool get archive=>widget.mode=='archive';
  @override void dispose(){title.dispose();body.dispose();reference.dispose();deceased.dispose();year.dispose();super.dispose();}
  Future<void> submit() async {
+  if (sending) return;
+  if (!archive && (title.text.trim().length < 5 ||
+      body.text.trim().length < 10)) {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content:Text('Judul minimal 5 karakter dan isi minimal 10 karakter.')));
+    return;
+  }
   setState(()=>sending=true);
   try {
    final isNews=widget.mode=='berita';
@@ -26,27 +34,134 @@ class _MobileEditorState extends State<MobileEditor> {
   } catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Gagal: $e')));}
   finally {if(mounted)setState(()=>sending=false);}
  }
- Future<void> _addNewsImage(ImageSource source)async{final img=await ImagePicker().pickImage(source:source,imageQuality:82,maxWidth:2200);if(img!=null&&mounted)setState(()=>newsPhotos.add(img.path));}
+ Future<void> _addNewsImage(ImageSource source) async {
+  if(newsPhotos.length>=5)return;
+  final img=await ImagePicker().pickImage(source:source,
+    imageQuality:82,maxWidth:2200);
+  if(img!=null&&mounted)setState(()=>newsPhotos.add(img.path));
+ }
+ Future<void> _replaceNewsImage(int index,ImageSource source) async {
+  final img=await ImagePicker().pickImage(source:source,
+    imageQuality:82,maxWidth:2200);
+  if(img!=null&&mounted&&index>=0&&index<newsPhotos.length){
+    setState(()=>newsPhotos[index]=img.path);
+  }
+ }
  Widget entry(String label,TextEditingController controller,{int lines=1,TextInputType? keyboard}) => Padding(padding:const EdgeInsets.only(bottom:12),child:TextField(controller:controller,maxLines:lines,keyboardType:keyboard,decoration:InputDecoration(labelText:label)));
- @override Widget build(BuildContext context) => ListView(padding:const EdgeInsets.all(14),children:[
-  CikokoPremiumHeader(
-    title:archive?'Tambah Arsip Ahli Waris':widget.mode=='berita'?'Publikasi Berita':'Tambah Pengumuman',
-    subtitle:archive?'Simpan dan kelola arsip surat lama dengan aman.':
-      'Tulis dan terbitkan informasi untuk warga Cikoko.',
+ @override
+ Widget build(BuildContext context)=>ListView(
+  padding:const EdgeInsets.fromLTRB(14,12,14,30),
+  children:[
+   CikokoPremiumHeader(
+    title:archive?'Tambah Arsip Ahli Waris':
+      widget.mode=='berita'?'Publikasi Berita':'Tambah Pengumuman',
+    subtitle:archive?'Catat metadata arsip resmi secara aman.':
+      'Tulis konten layanan publik yang dapat dibaca warga.',
     icon:archive?Icons.folder_copy_outlined:
       widget.mode=='berita'?Icons.newspaper_outlined:Icons.campaign_outlined),
-  const SizedBox(height:12),
-  if(archive)...[entry('Tahun surat',year,keyboard:TextInputType.number),entry('Nomor surat',reference),entry('Nama pemohon',title),entry('Nama pewaris',deceased),entry('Catatan arsip',body,lines:4)]
-  else ...[entry('Judul',title),entry('Isi ${widget.mode}',body,lines:9),if(widget.mode=='berita')...[
-    const Text('Foto Berita (maksimal 5)',style:TextStyle(fontWeight:FontWeight.w800)),
-    Wrap(spacing:8,children:[OutlinedButton.icon(onPressed:newsPhotos.length>=5?null:()=>_addNewsImage(ImageSource.camera),icon:const Icon(Icons.camera_alt_outlined),label:const Text('Kamera')),
-       OutlinedButton.icon(onPressed:newsPhotos.length>=5?null:()=>_addNewsImage(ImageSource.gallery),icon:const Icon(Icons.photo_library_outlined),label:const Text('Galeri'))]),
-    Text('${newsPhotos.length} dari 5 foto dipilih'),
-   ]],
-  SizedBox(height:48,child:FilledButton.icon(onPressed:sending?null:submit,icon:const Icon(Icons.save_outlined),label:Text(sending?'Menyimpan...':'Simpan'))),
-  const SizedBox(height:10),if(archive)const Text('Lampiran foto arsip lama tetap dikelola melalui panel cPanel. Fitur ini khusus pencatatan metadata.',style:TextStyle(fontSize:12,color:Colors.blueGrey)),
-  const CikokoPageSignature(),
- ]);
+   const SizedBox(height:13),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,
+    children:[
+     Text(archive?'Informasi Arsip':'Informasi Publikasi',
+       style:Theme.of(context).textTheme.titleMedium),
+     const SizedBox(height:12),
+     if(archive)...[
+      entry('Tahun surat',year,keyboard:TextInputType.number),
+      entry('Nomor surat',reference),
+      entry('Nama pemohon',title),
+      entry('Nama pewaris',deceased),
+      entry('Catatan arsip',body,lines:4),
+     ]else...[
+      entry('Judul',title),
+      entry('Isi ${widget.mode}',body,lines:8),
+     ],
+    ],
+   )),
+   if(widget.mode=='berita')...[
+    const SizedBox(height:12),
+    CikokoPremiumSurface(child:Column(
+     crossAxisAlignment:CrossAxisAlignment.stretch,
+     children:[
+      Text('Dokumentasi Berita',
+        style:Theme.of(context).textTheme.titleMedium),
+      const SizedBox(height:4),
+      Text('Maksimal 5 foto. Lihat setiap pratinjau dan ganti jika diperlukan.',
+        style:Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height:10),
+      for(var index=0;index<newsPhotos.length;index++)...[
+       Container(
+        margin:const EdgeInsets.only(bottom:11),
+        padding:const EdgeInsets.all(9),
+        decoration:BoxDecoration(
+         color:Theme.of(context).colorScheme.surfaceContainerLow,
+         borderRadius:BorderRadius.circular(13),
+         border:Border.all(
+          color:Theme.of(context).colorScheme.outlineVariant)),
+        child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+         Text('Foto ${index+1} dari 5',
+          style:Theme.of(context).textTheme.titleMedium),
+         const SizedBox(height:7),
+         ClipRRect(
+          borderRadius:BorderRadius.circular(10),
+          child:Image.file(File(newsPhotos[index]),
+           height:135,fit:BoxFit.contain,
+           errorBuilder:(_,__,___)=>const SizedBox(
+            height:110,
+            child:Center(child:Text('Pratinjau foto tidak tersedia')))),
+         ),
+         Wrap(spacing:7,runSpacing:5,children:[
+          OutlinedButton.icon(
+           onPressed:()=>_replaceNewsImage(index,ImageSource.gallery),
+           icon:const Icon(Icons.photo_library_outlined,size:17),
+           label:const Text('Ganti Foto')),
+          OutlinedButton.icon(
+           onPressed:()=>_replaceNewsImage(index,ImageSource.camera),
+           icon:const Icon(Icons.camera_alt_outlined,size:17),
+           label:const Text('Foto Ulang')),
+          TextButton.icon(
+           onPressed:()=>setState(()=>newsPhotos.removeAt(index)),
+           icon:const Icon(Icons.delete_outline_rounded,size:17),
+           label:const Text('Hapus')),
+         ]),
+        ]),
+       ),
+      ],
+      if(newsPhotos.isEmpty)
+       const CikokoEmptyState(
+        icon:Icons.add_photo_alternate_outlined,
+        title:'Belum ada foto berita',
+        subtitle:'Foto akan muncul di sini setelah dipilih.'),
+      Wrap(spacing:8,runSpacing:6,children:[
+       OutlinedButton.icon(
+        onPressed:newsPhotos.length>=5?null:
+          ()=>_addNewsImage(ImageSource.camera),
+        icon:const Icon(Icons.camera_alt_outlined),
+        label:const Text('Kamera')),
+       OutlinedButton.icon(
+        onPressed:newsPhotos.length>=5?null:
+          ()=>_addNewsImage(ImageSource.gallery),
+        icon:const Icon(Icons.photo_library_outlined),
+        label:const Text('Galeri')),
+      ]),
+     ],
+    )),
+   ],
+   const SizedBox(height:13),
+   FilledButton.icon(
+    onPressed:sending?null:submit,
+    icon:const Icon(Icons.save_outlined),
+    label:Text(sending?'Menyimpan...':'Simpan dan Terbitkan')),
+   if(archive)...[
+    const SizedBox(height:8),
+    Text('Lampiran arsip lama tetap dikelola melalui layanan administrasi '
+     'yang berwenang; formulir ini menyimpan metadata.',
+     style:Theme.of(context).textTheme.bodySmall),
+   ],
+   const CikokoPageSignature(),
+  ],
+ );
+
 }
 class ArchiveList extends StatefulWidget {final CikokoApi api;const ArchiveList({super.key,required this.api});@override State<ArchiveList> createState()=>_ArchiveListState();}
 class _ArchiveListState extends State<ArchiveList> {late Future<Map<String,dynamic>> result;@override void initState(){super.initState();result=widget.api.call('archives');}

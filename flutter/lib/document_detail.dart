@@ -222,5 +222,46 @@ class _CorrectionPhotoPickerState extends State<CorrectionPhotoPicker>{String? p
    }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Foto gagal dipilih: $e')));}
    finally{if(mounted)setState(()=>busy=false);}
  }
- @override Widget build(BuildContext context)=>Card(child:Padding(padding:const EdgeInsets.all(10),child:Row(children:[if(path!=null)ClipRRect(borderRadius:BorderRadius.circular(8),child:Image.file(File(path!),width:53,height:56,fit:BoxFit.cover)),const SizedBox(width:7),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(widget.label,style:const TextStyle(fontWeight:FontWeight.bold,fontSize:12)),Wrap(spacing:4,children:[TextButton.icon(onPressed:busy?null:()=>pick(ImageSource.camera),icon:const Icon(Icons.camera_alt_outlined,size:16),label:const Text('Kamera')),TextButton.icon(onPressed:busy?null:()=>pick(ImageSource.gallery),icon:const Icon(Icons.photo_library_outlined,size:16),label:const Text('Galeri'))])]))])));
+ @override
+ Widget build(BuildContext context)=>Card(
+  margin:const EdgeInsets.only(bottom:10),
+  child:Padding(padding:const EdgeInsets.all(12),
+   child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+    Row(children:[
+     Expanded(child:Text(widget.label,
+      style:Theme.of(context).textTheme.titleMedium)),
+     if(path!=null)const Icon(Icons.check_circle_rounded,
+      color:Color(0xFF13A97D),size:19),
+    ]),
+    const SizedBox(height:9),
+    ClipRRect(borderRadius:BorderRadius.circular(12),
+     child:SizedBox(height:142,
+      child:path!=null
+       ?Image.file(File(path!),fit:BoxFit.contain,
+         errorBuilder:(_,__,___)=>const Center(
+          child:Text('Pratinjau tidak tersedia')))
+       :ColoredBox(
+         color:Theme.of(context).colorScheme.surfaceContainerHighest,
+         child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+          Icon(Icons.add_photo_alternate_outlined,
+           color:Theme.of(context).colorScheme.primary,size:29),
+          const SizedBox(height:5),
+          Text('Foto belum dipilih',
+           style:Theme.of(context).textTheme.bodySmall),
+         ])),
+     )),
+    const SizedBox(height:9),
+    Wrap(spacing:8,runSpacing:7,children:[
+     OutlinedButton.icon(
+      onPressed:busy?null:()=>pick(ImageSource.camera),
+      icon:const Icon(Icons.camera_alt_outlined,size:17),
+      label:Text(path==null?'Kamera':'Foto Ulang')),
+     OutlinedButton.icon(
+      onPressed:busy?null:()=>pick(ImageSource.gallery),
+      icon:const Icon(Icons.photo_library_outlined,size:17),
+      label:Text(path==null?'Galeri':'Ganti Foto')),
+    ]),
+   ]),
+  ),
+ );
 }

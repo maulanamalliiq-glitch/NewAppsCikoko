@@ -2,6 +2,7 @@ import 'event_scope.dart';
 import 'app_settings.dart';
 import 'design_system.dart';
 import 'premium_ui.dart';
+import 'premium_flow_ui.dart';
 import 'profile_editor.dart';
 import 'dart:async';
 import 'dart:io';
@@ -401,7 +402,16 @@ class _HomeState extends State<HomePage> {
     ));
     if(leave==true&&mounted){SystemNavigator.pop();}
   }
-  @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
+  @override
+  Widget build(BuildContext c) {
+    // Defense-in-depth: a HomePage created without a valid session cannot
+    // expose the role dashboard or any private navigation.
+    if(guest){
+      return LoginPage(onLogin:widget.onAuthenticated);
+    }
+    return PopScope(canPop:false,
+      onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},
+      child:Scaffold(
     appBar: guest && section == 'Dashboard' ? null : AppBar(
       backgroundColor: CikokoDesign.navy,
       foregroundColor: Colors.white,
@@ -452,7 +462,7 @@ class _HomeState extends State<HomePage> {
       SafeArea(top:guest && section=='Dashboard',
        child:CikokoPremiumCanvas(child:_page())),
     bottomNavigationBar: NavigationBar(
-      height: 70,
+      height: 76,
       selectedIndex: nav,
       labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       onDestinationSelected: selectNav,
@@ -466,8 +476,8 @@ class _HomeState extends State<HomePage> {
           selectedIcon: const Icon(Icons.grid_view_rounded),
           label: CikokoSettings.tr('Layanan', 'Services')),
         NavigationDestination(
-          icon: const Icon(Icons.dashboard_customize_outlined),
-          selectedIcon: const Icon(Icons.dashboard_customize_rounded),
+          icon: const CikokoMenuOrb(),
+          selectedIcon: const CikokoMenuOrb(selected: true),
           label: CikokoSettings.tr('Menu', 'Menu')),
         NavigationDestination(
           icon: Badge(isLabelVisible: unreadCount > 0,
@@ -481,8 +491,10 @@ class _HomeState extends State<HomePage> {
           label: CikokoSettings.tr('Akun', 'Account')),
       ],
     ),
-    floatingActionButton:section=='Hubungi Kami'?null:FloatingActionButton.small(tooltip:'Hubungi Admin',onPressed:()=>switchTo('Hubungi Kami'),backgroundColor:blue,foregroundColor:Colors.white,child:const Icon(Icons.chat_bubble_outline)),
+    // Messaging stays in the authorized Menu/Drawer; no floating button
+    // overlaps form fields or the premium bottom navigation.
   ));
+  }
   Widget _page(){switch(section){
     case 'Dashboard':return home();
     case 'Menu Cikoko':return menuPage();
@@ -655,6 +667,7 @@ class _HomeState extends State<HomePage> {
   Widget home()=>ListView(padding:EdgeInsets.zero,children:[
     if(isStaff) Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoStaffHero(
       roleName:roleLabel,
+      publicCounts:letterCounts,
       accountName:'${api.profile?['name']??'Petugas Cikoko'}',
       onManagement: () => switchTo(
         role == 'admin' && capabilities['role:manage'] == true
@@ -669,30 +682,27 @@ class _HomeState extends State<HomePage> {
       onAspirations:()=>switchTo('Pusat Laporan'),
       onInnovations:()=>switchTo('Inovasi'),
     ))
-    else CikokoGuestHero(
-      onLogin:openLogin,
-      onRegister:openRegistration,
-      onServices:()=>switchTo('Layanan Online'),
-      onNews:()=>switchTo('Berita & Kegiatan'),
-      onInnovations:()=>switchTo('Inovasi'),
-      onAbout:showOfficeProfile,
-    ),
+    else const SizedBox.shrink(), // authenticated roles handled above
 
     Padding(padding:const EdgeInsets.symmetric(horizontal:12),child:Column(
       crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-    if(guest||role=='warga'||role=='admin')Padding(padding:const EdgeInsets.only(top:8),child:CikokoLetterCounters(
+    Padding(
+      padding: const EdgeInsets.only(top: 14, bottom: 6),
+      child: CikokoSearchLauncher(onTap: () => switchTo('Menu Cikoko')),
+    ),
+    if(role=='warga')Padding(padding:const EdgeInsets.only(top:8),child:CikokoLetterCounters(
       counts:letterCounts,onStatusTap:(category)=>
           role=='admin' && category=='all'
             ? showPublicLetterPie(context,api)
             : showPublicLetterStatus(context,api,category:category))),
     Padding(padding:const EdgeInsets.only(top:12,bottom:7),child:Row(
       mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[
-        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w600)),
+        Text(role=='warga'||guest?'Layanan Masyarakat':'Menu Cepat',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:15,fontWeight:FontWeight.w800)),
         TextButton(onPressed:()=>switchTo(role=='warga'?'Layanan Online':'Menu Cikoko'),child:const Text('Lihat Semua →',style:TextStyle(fontSize:11))),
       ])),
     if(role=='warga')
       LayoutBuilder(builder:(ctx,c)=>GridView.builder(
-        itemCount:activeServices.length,
+        itemCount:activeServices.length > 8 ? 8 : activeServices.length,
         shrinkWrap:true,
         physics:const NeverScrollableScrollPhysics(),
         gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(
@@ -1268,128 +1278,323 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
         :text]);
    }finally{if(mounted)setState(()=>sending=false);}
  }
- @override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(12),children:[
-const CikokoPremiumHeader(title:'Pengajuan Ahli Waris',
- subtitle:'Lengkapi identitas dan dokumen untuk proses administrasi.',
- icon:Icons.family_restroom_outlined),
-const SizedBox(height:11),
-const Card(child:Padding(padding:EdgeInsets.all(16),child:Text('Permohonan Pencatatan Ahli Waris\nSemua data dan foto dokumen akan diperiksa petugas. Pastikan foto terbaca.',style:TextStyle(color:navy,fontWeight:FontWeight.w600)))),Card(child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Identitas Pemohon dan Pewaris',style:Theme.of(c).textTheme.titleMedium),const SizedBox(height:14),for(final e in names.entries)Field(e.value,v(e.key),lines:e.key=='heirs'||e.key=='address'?3:1,date:const ['birthdate','marriage_date','deathdate'].contains(e.key),keyboard:e.key=='nik'?TextInputType.number:e.key=='phone'?TextInputType.phone:TextInputType.text)]))),const SizedBox(height:12),Text('Foto Persyaratan Wajib',style:Theme.of(c).textTheme.titleMedium),for(final e in requiredPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
-const SizedBox(height:12),
-Text('Dua Orang Saksi',style:Theme.of(c).textTheme.titleMedium),
-for(final e in witnessPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),
-const SizedBox(height:12),Text('Dokumen Kondisional',style:Theme.of(c).textTheme.titleMedium),for(final e in optionalPhotos.entries)PhotoInput(key:ValueKey(e.key),label:e.value,currentPath:photoFor(e.key),onChanged:(f)=>setState(()=>files[e.key]=[f])),const SizedBox(height:14),Row(children:[Expanded(child:Text('Data Anak (maksimal 10)',style:Theme.of(c).textTheme.titleMedium)),OutlinedButton(onPressed:children>=10?null:()=>setState(()=>children++),child:const Text('+ Tambah Anak'))]),for(var i=1;i<=children;i++)Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[Field('Nama anak ke-$i',v('child_name_$i')),for(final e in childPhotos.entries)PhotoInput(key:ValueKey('child_${i}_${e.key}'),label:'${e.value} anak ke-$i',currentPath:photoFor('child_${i}_${e.key}'),onChanged:(f)=>setState(()=>files['child_${i}_${e.key}']=[f]))]))),CheckboxListTile(value:agree,onChanged:(v)=>setState(()=>agree=v??false),title:const Text('Saya menyatakan seluruh data dan foto dokumen sesuai keadaan sebenarnya.',style:TextStyle(fontSize:12))),if(sending)...[LinearProgressIndicator(value:progress),Padding(padding:const EdgeInsets.all(8),child:Text('Mengirim ${(progress*100).toStringAsFixed(0)}%'))],FilledButton.icon(onPressed:sending||completed?null:send,
- icon:Icon(completed?Icons.check_circle:savedReference!=null?Icons.cloud_upload_outlined:Icons.send),
- label:Padding(padding:const EdgeInsets.all(12),child:Text(completed?'Pengajuan dan KTP Saksi Tersimpan':savedReference!=null?'Coba Lengkapi KTP Saksi':'Kirim Permohonan Ahli Waris'))),const SizedBox(height:24)]);
+ @override
+ Widget build(BuildContext context) => ListView(
+  padding: const EdgeInsets.fromLTRB(13, 12, 13, 30),
+  children: [
+   const CikokoPremiumHeader(
+    title: 'Pengajuan Ahli Waris',
+    subtitle: 'Identitas, foto dokumen, saksi, dan konfirmasi dalam satu layanan.',
+    icon: Icons.family_restroom_outlined),
+   const SizedBox(height: 12),
+   CikokoPremiumSurface(child:Row(children:[
+    Icon(Icons.verified_user_outlined,
+      color:Theme.of(context).colorScheme.primary,size:27),
+    const SizedBox(width:12),
+    Expanded(child:Text('Seluruh identitas dan foto dokumen akan diperiksa petugas. '
+      'Pastikan setiap dokumen terbaca dan sesuai data sebenarnya.',
+      style:Theme.of(context).textTheme.bodySmall)),
+   ])),
+   const SizedBox(height: 13),
+   CikokoFlowSection(
+    title: '01 · Identitas Pemohon dan Pewaris',
+    subtitle: 'Isi data keluarga sesuai dokumen asli.',
+    icon: Icons.badge_outlined,
+    child: Column(children:[
+     for (final e in names.entries)
+      Field(e.value,v(e.key),
+       lines:e.key=='heirs'||e.key=='address'?3:1,
+       date:const ['birthdate','marriage_date','deathdate'].contains(e.key),
+       keyboard:e.key=='nik'?TextInputType.number:
+        e.key=='phone'?TextInputType.phone:TextInputType.text),
+    ]),
+   ),
+   const CikokoPremiumSection(
+     title:'02 · Foto Persyaratan Wajib',
+     subtitle:'Setiap foto mempunyai area pratinjau dan tombol ganti.'),
+   for (final e in requiredPhotos.entries)
+    PhotoInput(key:ValueKey(e.key),label:e.value,
+      currentPath:photoFor(e.key),
+      onChanged:(file)=>setState(()=>files[e.key]=[file])),
+   const SizedBox(height: 12),
+   const CikokoPremiumSection(title:'03 · Dua Orang Saksi',
+     subtitle:'Lengkapi identitas kedua saksi.'),
+   for (final e in witnessPhotos.entries)
+    PhotoInput(key:ValueKey(e.key),label:e.value,
+      currentPath:photoFor(e.key),
+      onChanged:(file)=>setState(()=>files[e.key]=[file])),
+   const SizedBox(height: 12),
+   const CikokoPremiumSection(title:'04 · Dokumen Kondisional',
+     subtitle:'Lampirkan jika berlaku untuk permohonan Anda.'),
+   for (final e in optionalPhotos.entries)
+    PhotoInput(key:ValueKey(e.key),label:e.value,
+      currentPath:photoFor(e.key),
+      onChanged:(file)=>setState(()=>files[e.key]=[file])),
+   const SizedBox(height: 12),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+     Row(children:[
+      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+       Text('05 · Data Anak',style:Theme.of(context).textTheme.titleMedium),
+       Text('Maksimal 10 anak jika diperlukan.',
+        style:Theme.of(context).textTheme.bodySmall),
+      ])),
+      OutlinedButton.icon(
+       onPressed:children>=10?null:()=>setState(()=>children++),
+       icon:const Icon(Icons.add_rounded,size:17),
+       label:const Text('Tambah')),
+     ]),
+     for(var i=1;i<=children;i++)...[
+      const SizedBox(height: 12),
+      Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[
+       Field('Nama anak ke-$i',v('child_name_$i')),
+       for (final e in childPhotos.entries)
+        PhotoInput(key:ValueKey('child_${i}_${e.key}'),
+          label:'${e.value} anak ke-$i',
+          currentPath:photoFor('child_${i}_${e.key}'),
+          onChanged:(file)=>setState(()=>
+            files['child_${i}_${e.key}']=[file])),
+      ]))),
+     ],
+    ])),
+   const SizedBox(height: 13),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+     Text('06 · Pernyataan dan Pengiriman',
+       style:Theme.of(context).textTheme.titleMedium),
+     const SizedBox(height:8),
+     CheckboxListTile(
+      value:agree,contentPadding:EdgeInsets.zero,
+      controlAffinity:ListTileControlAffinity.leading,
+      onChanged:sending||completed?null:
+       (value)=>setState(()=>agree=value??false),
+      title:const Text('Saya menyatakan seluruh data dan foto dokumen '
+        'sesuai keadaan sebenarnya.',style:TextStyle(fontSize:12,height:1.4)),
+     ),
+     if(sending)...[
+      LinearProgressIndicator(value:progress>0?progress:null),
+      const SizedBox(height:8),
+      Text('Mengirim ${(progress*100).toStringAsFixed(0)}%',
+        style:Theme.of(context).textTheme.bodySmall),
+     ],
+     const SizedBox(height: 12),
+     FilledButton.icon(
+      key:const Key('waris_premium_submit'),
+      onPressed:sending||completed?null:send,
+      icon:Icon(completed?Icons.check_circle_rounded:
+        savedReference!=null?Icons.cloud_upload_outlined:Icons.send_outlined),
+      label:Padding(padding:const EdgeInsets.symmetric(vertical:10),
+       child:Text(completed?'Pengajuan dan KTP Saksi Tersimpan':
+         savedReference!=null?'Coba Lengkapi KTP Saksi':
+          'Kirim Permohonan Ahli Waris',
+         textAlign:TextAlign.center)),
+     ),
+    ])),
+   const CikokoPageSignature(),
+  ],
+ );
 }
 class ReportForm extends StatefulWidget{final String kind;const ReportForm({super.key,required this.kind});@override State<ReportForm> createState()=>_ReportState();}
 class _ReportState extends State<ReportForm>{final address=TextEditingController(),phone=TextEditingController(),notes=TextEditingController();String? photo;bool sending=false;double progress=0;
  @override void dispose(){address.dispose();phone.dispose();notes.dispose();super.dispose();}
  Future<void> send()async{if(address.text.trim().isEmpty||notes.text.trim().isEmpty||photo==null){notify(context,'Lengkapi alamat, keterangan dan foto',error:true);return;}setState(()=>sending=true);try{await api.upload('report',{'kind':widget.kind,'address':address.text,'phone':phone.text,'notes':notes.text},{'photo':[photo!]},progress:(p){if(mounted)setState(()=>progress=p);});if(mounted)notify(context,'Laporan berhasil dikirim');}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>sending=false);}}
  @override
- Widget build(BuildContext c)=>ListView(
-   padding:const EdgeInsets.fromLTRB(14,12,14,32),
-   children:[
-     CikokoPremiumHeader(
-       title:switch(widget.kind){
-        'jumantik'=>'Laporan Jumantik',
-        'fkdm'=>'Laporan FKDM',
-        'lmk'=>'Laporan LMK',
-        'posyandu'=>'Laporan Posyandu',
-        'pkk'=>'Laporan Dasawisma',
-        'kerja_bakti'=>'Laporan Kerja Bakti',
-        _=>'Laporan Kegiatan',
-       },
-       subtitle:'Lengkapi lokasi, uraian kegiatan, dan foto dokumentasi.',
-       icon:Icons.assignment_turned_in_outlined,
-       start:const Color(0xFF104F9C),end:const Color(0xFF1685D8)),
-     const SizedBox(height:13),
-     const CikokoPremiumSection(title:'Data Laporan',subtitle:'Informasi yang diperlukan untuk tindak lanjut'),
-     Card(child:Padding(
-       padding:const EdgeInsets.all(14),
-       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-         const Row(children:[
-           Icon(Icons.location_on_outlined,color:Color(0xFF1874CB),size:19),
-           SizedBox(width:8),
-           Text('Lokasi & kontak',style:TextStyle(fontSize:14,color:navy,fontWeight:FontWeight.w600)),
-         ]),
-         const SizedBox(height:11),
-         Field('Alamat / Lokasi',address),
-         const SizedBox(height:9),
-         Field('Nomor telepon (opsional)',phone),
-       ]),
-     )),
-     const SizedBox(height:10),
-     Card(child:Padding(
-       padding:const EdgeInsets.all(14),
-       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-         const Row(children:[
-           Icon(Icons.edit_note_outlined,color:Color(0xFF0E947E),size:20),
-           SizedBox(width:8),
-           Text('Uraian laporan',style:TextStyle(fontSize:14,color:navy,fontWeight:FontWeight.w600)),
-         ]),
-         const SizedBox(height:11),
-         Field('Keterangan kegiatan / hasil pemantauan',notes,lines:4),
-         const SizedBox(height:10),
-         PhotoInput(label:'Foto bukti kegiatan',onChanged:(f)=>photo=f),
-       ]),
-     )),
-     const SizedBox(height:12),
-     if(sending)...[
-       LinearProgressIndicator(value:progress>0?progress:null,minHeight:5),
-       const SizedBox(height:6),
-       Text('Mengunggah laporan ${(progress*100).round()}%',
-         style:const TextStyle(fontSize:11,color:Colors.blueGrey)),
-       const SizedBox(height:10),
-     ],
-     SizedBox(height:48,child:FilledButton.icon(
-       onPressed:sending?null:send,
-       icon:const Icon(Icons.send_rounded,size:18),
-       label:Text(sending?'Mengirim laporan…':'Kirim Laporan'),
-     )),
+ Widget build(BuildContext context) => ListView(
+  padding:const EdgeInsets.fromLTRB(14,12,14,30),
+  children:[
+   CikokoPremiumHeader(
+    title:switch(widget.kind){
+     'jumantik'=>'Laporan Jumantik',
+     'fkdm'=>'Laporan FKDM',
+     'lmk'=>'Laporan LMK',
+     'posyandu'=>'Laporan Posyandu',
+     'pkk'=>'Laporan Dasawisma',
+     'kerja_bakti'=>'Laporan Kerja Bakti',
+     _=>'Laporan Kegiatan',
+    },
+    subtitle:'Kirim laporan kegiatan dengan lokasi dan dokumentasi asli.',
+    icon:Icons.assignment_turned_in_outlined),
+   const SizedBox(height:13),
+   CikokoFlowSection(
+    title:'01 · Lokasi dan Kontak',
+    subtitle:'Alamat kejadian serta nomor yang dapat dihubungi.',
+    icon:Icons.location_on_outlined,
+    child:Column(children:[
+     Field('Alamat / Lokasi',address),
+     Field('Nomor telepon (opsional)',phone,
+       keyboard:TextInputType.phone),
+    ]),
+   ),
+   CikokoFlowSection(
+    title:'02 · Uraian Kegiatan',
+    subtitle:'Jelaskan kondisi atau kegiatan yang dilaporkan.',
+    icon:Icons.edit_note_outlined,
+    child:Field('Keterangan kegiatan / hasil pemantauan',notes,lines:4),
+   ),
+   const CikokoPremiumSection(
+    title:'03 · Foto Dokumentasi',
+    subtitle:'Foto asli dapat ditinjau atau diganti sebelum dikirim.'),
+   PhotoInput(label:'Foto bukti kegiatan',
+     onChanged:(file)=>photo=file),
+   const SizedBox(height:13),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+     Text('Konfirmasi Pengiriman',
+       style:Theme.of(context).textTheme.titleMedium),
      const SizedBox(height:7),
-     const Text('Periksa kembali data dan dokumentasi sebelum mengirim.',
-       textAlign:TextAlign.center,
-       style:TextStyle(fontSize:11,color:Colors.blueGrey)),
-   ],
+     Text('Periksa lokasi, keterangan, dan foto sebelum mengirim laporan.',
+       style:Theme.of(context).textTheme.bodySmall),
+     if(sending)...[
+      const SizedBox(height:12),
+      LinearProgressIndicator(value:progress>0?progress:null,minHeight:5),
+      const SizedBox(height:6),
+      Text('Mengunggah laporan ${(progress*100).round()}%',
+        style:Theme.of(context).textTheme.bodySmall),
+     ],
+     const SizedBox(height:13),
+     FilledButton.icon(
+      key:const Key('premium_report_submit'),
+      onPressed:sending?null:send,
+      icon:const Icon(Icons.send_rounded,size:18),
+      label:Text(sending?'Mengirim laporan…':'Kirim Laporan'),
+     ),
+    ])),
+   const CikokoPageSignature(),
+  ],
  );
 }
 class HistoryPage extends StatefulWidget{const HistoryPage({super.key});@override State<HistoryPage> createState()=>_HistoryState();}
 class _HistoryState extends State<HistoryPage>{Future<Map<String,dynamic>>? future;
  @override void initState(){super.initState();reload();}
  void reload(){setState((){future=api.call('history');});}
- @override Widget build(BuildContext c)=>FutureBuilder<Map<String,dynamic>>(future:future,builder:(c,s){
- if(s.hasError)return const Center(child:Padding(padding:EdgeInsets.all(18),child:Text('Riwayat pengajuan belum dapat ditampilkan. Silakan coba kembali.',textAlign:TextAlign.center)));
- if(!s.hasData)return const Center(child:CircularProgressIndicator());
- final rows=List<dynamic>.from(s.data!['items']??[]);
- return RefreshIndicator(onRefresh:()async{reload();try{await future;}catch(_){/* Ditampilkan oleh FutureBuilder. */}},child:ListView(padding:const EdgeInsets.all(12),children:[
-  const CikokoPremiumHeader(title:'Riwayat Pengajuan',
-   subtitle:'Pantau status surat dan layanan yang pernah Anda ajukan.',
-   icon:Icons.history_rounded),const SizedBox(height:12),
-  for(final r in rows)Card(child:ListTile(
-    leading:const CircleAvatar(child:Icon(Icons.description_outlined)),
-    title:Text('${r['title']??r['reference']??'Pengajuan'}',style:const TextStyle(fontSize:13,fontWeight:FontWeight.w700)),
-    subtitle:Text('${r['reference']??''} • ${r['status']??''}\n${r['created_at']??''}',style:const TextStyle(fontSize:11)),
-    trailing:const Icon(Icons.chevron_right),
-    onTap:(){
-      final row=Map<String,dynamic>.from(r);
-      final id=cikokoPositiveId(row);
-      final ref=cikokoWarisReference(row);
-      if(id==null && ref==null){notify(context,'Nomor pengajuan tidak diterima dari server. Pastikan API V2525 aktif.',error:true);reload();return;}
-      showCikokoDocument(context,api,id:id??0,reference:ref??'',
-        kind:cikokoDocumentKind(row),onChanged:reload);
-    },
-  )),if(rows.isEmpty)const ListTile(title:Text('Belum ada riwayat pengajuan.')),
-  const CikokoPageSignature()]));});
+ @override
+ Widget build(BuildContext context) => FutureBuilder<Map<String,dynamic>>(
+  future:future,
+  builder:(context,snapshot) {
+   if(snapshot.hasError){
+    return Center(child:Padding(padding:const EdgeInsets.all(14),
+     child:CikokoEmptyState(
+      icon:Icons.cloud_off_outlined,
+      title:'Riwayat belum dapat dimuat',
+      subtitle:'Periksa koneksi kemudian coba lagi.',
+      action:FilledButton.icon(
+       onPressed:reload,
+       icon:const Icon(Icons.refresh_rounded),
+       label:const Text('Muat Ulang')),
+     )));
+   }
+   if(!snapshot.hasData){
+    return const Center(child:CircularProgressIndicator());
+   }
+   final rows=List<dynamic>.from(snapshot.data!['items']??[]);
+   return RefreshIndicator(
+    onRefresh:()async{reload();try{await future;}catch(_){}},
+    child:ListView(padding:const EdgeInsets.fromLTRB(14,12,14,26),children:[
+     const CikokoPremiumHeader(
+      title:'Riwayat Pengajuan',
+      subtitle:'Pantau dokumen dan status yang terhubung ke akun Anda.',
+      icon:Icons.history_rounded),
+     const SizedBox(height:14),
+     if(rows.isEmpty)
+      const CikokoEmptyState(icon:Icons.history_toggle_off_rounded,
+       title:'Belum ada riwayat pengajuan',
+       subtitle:'Permohonan yang telah dikirim akan ditampilkan di sini.'),
+     for(final raw in rows)
+      CikokoRecordCard(
+       title:'${raw['title']??raw['reference']??'Pengajuan'}',
+       subtitle:'${raw['reference']??''}  ·  ${raw['created_at']??''}',
+       status:'${raw['status']??'proses'}',
+       statusLabel:'Status: ${(raw['status']??'proses').toString().replaceAll('_',' ')}',
+       onTap:(){
+        final row=Map<String,dynamic>.from(raw as Map);
+        final id=cikokoPositiveId(row);
+        final ref=cikokoWarisReference(row);
+        if(id==null&&ref==null){
+         notify(context,'Nomor pengajuan belum tersedia dari server.',error:true);
+         reload();return;
+        }
+        showCikokoDocument(context,api,id:id??0,reference:ref??'',
+         kind:cikokoDocumentKind(row),onChanged:reload);
+       },
+      ),
+     const CikokoPageSignature(),
+    ]),
+   );
+  },
+ );
 }
 class ChatPage extends StatefulWidget{const ChatPage({super.key});@override State<ChatPage> createState()=>_ChatState();}
 class _ChatState extends State<ChatPage>{final ctrl=TextEditingController();List<dynamic> messages=[];bool busy=false;Timer?timer;@override void initState(){super.initState();refresh();timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());} @override void dispose(){timer?.cancel();ctrl.dispose();super.dispose();}
  Future<void> refresh()async{try{final d=await api.call('chat');if(mounted)setState(()=>messages=List<dynamic>.from(d['messages']??[]));}catch(_){}}
  Future<void> send()async{if(ctrl.text.trim().isEmpty)return;setState(()=>busy=true);try{await api.call('chat_send',body:{'message':ctrl.text.trim()});ctrl.clear();await refresh();}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>busy=false);}}
- @override Widget build(BuildContext c)=>Column(children:[
-Padding(padding:const EdgeInsets.all(12),child:const CikokoPremiumHeader(
- title:'Hubungi Admin',subtitle:'Petugas akan membantu selama jam pelayanan.',
- icon:Icons.support_agent_outlined)),
-Expanded(child:ListView(padding:const EdgeInsets.all(12),children:[for(final m in messages)Align(alignment:m['sender']=='admin'?Alignment.centerLeft:Alignment.centerRight,child:Card(color:m['sender']=='admin'?Colors.white:const Color(0xffdef0ff),child:Padding(padding:const EdgeInsets.all(12),child:Text('${m['message']}'))))])),SafeArea(child:Padding(padding:const EdgeInsets.all(10),child:Row(children:[Expanded(child:TextField(controller:ctrl,maxLines:3,minLines:1,decoration:const InputDecoration(hintText:'Tulis pesan ke admin...'))),IconButton(onPressed:busy?null:send,icon:const Icon(Icons.send,color:blue))])))]);
+ @override
+ Widget build(BuildContext context) {
+  final scheme=Theme.of(context).colorScheme;
+  return Column(children:[
+   const Padding(
+    padding:EdgeInsets.fromLTRB(13,12,13,8),
+    child:CikokoPremiumHeader(
+     title:'Hubungi Admin',
+     subtitle:'Pesan hanya ditampilkan dalam percakapan akun Anda.',
+     icon:Icons.support_agent_outlined)),
+   Expanded(child:ListView(
+    padding:const EdgeInsets.fromLTRB(13,10,13,15),
+    children:[
+     if(messages.isEmpty)
+      const CikokoEmptyState(
+       icon:Icons.chat_bubble_outline_rounded,
+       title:'Belum ada pesan',
+       subtitle:'Kirim pesan untuk menghubungi petugas Kelurahan Cikoko.'),
+     for(final message in messages)
+      Align(
+       alignment:message['sender']=='admin'
+         ?Alignment.centerLeft:Alignment.centerRight,
+       child:ConstrainedBox(
+        constraints:const BoxConstraints(maxWidth:340),
+        child:Container(
+         margin:const EdgeInsets.only(bottom:10),
+         padding:const EdgeInsets.fromLTRB(13,11,13,11),
+         decoration:BoxDecoration(
+          color:message['sender']=='admin'
+            ?scheme.surface:scheme.primaryContainer,
+          border:Border.all(color:scheme.outlineVariant),
+          borderRadius:BorderRadius.only(
+           topLeft:const Radius.circular(18),
+           topRight:const Radius.circular(18),
+           bottomLeft:Radius.circular(message['sender']=='admin'?5:18),
+           bottomRight:Radius.circular(message['sender']=='admin'?18:5)),
+         ),
+         child:Text('${message['message']??''}',
+          style:TextStyle(color:scheme.onSurface,fontSize:12.5,height:1.45)),
+        ),
+       ),
+      ),
+    ],
+   )),
+   SafeArea(top:false,child:Padding(
+    padding:const EdgeInsets.fromLTRB(12,8,12,12),
+    child:Row(children:[
+     Expanded(child:TextField(
+      controller:ctrl,
+      maxLines:3,minLines:1,
+      decoration:const InputDecoration(
+       hintText:'Tulis pesan ke admin...',
+       prefixIcon:Icon(Icons.chat_bubble_outline_rounded)),
+     )),
+     const SizedBox(width:9),
+     SizedBox(width:48,height:48,
+      child:FilledButton(
+       onPressed:busy?null:send,
+       style:FilledButton.styleFrom(padding:EdgeInsets.zero,
+        shape:RoundedRectangleBorder(
+         borderRadius:BorderRadius.circular(15))),
+       child:const Icon(Icons.send_rounded),
+      )),
+    ]),
+   )),
+  ]);
+ }
+
 }
 class AdminChatPage extends StatefulWidget{const AdminChatPage({super.key});@override State<AdminChatPage> createState()=>_AdminChatState();}
 class _AdminChatState extends State<AdminChatPage>{List<dynamic> threads=[];@override void initState(){super.initState();load();}
@@ -1399,20 +1604,32 @@ class _AdminChatState extends State<AdminChatPage>{List<dynamic> threads=[];@ove
      builder:(_)=>AdminReplySheet(thread:thread));
    if(sent==true&&mounted)await load();
  }
- @override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(12),children:[
- const CikokoPremiumHeader(title:'Pesan Masuk',
-  subtitle:'Baca pesan dan balas kebutuhan warga.',icon:Icons.mark_chat_unread_outlined),
- const SizedBox(height:12),
- for(final t in threads)Card(child:ListTile(
-  leading:const CircleAvatar(backgroundColor:Color(0xFFE7F1FF),
-   child:Icon(Icons.person_outline,color:blue)),
-  title:Text('${t['name']}'),
-  subtitle:Text('${t['message']}',maxLines:2,overflow:TextOverflow.ellipsis),
-  trailing:const Icon(Icons.reply,color:blue),
-  onTap:()=>reply(Map<String,dynamic>.from(t)))),
- if(threads.isEmpty)const ListTile(title:Text('Belum ada pesan masuk.')),
- const CikokoPageSignature(),
-]);
+ @override
+ Widget build(BuildContext context) => ListView(
+  padding:const EdgeInsets.fromLTRB(14,12,14,28),
+  children:[
+   const CikokoPremiumHeader(
+    title:'Pesan Masuk',
+    subtitle:'Percakapan warga yang tersedia untuk akun petugas ini.',
+    icon:Icons.mark_chat_unread_outlined),
+   const SizedBox(height:12),
+   if(threads.isEmpty)
+    const CikokoEmptyState(icon:Icons.mark_chat_read_outlined,
+     title:'Belum ada pesan masuk',
+     subtitle:'Pesan warga akan tampil saat diterima oleh layanan.'),
+   for(final thread in threads)
+    Padding(padding:const EdgeInsets.only(bottom:8),
+     child:CikokoPremiumTile(
+      icon:Icons.forum_outlined,
+      title:'${thread['name']??'Warga'}',
+      subtitle:'${thread['message']??''}',
+      accent:CikokoPalette.blue,
+      onTap:()=>reply(Map<String,dynamic>.from(thread as Map)),
+     )),
+   const CikokoPageSignature(),
+  ],
+ );
+
 }
 class AdminReplySheet extends StatefulWidget{
  final Map<String,dynamic> thread;
@@ -1508,57 +1725,103 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
   }catch(e){if(mounted)notify(context,'Gagal mengubah tanggal: $e',error:true);}
   finally{if(mounted)setState(()=>busy=false);}
  }
- @override Widget build(BuildContext c)=>RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(12),children:[
-  CikokoPremiumHeader(
-   title:widget.onlyKind=='waris'?'Verifikasi Ahli Waris':
-    widget.onlyKind=='report'?'Laporan Kegiatan':'Verifikasi Laporan',
-   subtitle:'Pantau pengajuan dan tindak lanjut sesuai kewenangan Anda.',
-   icon:Icons.fact_check_outlined),
-  if(widget.onlyKind=='waris')const Padding(
-   padding:EdgeInsets.symmetric(horizontal:8,vertical:4),
-   child:Text('Khusus Ahli Waris. Admin Utama dapat mengatur progres dan tanggal pengajuan.')),
-  if(widget.onlyKind=='report')const Padding(
-   padding:EdgeInsets.symmetric(horizontal:8,vertical:4),
-   child:Text('Laporan kegiatan selain Ahli Waris.')),
-  const Padding(padding:EdgeInsets.all(8),child:Text('Ketuk surat untuk membuka data, progres, dan meminta kelengkapan dokumen.',style:TextStyle(fontSize:12,color:Colors.blueGrey))),
-  for(final r in rows)Card(
-    color:CikokoStatusBadge.accentFor((r['status']??'').toString()).withValues(alpha:.09),
-    margin:const EdgeInsets.only(bottom:10),
-    child:ListTile(contentPadding:const EdgeInsets.symmetric(horizontal:13,vertical:8),
-     leading:Container(width:41,height:44,alignment:Alignment.center,
-      decoration:BoxDecoration(
-       color:CikokoStatusBadge.accentFor((r['status']??'').toString()).withValues(alpha:.15),
-       borderRadius:BorderRadius.circular(11)),
-      child:Icon(Icons.fact_check_outlined,size:22,
-       color:CikokoStatusBadge.accentFor((r['status']??'').toString()))),
-     title:Text('${r['title']??r['reference']??'Pengajuan'}',
-       style:const TextStyle(fontWeight:FontWeight.w800,fontSize:13,color:navy)),
-     subtitle:Padding(padding:const EdgeInsets.only(top:7),
-       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-         CikokoStatusBadge(status:(r['status']??'').toString()),
-         const SizedBox(height:5),
-         Text('${r['name']??''}  •  ${cikokoDateOnly(r['created_at']??'-')}',
-           maxLines:2,overflow:TextOverflow.ellipsis,
-           style:const TextStyle(fontSize:11,color:CikokoPalette.muted)),
-       ])),
-    onTap:(){
-      final row=Map<String,dynamic>.from(r);
-      final id=cikokoPositiveId(row);
-      final ref=cikokoWarisReference(row);
-      if(id==null && ref==null){notify(context,'Server belum mengirim ID surat. Pastikan API V2525 aktif.',error:true);load();return;}
-      showCikokoDocument(context,api,id:id??0,reference:ref??'',kind:cikokoDocumentKind(row),onChanged:load);
-    },
-    trailing:PopupMenuButton<String>(tooltip:'Tindakan Admin',enabled:!busy,
-      onSelected:(value)=>value=='edit_date'
-       ? editWarisDate(Map<String,dynamic>.from(r))
-       : update(Map<String,dynamic>.from(r),value),
-      itemBuilder:(_)=>[
-       if(widget.allowWarisDate&&api.profile?['role']=='admin'&&cikokoDocumentKind(Map<String,dynamic>.from(r))=='waris')
-        const PopupMenuItem<String>(value:'edit_date',child:Text('Ubah Tanggal Pengajuan')),
-       for(final status in ['masuk','proses','revisi','selesai','ditolak'])
-        PopupMenuItem<String>(value:status,child:Text('Status: '+status)),
-      ]),
-  )),if(rows.isEmpty)const ListTile(title:Text('Belum ada permohonan.'))]));
+ Future<void> confirmReportStatus(Map<String,dynamic> row,
+    String status)async{
+  final yes=await showDialog<bool>(
+   context:context,
+   builder:(dialog)=>AlertDialog(
+    title:const Text('Konfirmasi Perubahan Status'),
+    content:Text('Ubah status pengajuan menjadi "${status.replaceAll('_',' ')}"? '
+     'Perubahan akan disimpan pada server.'),
+    actions:[
+     TextButton(onPressed:()=>Navigator.pop(dialog,false),
+      child:const Text('Batal')),
+     FilledButton(onPressed:()=>Navigator.pop(dialog,true),
+      child:const Text('Simpan Status')),
+    ],
+   ),
+  );
+  if(yes!=true||!mounted)return;
+  setState(()=>busy=true);
+  try{
+   await update(row,status);
+  }finally{
+   if(mounted)setState(()=>busy=false);
+  }
+ }
+ @override
+ Widget build(BuildContext context) => RefreshIndicator(
+  onRefresh:load,
+  child:ListView(
+   padding:const EdgeInsets.fromLTRB(14,12,14,28),
+   children:[
+    CikokoPremiumHeader(
+     title:widget.onlyKind=='waris'?'Verifikasi Ahli Waris':
+      widget.onlyKind=='report'?'Laporan Kegiatan':'Verifikasi Laporan',
+     subtitle:'Tinjau pengajuan dan tindak lanjut sesuai hak akses petugas.',
+     icon:Icons.fact_check_outlined),
+    const SizedBox(height:12),
+    if(widget.onlyKind=='waris')
+     CikokoPremiumSurface(
+      child:Text('Admin Utama dapat memeriksa dokumen dan tanggal '
+       'pengajuan Ahli Waris.',
+       style:Theme.of(context).textTheme.bodySmall)),
+    if(widget.onlyKind=='report')
+     CikokoPremiumSurface(
+      child:Text('Laporan kegiatan tanpa dokumen Ahli Waris.',
+       style:Theme.of(context).textTheme.bodySmall)),
+    const CikokoPremiumSection(
+     title:'Daftar Permohonan',
+     subtitle:'Ketuk dokumen untuk melihat detail dan progres.'),
+    if(rows.isEmpty)
+     const CikokoEmptyState(icon:Icons.fact_check_outlined,
+      title:'Belum ada permohonan',
+      subtitle:'Permohonan yang tersedia untuk petugas akan tampil di sini.'),
+    for(final raw in rows)
+     CikokoRecordCard(
+      title:'${raw['title']??raw['reference']??'Pengajuan'}',
+      subtitle:'${raw['name']??''} · ${cikokoDateOnly(raw['created_at']??'-')}',
+      status:'${raw['status']??'proses'}',
+      statusLabel:'${(raw['status']??'proses').toString().replaceAll('_',' ')}',
+      onTap:(){
+       final row=Map<String,dynamic>.from(raw as Map);
+       final id=cikokoPositiveId(row);
+       final ref=cikokoWarisReference(row);
+       if(id==null&&ref==null){
+        notify(context,'Nomor dokumen tidak tersedia dari server.',error:true);
+        load();return;
+       }
+       showCikokoDocument(context,api,id:id??0,
+        reference:ref??'',kind:cikokoDocumentKind(row),onChanged:load);
+      },
+      footer:Align(
+       alignment:Alignment.centerRight,
+       child:PopupMenuButton<String>(
+        tooltip:'Tindakan Petugas',
+        enabled:!busy,
+        icon:Icon(Icons.more_horiz_rounded,
+         color:Theme.of(context).colorScheme.primary),
+        onSelected:(value)=>value=='edit_date'
+         ?editWarisDate(Map<String,dynamic>.from(raw as Map))
+         :confirmReportStatus(Map<String,dynamic>.from(raw as Map),value),
+        itemBuilder:(_)=>[
+         if(widget.allowWarisDate&&api.profile?['role']=='admin'&&
+            cikokoDocumentKind(Map<String,dynamic>.from(raw as Map))=='waris')
+          const PopupMenuItem<String>(
+           value:'edit_date',child:Text('Ubah Tanggal Pengajuan')),
+         for(final status in ['masuk','proses','revisi','selesai','ditolak'])
+          PopupMenuItem<String>(
+           value:status,
+           child:Text('Ubah status: ${status.replaceAll('_',' ')}')),
+        ],
+       ),
+      ),
+     ),
+    const CikokoPageSignature(),
+   ],
+  ),
+ );
+
 }
 
 class _PageCopyright extends StatelessWidget {
