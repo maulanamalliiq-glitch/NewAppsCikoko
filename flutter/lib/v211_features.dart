@@ -288,8 +288,10 @@ class _CivicProfileState extends State<CivicProfilePage>{
       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
        Text(e.value,style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),
        const SizedBox(height:3),
-       SelectableText((row[e.key]??'').toString().trim().isEmpty
-        ?'Belum diisi':(row[e.key]??'').toString(),
+       SelectableText(e.key=='nik'
+        ?cikokoMaskedNik(row[e.key])
+        :(row[e.key]??'').toString().trim().isEmpty
+          ?'Belum diisi':(row[e.key]??'').toString(),
         style:TextStyle(fontSize:13,color:Theme.of(context).colorScheme.onSurface)),
        const Divider(height:12),
       ])),
