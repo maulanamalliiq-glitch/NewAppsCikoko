@@ -347,26 +347,31 @@ class _CivicProfileState extends State<CivicProfilePage>{
      ],
     ]));
    return ListView(padding:const EdgeInsets.fromLTRB(14,10,14,28),children:[
+    Padding(padding:const EdgeInsets.only(bottom:11),
+      child:Text('Profil Saya',style:TextStyle(
+        color:Theme.of(context).colorScheme.onSurface,
+        fontSize:20,fontWeight:FontWeight.w800))),
+
     Container(
      padding:const EdgeInsets.fromLTRB(16,22,16,17),
      decoration:BoxDecoration(
-      gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
-       colors:Theme.of(context).brightness==Brightness.dark
-        ?const [Color(0xFF173455),Color(0xFF152940),Color(0xFF111E30)]
-        :const [Color(0xFFFFFFFF),Color(0xFFE8F1FF),Color(0xFFDCEBFF)]),
+      gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
+        colors:[Color(0xFF07346E),Color(0xFF125BC0),Color(0xFF3086DD)]),
       borderRadius:BorderRadius.circular(20),
-      border:Border.all(color:const Color(0xFFE0EAF8))),
+      boxShadow:const [BoxShadow(color:Color(0x25114B9A),
+        blurRadius:16,offset:Offset(0,6))],
+      border:Border.all(color:const Color(0xFF2675C5))),
      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
       Row(children:[
        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Text(CikokoSettings.tr('Hai, ','Hi, ')+displayName,maxLines:2,overflow:TextOverflow.ellipsis,
-         style:TextStyle(fontSize:21,fontWeight:FontWeight.w700,color:Theme.of(context).colorScheme.onSurface)),
+         style:TextStyle(fontSize:21,fontWeight:FontWeight.w800,color:Colors.white)),
         const SizedBox(height:7),
         Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),
-         decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface.withValues(alpha:.85),
-          borderRadius:BorderRadius.circular(8)),
+         decoration:BoxDecoration(color:Colors.white.withValues(alpha:.19),
+          borderRadius:BorderRadius.circular(9)),
          child:Text(isResident?CikokoSettings.tr('Akun Warga','Resident Account'):CikokoSettings.tr('Akun ','Account ')+role.replaceAll('_',' ').toUpperCase(),
-          style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant))),
+          style:const TextStyle(fontSize:11,color:Colors.white,fontWeight:FontWeight.w700))),
        ])),
        const SizedBox(width:12),
        Stack(clipBehavior:Clip.none,children:[
@@ -401,12 +406,12 @@ class _CivicProfileState extends State<CivicProfilePage>{
        Container(width:double.infinity,
         padding:const EdgeInsets.symmetric(horizontal:12,vertical:10),
         decoration:BoxDecoration(
-         color:Theme.of(context).colorScheme.surface.withValues(alpha:.77),
+         color:Colors.white.withValues(alpha:.16),
          borderRadius:BorderRadius.circular(12)),
         child:Row(children:[
          Icon(cikokoValidRtRw(row['rt'])&&cikokoValidRtRw(row['rw'])
            ?Icons.location_on_rounded:Icons.info_outline_rounded,
-           color:Theme.of(context).colorScheme.primary,size:17),
+           color:Colors.white,size:17),
          const SizedBox(width:7),
          Expanded(child:Text(
           cikokoValidRtRw(row['rt'])&&cikokoValidRtRw(row['rw'])
@@ -415,7 +420,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
            :CikokoSettings.tr('Wilayah RT/RW belum lengkap','RT/RW area not complete'),
           maxLines:1,overflow:TextOverflow.ellipsis,
           style:TextStyle(fontSize:11,fontWeight:FontWeight.w600,
-           color:Theme.of(context).colorScheme.onSurface))),
+           color:Colors.white))),
         ])),
       ],
      ]),
@@ -464,8 +469,10 @@ class _CivicProfileState extends State<CivicProfilePage>{
      ]),
      const SizedBox(height:10),
      Container(padding:const EdgeInsets.all(14),
-      decoration:BoxDecoration(color:Colors.white,borderRadius:BorderRadius.circular(16),
-       border:Border.all(color:const Color(0xFFE5EAF2))),
+      decoration:BoxDecoration(
+        color:Theme.of(context).colorScheme.surface,
+        borderRadius:BorderRadius.circular(16),
+        border:Border.all(color:Theme.of(context).colorScheme.outlineVariant)),
       child:Column(children:[
        for(final e in <String,String>{
         'name':'Nama Lengkap','username':'Username','phone':'Nomor HP',

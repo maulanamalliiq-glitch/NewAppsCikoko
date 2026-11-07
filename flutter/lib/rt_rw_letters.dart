@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
+import 'premium_flow_ui.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
@@ -30,6 +31,7 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
   };
   late Future<Map<String, dynamic>> requests;
   bool saving = false;
+  bool reviewing = false;
 
   String get role => '${widget.api.profile?['role'] ?? ''}';
   @override
@@ -69,7 +71,8 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
     ));
   Widget genderField()=>Padding(padding:const EdgeInsets.only(bottom:12),
     child:DropdownButtonFormField<String>(
-      initialValue:null,decoration:const InputDecoration(
+      initialValue:form['jenis_kelamin']!.text.isEmpty
+        ?null:form['jenis_kelamin']!.text,decoration:const InputDecoration(
         labelText:'Jenis Kelamin',border:OutlineInputBorder()),
       items:const [
         DropdownMenuItem(value:'Laki-laki',child:Text('Laki-laki')),
@@ -98,7 +101,7 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
       await widget.api.call('rt_rw_submit',body:{
         'form':<String,String>{for(final f in form.entries)f.key:f.value.text.trim()},
       });
-      if (mounted) setState(refresh);
+      if (mounted) setState(() { reviewing = false; refresh(); });
       flash('Permohonan berhasil dikirim ke Ketua RT sesuai data profil.');
     } catch (e) { flash('$e'); }
     finally { if (mounted) setState(() => saving = false); }
@@ -214,38 +217,121 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
           onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(
             builder:(_)=>RtRwSignerPage(api:widget.api))),
           icon:const Icon(Icons.draw_outlined),label:const Text('Atur TTD & Stempel Petugas'))),
-      if (isWarga) Card(child: Padding(padding: const EdgeInsets.all(14), child:
-        Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Text('RT '+cikokoAreaLabel(widget.api.profile?['rt'])+
-               ' / RW '+cikokoAreaLabel(widget.api.profile?['rw']),
-            style:TextStyle(fontWeight:FontWeight.w600,color:Theme.of(context).colorScheme.onSurface)),
-          const SizedBox(height:10),
-          Form(key:formKey,child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-            const CikokoPremiumSection(title:'Identitas Pemohon',subtitle:'Lengkapi data sesuai dokumen asli'),
-            const SizedBox(height:10),
-            formField('nama','Nama'),
-            formField('tempat_lahir','Tempat Lahir'),
-            formField('tanggal_lahir','Tanggal Lahir',date:true),
-            formField('no_ktp_kk','No. KTP/KK',keyboard:TextInputType.number),
-            formField('agama','Agama'),
-            formField('kewarganegaraan','Kewarganegaraan'),
-            formField('pendidikan','Pendidikan'),
-            genderField(),
-            formField('status','Status'),
-            formField('pekerjaan','Pekerjaan'),
-            formField('alamat','Alamat',lines:2),
-            const SizedBox(height:4),
-            const CikokoPremiumSection(title:'Maksud Surat',subtitle:'Tulis keperluan pengajuan'),
-            const SizedBox(height:10),
-            formField('maksud_keperluan','Maksud/Keperluan',lines:2),
-          ])),
-          const SizedBox(height:12),
-          FilledButton.icon(onPressed: saving ? null : submit, icon: const Icon(Icons.send_outlined),
-            label: Text(saving ? 'Mengirim...' : 'Kirim ke Ketua RT Otomatis')),
-          const SizedBox(height: 6),
-          const Text('Jika RT/RW belum terisi, lengkapi Profil dengan konfirmasi password terlebih dahulu.',
-            style: TextStyle(fontSize: 11, color: Colors.blueGrey)),
-        ]))),
+      if (isWarga) ...[
+        CikokoFlowSteps(
+          current: reviewing ? 1 : 0,
+          labels: const ['Isi Data', 'Konfirmasi', 'Terkirim'],
+        ),
+        const SizedBox(height: 13),
+        Visibility(
+          visible: !reviewing,
+          maintainState: true,
+          child: Column(children: [
+            CikokoFlowSection(
+              title: 'Identitas Pemohon',
+              subtitle: 'Lengkapi data sesuai dokumen asli',
+              icon: Icons.person_outline_rounded,
+              child: Form(
+                key: formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Wilayah RT ${cikokoAreaLabel(widget.api.profile?['rt'])}'
+                      ' / RW ${cikokoAreaLabel(widget.api.profile?['rw'])}',
+                      style: TextStyle(color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 13),
+                    formField('nama', 'Nama'),
+                    formField('tempat_lahir', 'Tempat Lahir'),
+                    formField('tanggal_lahir', 'Tanggal Lahir', date: true),
+                    formField('no_ktp_kk', 'No. KTP/KK',
+                      keyboard: TextInputType.number),
+                    formField('agama', 'Agama'),
+                    formField('kewarganegaraan', 'Kewarganegaraan'),
+                    formField('pendidikan', 'Pendidikan'),
+                    genderField(),
+                    formField('status', 'Status'),
+                    formField('pekerjaan', 'Pekerjaan'),
+                    formField('alamat', 'Alamat', lines: 2),
+                  ],
+                ),
+              ),
+            ),
+            CikokoFlowSection(
+              title: 'Keperluan Surat',
+              subtitle: 'Jelaskan tujuan pengajuan surat',
+              icon: Icons.description_outlined,
+              child: formField('maksud_keperluan', 'Maksud/Keperluan', lines: 2),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('rt_rw_continue'),
+                onPressed: saving ? null : () {
+                  if (formKey.currentState?.validate() ?? false) {
+                    setState(() => reviewing = true);
+                  }
+                },
+                icon: const Icon(Icons.arrow_forward_rounded),
+                label: const Text('Lanjutkan ke Konfirmasi'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Jika RT/RW belum terisi, lengkapi Profil dengan '
+              'konfirmasi password terlebih dahulu.',
+              style: TextStyle(fontSize: 11,
+                color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+          ]),
+        ),
+        if (reviewing) CikokoFlowSection(
+          title: 'Periksa Data Pengajuan',
+          subtitle: 'Pastikan data benar sebelum dikirim ke Ketua RT.',
+          icon: Icons.fact_check_outlined,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+            for (final entry in const <String, String>{
+              'nama': 'Nama', 'tempat_lahir': 'Tempat Lahir',
+              'tanggal_lahir': 'Tanggal Lahir',
+              'no_ktp_kk': 'No. KTP/KK',
+              'agama': 'Agama', 'kewarganegaraan': 'Kewarganegaraan',
+              'pendidikan': 'Pendidikan', 'jenis_kelamin': 'Jenis Kelamin',
+              'status': 'Status', 'pekerjaan': 'Pekerjaan',
+              'alamat': 'Alamat', 'maksud_keperluan': 'Keperluan',
+            }.entries)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(entry.value, style: TextStyle(
+                    fontSize: 10.5,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  const SizedBox(height: 3),
+                  Text(form[entry.key]!.text,
+                    style: const TextStyle(fontSize: 13,
+                      fontWeight: FontWeight.w600)),
+                  const Divider(height: 12),
+                ]),
+              ),
+            const SizedBox(height: 6),
+            FilledButton.icon(
+              key: const Key('rt_rw_submit_review'),
+              onPressed: saving ? null : submit,
+              icon: const Icon(Icons.send_outlined),
+              label: Text(saving ? 'Mengirim...' : 'Kirim ke Ketua RT'),
+            ),
+            const SizedBox(height: 7),
+            OutlinedButton.icon(
+              key: const Key('rt_rw_back_to_form'),
+              onPressed: saving ? null
+                : () => setState(() => reviewing = false),
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Perbaiki Data'),
+            ),
+          ]),
+        ),
+      ],
       const SizedBox(height: 14),
       Text(isWarga ? 'Riwayat Surat Pengantar' : 'Daftar Surat yang Ditangani',
         style: Theme.of(context).textTheme.titleMedium),
@@ -273,8 +359,18 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
                 const SizedBox(height: 5),
                 Text('${letter['notes'] ?? ''}', style: const TextStyle(fontSize: 12)),
                 const SizedBox(height: 8),
-                Text(statusLabel('${letter['status'] ?? ''}'),
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: CikokoStatusBadge.accentFor(
+                      '${letter['status'] ?? ''}').withValues(alpha: .12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(statusLabel('${letter['status'] ?? ''}'),
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700,
+                      color: CikokoStatusBadge.accentFor(
+                        '${letter['status'] ?? ''}'))),
+                ),
                  if (canVerify && letter['requires_reaffirm']==true)
                    TextButton.icon(icon:const Icon(Icons.draw_outlined),
                      label:const Text('Lengkapi TTD Surat Lama'),

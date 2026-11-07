@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
+import 'premium_flow_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:printing/printing.dart';
@@ -101,18 +102,64 @@ class _LpjPageState extends State<LpjPage> {
   return 'Rp '+b.toString();
  }
  int get spentPreview=>expenses.fold<int>(0,(sum,e)=>sum+(amountValue(e.amount.text)??0));
- Widget financialSummary(){
-  final total=(amountValue(opening.text)??0)+(amountValue(income.text)??0),spent=spentPreview;
-  return Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-   const Text('REKAPITULASI LPJ',style:TextStyle(fontWeight:FontWeight.w600,fontSize:16)),
-   const SizedBox(height:10),
-   Text('JUMLAH PENERIMAAN (saldo + penerimaan): '+rupiah(total)),
-   const SizedBox(height:6),Text('JUMLAH PENGELUARAN: '+rupiah(spent)),
-   const Divider(),
-   Text('SISA UANG PENYELENGGARAAN (saldo bulan berikutnya): '+rupiah(total-spent),
-    style:TextStyle(fontWeight:FontWeight.bold,color:spent>total?Colors.red:null)),
-   if(spent>total)const Padding(padding:EdgeInsets.only(top:8),child:Text('Pengeluaran melebihi jumlah penerimaan. Periksa rincian!',style:TextStyle(color:Colors.red))),
-  ])));
+ Widget financialSummary() {
+  final total = (amountValue(opening.text) ?? 0) +
+      (amountValue(income.text) ?? 0);
+  final spent = spentPreview;
+  final remaining = total - spent;
+  final scheme = Theme.of(context).colorScheme;
+  Widget amountRow(String label, String value, IconData icon, Color accent,
+      {bool prominent = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 7),
+      child: Row(children: [
+        Container(
+          width: 38, height: 38,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: .12),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          child: Icon(icon, color: accent, size: 21),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: TextStyle(color: scheme.onSurfaceVariant,
+              fontSize: 11, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 3),
+            Text(value, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: prominent && remaining < 0
+                  ? const Color(0xFFC93C4B) : scheme.onSurface,
+                fontWeight: FontWeight.w800, fontSize: prominent ? 17 : 14)),
+          ],
+        )),
+      ]),
+    );
+  }
+
+  return CikokoFlowSection(
+    title: 'Ringkasan Keuangan',
+    subtitle: 'Dihitung otomatis dari nominal yang Anda masukkan',
+    icon: Icons.account_balance_wallet_outlined,
+    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      amountRow('Total penerimaan', rupiah(total),
+        Icons.arrow_downward_rounded, const Color(0xFF0C9C75)),
+      amountRow('Total pengeluaran', rupiah(spent),
+        Icons.arrow_upward_rounded, const Color(0xFFDC9140)),
+      const Divider(height: 18),
+      amountRow('Saldo bulan berikutnya', rupiah(remaining),
+        Icons.savings_outlined, const Color(0xFF156BC5), prominent: true),
+      if (spent > total)
+        const Padding(
+          padding: EdgeInsets.only(top: 7),
+          child: Text('Pengeluaran melebihi jumlah penerimaan. '
+            'Periksa rincian sebelum mengirim!',
+            style: TextStyle(color: Color(0xFFC93C4B), fontSize: 11)),
+        ),
+    ]),
+  );
  }
  Future<void> submit()async{
   final p=period.text.trim(),o=amountValue(opening.text),i=amountValue(income.text);
@@ -160,22 +207,41 @@ class _LpjPageState extends State<LpjPage> {
   const SizedBox(height:14),
   Text(widget.kind.startsWith('lpj_lmk')?'Sesuai format LPJ LMK Kelurahan Cikoko • A4 potret':'Sesuai format LPJ RT/RW Kelurahan Cikoko • A4 potret',style:const TextStyle(fontWeight:FontWeight.w600)),
   const SizedBox(height:12),
-  TextField(controller:period,decoration:const InputDecoration(labelText:'BULAN & TAHUN (YYYY-MM)',helperText:'Contoh: 2026-01 = JANUARI 2026',border:OutlineInputBorder())),
+  CikokoFlowSection(
+    title: 'Periode & Saldo Awal',
+    subtitle: 'Tentukan bulan laporan dan saldo dari periode sebelumnya',
+    icon: Icons.calendar_month_outlined,
+    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      TextField(controller: period,
+        decoration: const InputDecoration(
+          labelText: 'Bulan dan Tahun (YYYY-MM)',
+          helperText: 'Contoh: 2026-01 = Januari 2026',
+          border: OutlineInputBorder())),
+      const SizedBox(height: 12),
+      moneyInput('Saldo bulan sebelumnya', opening),
+    ]),
+  ),
+  CikokoFlowSection(
+    title: 'Penerimaan Bulan Ini',
+    subtitle: 'Isi jumlah dana yang benar-benar diterima',
+    icon: Icons.payments_outlined,
+    child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      moneyInput('Penerimaan bulan ini', income),
+      Text(
+        'Nominal acuan format: ' +
+          (lpjReferenceLabel[widget.kind] ?? 'sesuai ketentuan wilayah') +
+          '. Pastikan sesuai penerimaan sebenarnya.',
+        style: Theme.of(context).textTheme.bodySmall),
+      Align(alignment: Alignment.centerLeft, child: TextButton.icon(
+        onPressed: () => setState(() =>
+          income.text = lpjReferenceAmount[widget.kind]?.toString() ?? income.text),
+        icon: const Icon(Icons.edit_note_outlined),
+        label: const Text('Isi nominal acuan (dapat diubah)'))),
+    ]),
+  ),
   const SizedBox(height:12),
-  const Text('I. SALDO BULAN LALU',style:TextStyle(fontWeight:FontWeight.bold)),
-  const SizedBox(height:8),
-  moneyInput('Saldo bulan sebelumnya',opening),
-  const Text('II. PENERIMAAN UANG PENYELENGGARAAN BULAN INI',style:TextStyle(fontWeight:FontWeight.bold)),
-  const SizedBox(height:8),
-  moneyInput('Penerimaan bulan ini',income),
-  Text('Nominal dalam contoh format '+(lpjReferenceLabel[widget.kind]??'sesuai ketentuan wilayah')+'. Pastikan sesuai penerimaan sebenarnya.',style:Theme.of(context).textTheme.bodySmall),
-  Align(alignment:Alignment.centerLeft,child:TextButton.icon(
-   onPressed:()=>setState(()=>income.text=lpjReferenceAmount[widget.kind]?.toString()??income.text),
-   icon:const Icon(Icons.edit_note_outlined),label:const Text('Isi nominal acuan (dapat diubah)'))),
-  const SizedBox(height:12),
-  financialSummary(),
-  const SizedBox(height:12),
-  const Text('III. PENGELUARAN',style:TextStyle(fontWeight:FontWeight.bold)),
+  const CikokoPremiumSection(title:'III. Pengeluaran',
+    subtitle:'Rincian kegiatan dan bukti pengeluaran'),
   const SizedBox(height:6),
   Row(children:[const Expanded(child:Text('NO. | KEGIATAN | JUMLAH | KETERANGAN',style:TextStyle(fontSize:13,fontWeight:FontWeight.bold))),
    TextButton.icon(onPressed:expenses.length>=60?null:addExpense,icon:const Icon(Icons.add),label:const Text('Tambah'))]),
@@ -215,14 +281,21 @@ class _LpjPageState extends State<LpjPage> {
    else Card(child:ListTile(leading:const Icon(Icons.verified_user_outlined),title:const Text('LPJ disusun oleh Bendahara'),subtitle:Text(widget.kind.startsWith('lpj_lmk')?'Anggota LMK memeriksa dan menandatangani LPJ yang masuk sesuai ketentuan.':'Ketua RT/RW memeriksa dan menandatangani LPJ yang masuk sesuai wilayah.'))),
    const SizedBox(height:16),const CikokoPremiumSection(title:'Daftar & Status LPJ',subtitle:'Laporan yang tersimpan di sistem'),
    if(records.isEmpty)const Card(child:ListTile(title:Text('Belum ada LPJ'),subtitle:Text('LPJ yang dikirim petugas berwenang akan tampil di sini.'))),
-   for(final doc in records)
-    Card(child:ListTile(
-     leading:const Icon(Icons.receipt_long_outlined),
-     title:Text('Periode '+(doc['period']??'-').toString()),
-     subtitle:Text('Status: '+(doc['status']??'-').toString().replaceAll('_',' ')+' • '+(doc['owner_name']??'').toString()),
-     trailing:const Icon(Icons.chevron_right),
-     onTap:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>LpjDetailPage(api:widget.api,docId:int.tryParse(doc['id'].toString())??0,kind:widget.kind))).then((_)=>reload()),
-    )),
+   for (final doc in records)
+     CikokoRecordCard(
+       title: 'Periode ${doc['period'] ?? '-'}',
+       subtitle: 'Pembuat: ${doc['owner_name'] ?? '-'}'
+         ' · RT ${doc['rt'] ?? '-'} / RW ${doc['rw'] ?? '-'}',
+       status: (doc['status'] ?? '').toString(),
+       statusLabel: 'Status: ${(doc['status'] ?? '-').toString().replaceAll('_', ' ')}',
+       onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+         builder: (_) => LpjDetailPage(
+           api: widget.api,
+           docId: int.tryParse('${doc['id']}') ?? 0,
+           kind: widget.kind,
+         ),
+       )).then((_) => reload()),
+     ),
    const SizedBox(height:32),
   ]));
  }
