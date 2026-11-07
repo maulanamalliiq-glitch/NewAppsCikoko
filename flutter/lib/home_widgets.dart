@@ -76,44 +76,138 @@ class CikokoOfficeHero extends StatelessWidget {
 }
 
 
+
 class CikokoWelcomeHero extends StatelessWidget {
   final String name, roleName, subtitle;
-  const CikokoWelcomeHero({super.key,required this.name,
-    required this.roleName,required this.subtitle});
-  @override Widget build(BuildContext context)=>Container(
-    width:double.infinity,
-    decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),
-      gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
-        colors:[Color(0xFF082653),Color(0xFF175AA7),Color(0xFF2287E1)]),
-      boxShadow:[BoxShadow(color:const Color(0xFF175AA7).withValues(alpha:.22),
-        blurRadius:18,offset:const Offset(0,7))]),
-    child:ClipRRect(borderRadius:BorderRadius.circular(22),child:Stack(children:[
-      const Positioned.fill(child:CikokoMonasBackdrop()),
-      const Positioned.fill(child:DecoratedBox(decoration:BoxDecoration(
-        gradient:LinearGradient(begin:Alignment.centerLeft,end:Alignment.centerRight,
-          colors:[Color(0xED081D3A),Color(0xDD133D75),Color(0xAA164F91)])))),
-      const Positioned(right:8,bottom:4,child:Text(
-        'Monas · CC BY-SA 3.0',style:TextStyle(color:Colors.white70,fontSize:7))),
-      Positioned(right:-24,top:-54,child:Icon(Icons.blur_circular_rounded,
-        size:174,color:Colors.white.withValues(alpha:.10))),
-      Padding(padding:const EdgeInsets.all(20),child:Column(
-        crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),
-          decoration:BoxDecoration(color:Colors.white.withValues(alpha:.15),
-            borderRadius:BorderRadius.circular(20)),
-          child:Text(roleName.toUpperCase(),style:const TextStyle(color:Colors.white,
-            fontSize:10,fontWeight:FontWeight.w700,letterSpacing:.7))),
-        const SizedBox(height:16),
-        Text(CikokoSettings.tr('Hai, ','Hi, ')+(name.trim().isEmpty?'Pengguna Cikoko':name),
-          maxLines:2,overflow:TextOverflow.ellipsis,
-          style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w800,
-            fontSize:24,height:1.18)),
-        const SizedBox(height:6),
-        Text(subtitle,maxLines:2,overflow:TextOverflow.ellipsis,
-          style:const TextStyle(color:Color(0xFFDEEEFF),fontSize:12)),
-      ])),
-    ])),
-  );
+  const CikokoWelcomeHero({
+    super.key,
+    required this.name,
+    required this.roleName,
+    required this.subtitle,
+  });
+
+  String get initials {
+    final pieces = name.trim().split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty).take(2).toList();
+    return pieces.isEmpty
+        ? 'C'
+        : pieces.map((part) => part.substring(0, 1).toUpperCase()).join();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final displayName = name.trim().isEmpty ? 'Pengguna Cikoko' : name.trim();
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF07346E), Color(0xFF1262C6), Color(0xFF348DE8)],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: const [
+          BoxShadow(color: Color(0x25114B9A), blurRadius: 19, offset: Offset(0, 7)),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(children: [
+          const Positioned.fill(child: CikokoCityBackdrop()),
+          const Positioned.fill(child: DecoratedBox(
+            decoration: BoxDecoration(gradient: LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [Color(0xF109336E), Color(0xD30C438E), Color(0xB11465C0)],
+            )),
+          )),
+          Positioned(
+            right: -26,
+            top: -51,
+            child: Container(
+              width: 162,
+              height: 162,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0x33FFFFFF), width: 24),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 15, 16, 20),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Image.asset('assets/logo.png', width: 34, height: 34, fit: BoxFit.contain),
+                const SizedBox(width: 9),
+                const Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Cikoko SmartAPP', maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.white, fontSize: 15.5,
+                        fontWeight: FontWeight.w800)),
+                    Text('Kelurahan Cikoko · Pancoran',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Color(0xFFE2EEFF), fontSize: 9.5)),
+                  ],
+                )),
+                const SizedBox(width: 7),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFC341),
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  child: const Text('Premium', style: TextStyle(
+                    color: Color(0xFF07346E), fontSize: 10,
+                    fontWeight: FontWeight.w800)),
+                ),
+              ]),
+              const SizedBox(height: 21),
+              Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: .95),
+                    shape: BoxShape.circle,
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x20000000), blurRadius: 9),
+                    ],
+                  ),
+                  child: CircleAvatar(
+                    backgroundColor: const Color(0xFFD7EAFF),
+                    child: Text(initials, style: const TextStyle(
+                      color: Color(0xFF104A9B), fontSize: 21,
+                      fontWeight: FontWeight.w800)),
+                  ),
+                ),
+                const SizedBox(width: 13),
+                Expanded(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(CikokoSettings.tr('Hai, ', 'Hi, ') + displayName,
+                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white,
+                        fontSize: 19, fontWeight: FontWeight.w800, height: 1.15)),
+                    const SizedBox(height: 4),
+                    Text(roleName, maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xFFFFD778),
+                        fontSize: 11.5, fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 3),
+                    Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Color(0xFFE5F1FF),
+                        fontSize: 10.5, height: 1.3)),
+                  ],
+                )),
+              ]),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
 }
 
 /// Beranda warga premium: identitas kelurahan, sapaan, dan empat akses utama.
@@ -252,26 +346,56 @@ class _CikokoLiveWeatherState extends State<CikokoLiveWeather> {
   });
 }
 
+
 class _PremiumQuickAction extends StatelessWidget {
   final IconData icon;
   final String title;
   final VoidCallback onTap;
   final Color accent;
-  const _PremiumQuickAction({required this.icon,required this.title,
-   required this.onTap,this.accent=homeBlue});
-  @override
-  Widget build(BuildContext context)=>Material(color:Colors.transparent,
-   child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(12),
-    child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-     Container(width:43,height:43,
-      decoration:BoxDecoration(color:accent.withValues(alpha:.13),
-       borderRadius:BorderRadius.circular(13)),
-      child:Icon(icon,color:accent,size:24)),
-     const SizedBox(height:7),
-     Text(CikokoSettings.label(title),maxLines:2,overflow:TextOverflow.ellipsis,textAlign:TextAlign.center,
-      style:const TextStyle(color:homeNavy,fontSize:10.3,fontWeight:FontWeight.w500,height:1.2)),
-    ])));
+  const _PremiumQuickAction({
+    required this.icon, required this.title, required this.onTap,
+    this.accent = homeBlue,
+  });
 
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.surface,
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+          decoration: BoxDecoration(
+            border: Border.all(color: colors.outlineVariant),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: .13),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: accent, size: 21),
+            ),
+            const SizedBox(height: 6),
+            Flexible(child: Text(
+              CikokoSettings.label(title),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colors.onSurface,
+                fontSize: 9.6, fontWeight: FontWeight.w700, height: 1.1),
+            )),
+          ]),
+        ),
+      ),
+    );
+  }
 }
 
 /// Konsisten untuk semua akun petugas tanpa mengubah izin atau endpoint.
@@ -304,22 +428,40 @@ class CikokoStaffHero extends StatelessWidget {
       const SizedBox(height:12),
       const CikokoLiveWeather(),
       const SizedBox(height:16),
-      Row(children:[
-        for(final card in cards)
-         Expanded(child:Container(
-          margin:const EdgeInsets.only(right:7),
-          padding:const EdgeInsets.symmetric(horizontal:10,vertical:13),
-          decoration:BoxDecoration(
-           color:card.color,borderRadius:BorderRadius.circular(13),
-           boxShadow:[BoxShadow(color:card.color.withValues(alpha:.16),
-             blurRadius:9,offset:const Offset(0,4))]),
-          child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-           Text(CikokoSettings.label(card.title),maxLines:1,overflow:TextOverflow.ellipsis,
-            style:const TextStyle(color:Colors.white,fontSize:10,fontWeight:FontWeight.w500)),
-           const SizedBox(height:7),
-           Text(card.value,maxLines:1,overflow:TextOverflow.ellipsis,
-            style:const TextStyle(color:Colors.white,fontSize:15,fontWeight:FontWeight.w700)),
-          ]))),
+
+      Row(children: [
+        for (final card in cards)
+          Expanded(child: Container(
+            margin: const EdgeInsets.only(right: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+            ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Container(
+                width: 31, height: 31,
+                decoration: BoxDecoration(
+                  color: card.color.withValues(alpha: .13),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(
+                  admin ? Icons.dashboard_customize_outlined : Icons.assignment_outlined,
+                  color: card.color, size: 18,
+                ),
+              ),
+              const SizedBox(height: 7),
+              Text(CikokoSettings.label(card.title),
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 10, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              Text(card.value, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 14, fontWeight: FontWeight.w800)),
+            ]),
+          )),
       ]),
       const SizedBox(height:15),
       Row(children:[
@@ -432,6 +574,67 @@ class CikokoQuickMenu extends StatelessWidget {
   );
 }
 
+
+class CikokoPortalBanner extends StatelessWidget {
+  final VoidCallback onOpen;
+  const CikokoPortalBanner({super.key, required this.onOpen});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: CikokoPalette.navy,
+      borderRadius: BorderRadius.circular(19),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        key: const Key('cikoko_portal_banner'),
+        onTap: onOpen,
+        child: SizedBox(
+          height: 117,
+          child: Stack(fit: StackFit.expand, children: [
+            Image.asset('assets/kantor-cikoko.jpg', fit: BoxFit.cover,
+              alignment: Alignment.centerRight),
+            const DecoratedBox(decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [Color(0xFF082B5D), Color(0xF20B438B),
+                  Color(0x302671BC)],
+                stops: [0, .62, 1],
+              ),
+            )),
+            Padding(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Portal Layanan', style: TextStyle(
+                    color: Colors.white, fontSize: 16,
+                    fontWeight: FontWeight.w800)),
+                  const Text('Kecamatan Pancoran', style: TextStyle(
+                    color: Colors.white, fontSize: 13,
+                    fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text(CikokoSettings.tr(
+                    'Layanan administrasi dan informasi dalam satu aplikasi.',
+                    'Public services and information in one app.'),
+                    maxLines: 2, overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Color(0xFFE2EFFF),
+                      fontSize: 10.5, height: 1.3)),
+                ],
+              ),
+            ),
+            const Positioned(
+              bottom: 10, right: 10,
+              child: Icon(Icons.arrow_circle_right_outlined,
+                color: Colors.white, size: 23)),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 /// Angka rekap dari API publik: tidak membocorkan identitas dan lampiran.
 class CikokoLetterCounters extends StatelessWidget {
   final Map<String,int>? counts;
@@ -440,8 +643,9 @@ class CikokoLetterCounters extends StatelessWidget {
   @override
   Widget build(BuildContext context)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Row(children:[
-      const Expanded(child:Text('Status Pelayanan Surat',
-        style:TextStyle(fontWeight:FontWeight.w800,color:homeNavy,fontSize:13.5))),
+      Expanded(child:Text('Status Pelayanan Surat',
+        style:TextStyle(fontWeight:FontWeight.w800,
+          color:Theme.of(context).colorScheme.onSurface,fontSize:13.5))),
       TextButton(onPressed:()=>onStatusTap('all'),
         child:const Text('Lihat Status →',style:TextStyle(fontSize:11.2,fontWeight:FontWeight.w700))),
     ]),
@@ -455,15 +659,19 @@ class CikokoLetterCounters extends StatelessWidget {
           borderRadius:BorderRadius.circular(11),
           child:Container(
             padding:const EdgeInsets.symmetric(horizontal:10,vertical:9),
-            decoration:BoxDecoration(color:Colors.white,border:Border.all(color:homeBorder),
-              borderRadius:BorderRadius.circular(11)),
+            decoration:BoxDecoration(
+              color:Theme.of(context).colorScheme.surface,
+              border:Border.all(color:Theme.of(context).colorScheme.outlineVariant),
+              borderRadius:BorderRadius.circular(13)),
             child:Row(children:[
               Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
                 Text(counts==null?'—':'${counts![pair.$1]??0}',
                   style:TextStyle(color:pair.$3,fontSize:19,fontWeight:FontWeight.w900)),
                 const SizedBox(height:2),
                 Text(pair.$2,maxLines:1,overflow:TextOverflow.ellipsis,
-                  style:const TextStyle(fontSize:9.6,color:homeNavy,fontWeight:FontWeight.w600)),
+                  style:TextStyle(fontSize:9.6,
+                    color:Theme.of(context).colorScheme.onSurface,
+                    fontWeight:FontWeight.w600)),
               ])),
               Icon(Icons.chevron_right_rounded,size:16,color:pair.$3),
             ]),
