@@ -291,6 +291,50 @@ class CikokoPremiumSurface extends StatelessWidget {
   }
 }
 
+class CikokoSearchLauncher extends StatelessWidget {
+  final VoidCallback onTap;
+  const CikokoSearchLauncher({super.key, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        key: const Key('cikoko_home_search'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: scheme.outlineVariant),
+            boxShadow: [
+              BoxShadow(color: const Color(0xFF0B66D8)
+                .withValues(alpha: .07),
+                blurRadius: 12, offset: const Offset(0, 3)),
+            ],
+          ),
+          child: Row(children: [
+            Icon(Icons.search_rounded, color: scheme.primary, size: 22),
+            const SizedBox(width: 11),
+            Expanded(child: Text(
+              CikokoSettings.tr('Cari layanan dan informasi...',
+                'Find services and information...'),
+              maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 12,
+                color: scheme.onSurfaceVariant),
+            )),
+            Icon(Icons.tune_rounded,
+              size: 19, color: scheme.primary),
+          ]),
+        ),
+      ),
+    );
+  }
+}
+
 class CikokoMenuOrb extends StatelessWidget {
   final bool selected;
   const CikokoMenuOrb({super.key, this.selected = false});
