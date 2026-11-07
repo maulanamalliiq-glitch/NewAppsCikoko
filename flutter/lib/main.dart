@@ -497,7 +497,7 @@ class _HomeState extends State<HomePage> {
       const colors=[Color(0xFF8653D7),Color(0xFFED6A38),
        Color(0xFF2187DB),Color(0xFF17A983),Color(0xFFE3A12A),Color(0xFFB857CB)];
       final accent=colors[i%colors.length];
-      return Material(color:Colors.white,borderRadius:BorderRadius.circular(15),
+      return Material(color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(15),
        child:InkWell(onTap:()=>switchTo(f.route),borderRadius:BorderRadius.circular(15),
         child:Container(
          padding:const EdgeInsets.all(11),
@@ -617,7 +617,7 @@ class _HomeState extends State<HomePage> {
           final url='${service['url']??''}';
           final logo='${service['logo_url']??''}';
           return Material(
-            color:Colors.white,
+            color:Theme.of(context).colorScheme.surface,
             borderRadius:BorderRadius.circular(16),
             child:InkWell(
               borderRadius:BorderRadius.circular(16),
@@ -674,6 +674,10 @@ class _HomeState extends State<HomePage> {
       itemBuilder:(ctx,i){final feature=homeShortcuts[i];return CikokoQuickMenu(
         title:feature.title,icon:iconFor(feature.route),onTap:()=>switchTo(feature.route));},
     )),
+    if (!guest) Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: CikokoPortalBanner(onOpen: () => switchTo('Layanan Online')),
+    ),
     if(role=='warga'||guest)Padding(padding:const EdgeInsets.only(top:9),child:Wrap(spacing:7,runSpacing:2,children:[
       ActionChip(avatar:const Icon(Icons.description_outlined,size:16,color:blue),label:const Text('Ahli Waris',style:TextStyle(fontSize:11)),onPressed:()=>switchTo('Surat Ahli Waris')),
       ActionChip(avatar:const Icon(Icons.bug_report_outlined,size:16,color:blue),label:const Text('Jumantik',style:TextStyle(fontSize:11)),onPressed:()=>switchTo('Laporan Jumantik')),
