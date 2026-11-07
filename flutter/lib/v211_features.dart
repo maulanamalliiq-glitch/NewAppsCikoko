@@ -612,8 +612,121 @@ class _PpsuReportState extends State<PpsuReportPage>{
   OutlinedButton.icon(onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>Scaffold(appBar:AppBar(title:const Text('Riwayat Kegiatan PPSU')),body:PpsuHistoryPage(api:widget.api)))) ,icon:const Icon(Icons.history),label:const Text('Lihat Riwayat Kegiatan')),
  ]);
 }
-class PpsuHistoryPage extends StatelessWidget{final CikokoApi api;const PpsuHistoryPage({super.key,required this.api});@override Widget build(BuildContext context)=>FutureBuilder<Map<String,dynamic>>(future:api.call('v211_ppsu_list'),builder:(c,s){if(s.hasError)return const Center(child:Text('Laporan belum dapat dimuat.'));if(!s.hasData)return const Center(child:CircularProgressIndicator());final rows=List<dynamic>.from(s.data?['items']??[]);return ListView(children:[for(final raw in rows)Card(child:ListTile(title:Text('${raw['team']} · ${raw['work_date']}'),subtitle:Text('${raw['activity']}',maxLines:2,overflow:TextOverflow.ellipsis),trailing:const Icon(Icons.chevron_right),onTap:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>PpsuDetailPage(api:api,id:int.parse('${raw['id']}')))))),if(rows.isEmpty)const ListTile(title:Text('Belum ada laporan kegiatan PPSU.'))]);});}
-class PpsuDetailPage extends StatelessWidget{final CikokoApi api;final int id;const PpsuDetailPage({super.key,required this.api,required this.id});@override Widget build(BuildContext c)=>Scaffold(appBar:AppBar(title:const Text('Detail Kegiatan PPSU')),body:FutureBuilder<Map<String,dynamic>>(future:api.callWithQuery('v211_ppsu_detail',{'id':'$id'}),builder:(ctx,s){if(s.hasError)return const Center(child:Text('Detail belum dapat ditampilkan.'));if(!s.hasData)return const Center(child:CircularProgressIndicator());final r=Map<String,dynamic>.from(s.data?['item']??{});return ListView(padding:const EdgeInsets.all(16),children:[Text('${r['team']} · ${r['work_date']}',style:const TextStyle(fontWeight:FontWeight.bold,fontSize:18)),Text('Petugas: ${r['name']??''}'),const SizedBox(height:8),Text('${r['activity']??''}'),const SizedBox(height:12),for(var i=0;i<3;i++)Padding(padding:const EdgeInsets.only(bottom:12),child:GestureDetector(onTap:()=>showDialog<void>(context:c,builder:(_)=>Dialog(child:InteractiveViewer(child:Image.network(api.photoUrl('v211_ppsu_photo',{'id':'$id','index':'$i'}),headers:api.authHeaders())))),child:ClipRRect(borderRadius:BorderRadius.circular(12),child:Image.network(api.photoUrl('v211_ppsu_photo',{'id':'$id','index':'$i'}),headers:api.authHeaders(),height:180,fit:BoxFit.cover,errorBuilder:(_,__,___)=>const Text('Foto tidak tersedia')))))]);}),);
+class PpsuHistoryPage extends StatelessWidget {
+ final CikokoApi api;
+ const PpsuHistoryPage({super.key,required this.api});
+ @override
+ Widget build(BuildContext context)=>FutureBuilder<Map<String,dynamic>>(
+  future:api.call('v211_ppsu_list'),
+  builder:(context,snapshot){
+   if(snapshot.hasError)
+    return const Center(child:CikokoEmptyState(
+     icon:Icons.cloud_off_outlined,
+     title:'Riwayat belum dapat dimuat',
+     subtitle:'Periksa koneksi internet dan muat ulang halaman.'));
+   if(!snapshot.hasData)
+    return const Center(child:CircularProgressIndicator());
+   final rows=List<dynamic>.from(snapshot.data?['items']??[]);
+   return ListView(
+    padding:const EdgeInsets.fromLTRB(14,12,14,28),
+    children:[
+     const CikokoPremiumHeader(
+      title:'Riwayat Kegiatan PPSU',
+      subtitle:'Daftar laporan kegiatan sesuai data server.',
+      icon:Icons.history_rounded),
+     const SizedBox(height:14),
+     if(rows.isEmpty)
+      const CikokoEmptyState(
+       icon:Icons.assignment_outlined,
+       title:'Belum ada laporan PPSU',
+       subtitle:'Laporan yang dikirim akan tampil dalam daftar ini.'),
+     for(final raw in rows)
+      Padding(
+       padding:const EdgeInsets.only(bottom:9),
+       child:CikokoPremiumTile(
+        icon:Icons.cleaning_services_outlined,
+        title:'${raw['team']??''} · ${raw['work_date']??''}',
+        subtitle:'${raw['activity']??''}',
+        accent:CikokoPalette.blue,
+        onTap:(){
+         final id=int.tryParse('${raw['id']??''}');
+         if(id==null||id<=0){
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+           content:Text('Nomor laporan belum tersedia dari server.')));
+          return;
+         }
+         Navigator.of(context).push(MaterialPageRoute<void>(
+          builder:(_)=>PpsuDetailPage(api:api,id:id)));
+        },
+       ),
+      ),
+     const CikokoPageSignature(),
+    ],
+   );
+  });
+}
+
+class PpsuDetailPage extends StatelessWidget {
+ final CikokoApi api;
+ final int id;
+ const PpsuDetailPage({super.key,required this.api,required this.id});
+ @override
+ Widget build(BuildContext context)=>Scaffold(
+  appBar:AppBar(title:const Text('Detail Kegiatan PPSU')),
+  body:FutureBuilder<Map<String,dynamic>>(
+   future:api.callWithQuery('v211_ppsu_detail',{'id':'$id'}),
+   builder:(context,snapshot){
+    if(snapshot.hasError)
+     return const Center(child:CikokoEmptyState(
+      icon:Icons.cloud_off_outlined,
+      title:'Detail belum dapat ditampilkan'));
+    if(!snapshot.hasData)
+     return const Center(child:CircularProgressIndicator());
+    final row=Map<String,dynamic>.from(snapshot.data?['item']??{});
+    return ListView(padding:const EdgeInsets.all(14),children:[
+     CikokoPremiumHeader(
+      title:'${row['team']??'Kegiatan PPSU'}',
+      subtitle:'Tanggal kegiatan: ${row['work_date']??'-'}',
+      icon:Icons.cleaning_services_outlined),
+     const SizedBox(height:13),
+     CikokoPremiumSurface(child:Column(
+      crossAxisAlignment:CrossAxisAlignment.stretch,
+      children:[
+       Text('Pelaksana: ${row['name']??'-'}',
+        style:Theme.of(context).textTheme.titleMedium),
+       const SizedBox(height:9),
+       Text('${row['activity']??''}',
+        style:Theme.of(context).textTheme.bodyMedium),
+      ])),
+     const SizedBox(height:13),
+     const CikokoPremiumSection(title:'Foto Dokumentasi',
+      subtitle:'Ketuk foto untuk melihat lebih dekat.'),
+     for(var index=0;index<3;index++)
+      Padding(padding:const EdgeInsets.only(bottom:12),
+       child:InkWell(
+        onTap:()=>showDialog<void>(
+         context:context,
+         builder:(_)=>Dialog(
+          child:InteractiveViewer(
+           child:Image.network(
+            api.photoUrl('v211_ppsu_photo',{'id':'$id','index':'$index'}),
+            headers:api.authHeaders())))),
+        child:ClipRRect(
+         borderRadius:BorderRadius.circular(16),
+         child:Image.network(
+          api.photoUrl('v211_ppsu_photo',{'id':'$id','index':'$index'}),
+          headers:api.authHeaders(),height:190,
+          width:double.infinity,fit:BoxFit.cover,
+          errorBuilder:(_,__,___)=>const SizedBox(
+           height:100,child:Center(child:Text('Foto tidak tersedia')))),
+        ),
+       ),
+      ),
+     const CikokoPageSignature(),
+    ]);
+   },
+  ),
+ );
 }
 
 class CivicNewsDetail extends StatefulWidget{final CikokoApi api;final Map<String,dynamic> preview;const CivicNewsDetail({super.key,required this.api,required this.preview});@override State<CivicNewsDetail> createState()=>_CivicNewsState();}
