@@ -21,3 +21,14 @@ bool cikokoProfileIsComplete(
   return !isResident ||
       (cikokoValidRtRw(user['rt']) && cikokoValidRtRw(user['rw']));
 }
+
+ 
+/// Display only. Full identity remains accessible to the owner's protected
+/// edit flow and is never altered in requests sent to the server.
+String cikokoMaskedNik(Object? value) {
+  final raw = (value ?? '').toString().trim();
+  if (raw.isEmpty) return 'Belum diisi';
+  final digits = raw.replaceAll(RegExp(r'[^0-9]'), '');
+  if (digits.length < 8) return '••••';
+  return '${digits.substring(0, 4)}••••••••${digits.substring(digits.length - 4)}';
+}
