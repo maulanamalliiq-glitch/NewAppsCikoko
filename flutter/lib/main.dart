@@ -1722,57 +1722,103 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
   }catch(e){if(mounted)notify(context,'Gagal mengubah tanggal: $e',error:true);}
   finally{if(mounted)setState(()=>busy=false);}
  }
- @override Widget build(BuildContext c)=>RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(12),children:[
-  CikokoPremiumHeader(
-   title:widget.onlyKind=='waris'?'Verifikasi Ahli Waris':
-    widget.onlyKind=='report'?'Laporan Kegiatan':'Verifikasi Laporan',
-   subtitle:'Pantau pengajuan dan tindak lanjut sesuai kewenangan Anda.',
-   icon:Icons.fact_check_outlined),
-  if(widget.onlyKind=='waris')const Padding(
-   padding:EdgeInsets.symmetric(horizontal:8,vertical:4),
-   child:Text('Khusus Ahli Waris. Admin Utama dapat mengatur progres dan tanggal pengajuan.')),
-  if(widget.onlyKind=='report')const Padding(
-   padding:EdgeInsets.symmetric(horizontal:8,vertical:4),
-   child:Text('Laporan kegiatan selain Ahli Waris.')),
-  const Padding(padding:EdgeInsets.all(8),child:Text('Ketuk surat untuk membuka data, progres, dan meminta kelengkapan dokumen.',style:TextStyle(fontSize:12,color:Colors.blueGrey))),
-  for(final r in rows)Card(
-    color:CikokoStatusBadge.accentFor((r['status']??'').toString()).withValues(alpha:.09),
-    margin:const EdgeInsets.only(bottom:10),
-    child:ListTile(contentPadding:const EdgeInsets.symmetric(horizontal:13,vertical:8),
-     leading:Container(width:41,height:44,alignment:Alignment.center,
-      decoration:BoxDecoration(
-       color:CikokoStatusBadge.accentFor((r['status']??'').toString()).withValues(alpha:.15),
-       borderRadius:BorderRadius.circular(11)),
-      child:Icon(Icons.fact_check_outlined,size:22,
-       color:CikokoStatusBadge.accentFor((r['status']??'').toString()))),
-     title:Text('${r['title']??r['reference']??'Pengajuan'}',
-       style:const TextStyle(fontWeight:FontWeight.w800,fontSize:13,color:navy)),
-     subtitle:Padding(padding:const EdgeInsets.only(top:7),
-       child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-         CikokoStatusBadge(status:(r['status']??'').toString()),
-         const SizedBox(height:5),
-         Text('${r['name']??''}  •  ${cikokoDateOnly(r['created_at']??'-')}',
-           maxLines:2,overflow:TextOverflow.ellipsis,
-           style:const TextStyle(fontSize:11,color:CikokoPalette.muted)),
-       ])),
-    onTap:(){
-      final row=Map<String,dynamic>.from(r);
-      final id=cikokoPositiveId(row);
-      final ref=cikokoWarisReference(row);
-      if(id==null && ref==null){notify(context,'Server belum mengirim ID surat. Pastikan API V2525 aktif.',error:true);load();return;}
-      showCikokoDocument(context,api,id:id??0,reference:ref??'',kind:cikokoDocumentKind(row),onChanged:load);
-    },
-    trailing:PopupMenuButton<String>(tooltip:'Tindakan Admin',enabled:!busy,
-      onSelected:(value)=>value=='edit_date'
-       ? editWarisDate(Map<String,dynamic>.from(r))
-       : update(Map<String,dynamic>.from(r),value),
-      itemBuilder:(_)=>[
-       if(widget.allowWarisDate&&api.profile?['role']=='admin'&&cikokoDocumentKind(Map<String,dynamic>.from(r))=='waris')
-        const PopupMenuItem<String>(value:'edit_date',child:Text('Ubah Tanggal Pengajuan')),
-       for(final status in ['masuk','proses','revisi','selesai','ditolak'])
-        PopupMenuItem<String>(value:status,child:Text('Status: '+status)),
-      ]),
-  )),if(rows.isEmpty)const ListTile(title:Text('Belum ada permohonan.'))]));
+ Future<void> confirmReportStatus(Map<String,dynamic> row,
+    String status)async{
+  final yes=await showDialog<bool>(
+   context:context,
+   builder:(dialog)=>AlertDialog(
+    title:const Text('Konfirmasi Perubahan Status'),
+    content:Text('Ubah status pengajuan menjadi "${status.replaceAll('_',' ')}"? '
+     'Perubahan akan disimpan pada server.'),
+    actions:[
+     TextButton(onPressed:()=>Navigator.pop(dialog,false),
+      child:const Text('Batal')),
+     FilledButton(onPressed:()=>Navigator.pop(dialog,true),
+      child:const Text('Simpan Status')),
+    ],
+   ),
+  );
+  if(yes!=true||!mounted)return;
+  setState(()=>busy=true);
+  try{
+   await update(row,status);
+  }finally{
+   if(mounted)setState(()=>busy=false);
+  }
+ }
+ @override
+ Widget build(BuildContext context) => RefreshIndicator(
+  onRefresh:load,
+  child:ListView(
+   padding:const EdgeInsets.fromLTRB(14,12,14,28),
+   children:[
+    CikokoPremiumHeader(
+     title:widget.onlyKind=='waris'?'Verifikasi Ahli Waris':
+      widget.onlyKind=='report'?'Laporan Kegiatan':'Verifikasi Laporan',
+     subtitle:'Tinjau pengajuan dan tindak lanjut sesuai hak akses petugas.',
+     icon:Icons.fact_check_outlined),
+    const SizedBox(height:12),
+    if(widget.onlyKind=='waris')
+     CikokoPremiumSurface(
+      child:Text('Admin Utama dapat memeriksa dokumen dan tanggal '
+       'pengajuan Ahli Waris.',
+       style:Theme.of(context).textTheme.bodySmall)),
+    if(widget.onlyKind=='report')
+     CikokoPremiumSurface(
+      child:Text('Laporan kegiatan tanpa dokumen Ahli Waris.',
+       style:Theme.of(context).textTheme.bodySmall)),
+    const CikokoPremiumSection(
+     title:'Daftar Permohonan',
+     subtitle:'Ketuk dokumen untuk melihat detail dan progres.'),
+    if(rows.isEmpty)
+     const CikokoEmptyState(icon:Icons.fact_check_outlined,
+      title:'Belum ada permohonan',
+      subtitle:'Permohonan yang tersedia untuk petugas akan tampil di sini.'),
+    for(final raw in rows)
+     CikokoRecordCard(
+      title:'${raw['title']??raw['reference']??'Pengajuan'}',
+      subtitle:'${raw['name']??''} · ${cikokoDateOnly(raw['created_at']??'-')}',
+      status:'${raw['status']??'proses'}',
+      statusLabel:'${(raw['status']??'proses').toString().replaceAll('_',' ')}',
+      onTap:(){
+       final row=Map<String,dynamic>.from(raw as Map);
+       final id=cikokoPositiveId(row);
+       final ref=cikokoWarisReference(row);
+       if(id==null&&ref==null){
+        notify(context,'Nomor dokumen tidak tersedia dari server.',error:true);
+        load();return;
+       }
+       showCikokoDocument(context,api,id:id??0,
+        reference:ref??'',kind:cikokoDocumentKind(row),onChanged:load);
+      },
+      footer:Align(
+       alignment:Alignment.centerRight,
+       child:PopupMenuButton<String>(
+        tooltip:'Tindakan Petugas',
+        enabled:!busy,
+        icon:Icon(Icons.more_horiz_rounded,
+         color:Theme.of(context).colorScheme.primary),
+        onSelected:(value)=>value=='edit_date'
+         ?editWarisDate(Map<String,dynamic>.from(raw as Map))
+         :confirmReportStatus(Map<String,dynamic>.from(raw as Map),value),
+        itemBuilder:(_)=>[
+         if(widget.allowWarisDate&&api.profile?['role']=='admin'&&
+            cikokoDocumentKind(Map<String,dynamic>.from(raw as Map))=='waris')
+          const PopupMenuItem<String>(
+           value:'edit_date',child:Text('Ubah Tanggal Pengajuan')),
+         for(final status in ['masuk','proses','revisi','selesai','ditolak'])
+          PopupMenuItem<String>(
+           value:status,
+           child:Text('Ubah status: ${status.replaceAll('_',' ')}')),
+        ],
+       ),
+      ),
+     ),
+    const CikokoPageSignature(),
+   ],
+  ),
+ );
+
 }
 
 class _PageCopyright extends StatelessWidget {
