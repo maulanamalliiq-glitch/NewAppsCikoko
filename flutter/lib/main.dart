@@ -194,7 +194,7 @@ class HomePage extends StatefulWidget{final VoidCallback onLogout,onAuthenticate
 class _HomeState extends State<HomePage> {
   String section='Dashboard';
   String menuQuery='';
-  int nav=2;
+  int nav=0;
   List<dynamic> items=[],events=[];
   List<Map<String,dynamic>> activeServices=cikokoDefaultIntegratedServices();
   int get unreadCount=>events.where((e)=>e['is_read']!=true && '${e['is_read']??0}'!='1').length;
@@ -279,21 +279,27 @@ class _HomeState extends State<HomePage> {
     if(guest&&_needsLogin(s)){openLogin();return;}
     setState(() {
       section=s;
-      if(s=='Dashboard'){nav=2;}
-      else if(s=='Berita & Kegiatan'){nav=1;}
-      else if(s=='Inovasi'){nav=3;}
-      else if(s=='Profil'){nav=4;}
-      else if(s=='Riwayat'||s=='Verifikasi Laporan'||s=='Verifikasi Ahli Waris'||s=='Laporan Kegiatan Admin'){nav=1;}
-      else if(s=='Notifikasi'){nav=2;}
-      else {nav=0;}
+      if (s == 'Dashboard') {
+        nav = 0;
+      } else if (s == 'Layanan Online') {
+        nav = 1;
+      } else if (s == 'Notifikasi') {
+        nav = 3;
+      } else if (s == 'Profil') {
+        nav = 4;
+      } else {
+        nav = 2;
+      }
     });
   }
-  void selectNav(int value){
-    if(value==0){switchTo('Menu Cikoko');return;}
-    if(value==1){switchTo('Berita & Kegiatan');return;}
-    if(value==2){switchTo('Dashboard');return;}
-    if(value==3){switchTo('Inovasi');return;}
-    switchTo('Profil');
+  void selectNav(int value) {
+    switch (value) {
+      case 0: switchTo('Dashboard'); return;
+      case 1: switchTo('Layanan Online'); return;
+      case 2: switchTo('Menu Cikoko'); return;
+      case 3: switchTo('Notifikasi'); return;
+      case 4: switchTo('Profil'); return;
+    }
   }
   IconData iconFor(String s)=>switch(s){
     'Dashboard'=>Icons.home_outlined,'Menu Cikoko'=>Icons.grid_view_rounded,
@@ -322,8 +328,25 @@ class _HomeState extends State<HomePage> {
     if(leave==true&&mounted){SystemNavigator.pop();}
   }
   @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
-    appBar:guest && section=='Dashboard'?null:AppBar(
-      title:Row(children:[const CikokoBrandMark(size:31),const SizedBox(width:9),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Cikoko SmartAPP',maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:Theme.of(c).colorScheme.onSurface)),Text(roleLabel,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:10.5,color:Theme.of(c).colorScheme.onSurfaceVariant))]))]),
+    appBar: guest && section == 'Dashboard' ? null : AppBar(
+      backgroundColor: CikokoDesign.navy,
+      foregroundColor: Colors.white,
+      flexibleSpace: const DecoratedBox(decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft, end: Alignment.bottomRight,
+          colors: [Color(0xFF07346E), Color(0xFF126BD7)],
+        ),
+      )),
+      title: Row(children: [
+        Image.asset('assets/logo.png', width: 31, height: 31, fit: BoxFit.contain),
+        const SizedBox(width: 9),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('Cikoko SmartAPP', maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+          Text(roleLabel, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 10.5, color: Color(0xFFE1EDFF))),
+        ])),
+      ]),
       actions:[
         IconButton(
           tooltip:CikokoSettings.tr('Ganti tema gelap/terang','Switch dark/light theme'),
@@ -354,13 +377,36 @@ class _HomeState extends State<HomePage> {
     body:loading?const Center(child:CircularProgressIndicator()):
       SafeArea(top:guest && section=='Dashboard',
        child:CikokoPremiumCanvas(child:_page())),
-    bottomNavigationBar:NavigationBar(height:67,selectedIndex:nav,labelBehavior:NavigationDestinationLabelBehavior.alwaysShow,onDestinationSelected:selectNav,destinations:[
-      NavigationDestination(icon:Icon(Icons.grid_view_outlined),selectedIcon:Icon(Icons.grid_view_rounded),label:CikokoSettings.tr('Menu','Menu')),
-      NavigationDestination(icon:Icon(Icons.newspaper_outlined),selectedIcon:Icon(Icons.newspaper),label:CikokoSettings.tr('Berita','News')),
-      NavigationDestination(icon:Icon(Icons.home_outlined),selectedIcon:Icon(Icons.home),label:CikokoSettings.tr('Beranda','Home')),
-      NavigationDestination(icon:Icon(Icons.auto_awesome_outlined),selectedIcon:Icon(Icons.auto_awesome),label:CikokoSettings.tr('Inovasi','Innovation')),
-      NavigationDestination(icon:Icon(Icons.person_outline),selectedIcon:Icon(Icons.person),label:CikokoSettings.tr('Profil','Profile')),
-    ]),
+    bottomNavigationBar: NavigationBar(
+      height: 70,
+      selectedIndex: nav,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      onDestinationSelected: selectNav,
+      destinations: [
+        NavigationDestination(
+          icon: const Icon(Icons.home_outlined),
+          selectedIcon: const Icon(Icons.home_rounded),
+          label: CikokoSettings.tr('Beranda', 'Home')),
+        NavigationDestination(
+          icon: const Icon(Icons.grid_view_outlined),
+          selectedIcon: const Icon(Icons.grid_view_rounded),
+          label: CikokoSettings.tr('Layanan', 'Services')),
+        NavigationDestination(
+          icon: const Icon(Icons.dashboard_customize_outlined),
+          selectedIcon: const Icon(Icons.dashboard_customize_rounded),
+          label: CikokoSettings.tr('Menu', 'Menu')),
+        NavigationDestination(
+          icon: Badge(isLabelVisible: unreadCount > 0,
+            label: Text('$unreadCount'),
+            child: const Icon(Icons.notifications_none_rounded)),
+          selectedIcon: const Icon(Icons.notifications_rounded),
+          label: CikokoSettings.tr('Notifikasi', 'Notifications')),
+        NavigationDestination(
+          icon: const Icon(Icons.person_outline_rounded),
+          selectedIcon: const Icon(Icons.person_rounded),
+          label: CikokoSettings.tr('Akun', 'Account')),
+      ],
+    ),
     floatingActionButton:section=='Hubungi Kami'?null:FloatingActionButton.small(tooltip:'Hubungi Admin',onPressed:()=>switchTo('Hubungi Kami'),backgroundColor:blue,foregroundColor:Colors.white,child:const Icon(Icons.chat_bubble_outline)),
   ));
   Widget _page(){switch(section){
@@ -523,8 +569,10 @@ class _HomeState extends State<HomePage> {
     if(isStaff) Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoStaffHero(
       roleName:roleLabel,
       accountName:'${api.profile?['name']??'Petugas Cikoko'}',
-      onManagement:()=>switchTo('Menu Cikoko'),
-      onServices:()=>switchTo('Layanan Online'),
+      onManagement: () => switchTo(
+        role == 'admin' && capabilities['role:manage'] == true
+          ? 'Kelola Akun Petugas' : 'Menu Cikoko'),
+      onServices: () => switchTo('Layanan Online'),
     ))
     else if(role=='warga') Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoResidentHero(
       name:'${api.profile?['name']??'Warga Cikoko'}',
