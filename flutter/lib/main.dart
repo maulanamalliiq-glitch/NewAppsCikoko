@@ -402,7 +402,16 @@ class _HomeState extends State<HomePage> {
     ));
     if(leave==true&&mounted){SystemNavigator.pop();}
   }
-  @override Widget build(BuildContext c)=>PopScope(canPop:false,onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},child:Scaffold(
+  @override
+  Widget build(BuildContext c) {
+    // Defense-in-depth: a HomePage created without a valid session cannot
+    // expose the role dashboard or any private navigation.
+    if(guest){
+      return LoginPage(onLogin:widget.onAuthenticated);
+    }
+    return PopScope(canPop:false,
+      onPopInvokedWithResult:(didPop,result){if(!didPop)confirmExit();},
+      child:Scaffold(
     appBar: guest && section == 'Dashboard' ? null : AppBar(
       backgroundColor: CikokoDesign.navy,
       foregroundColor: Colors.white,
@@ -485,6 +494,7 @@ class _HomeState extends State<HomePage> {
     // Messaging stays in the authorized Menu/Drawer; no floating button
     // overlaps form fields or the premium bottom navigation.
   ));
+  }
   Widget _page(){switch(section){
     case 'Dashboard':return home();
     case 'Menu Cikoko':return menuPage();
@@ -672,14 +682,7 @@ class _HomeState extends State<HomePage> {
       onAspirations:()=>switchTo('Pusat Laporan'),
       onInnovations:()=>switchTo('Inovasi'),
     ))
-    else CikokoGuestHero(
-      onLogin:openLogin,
-      onRegister:openRegistration,
-      onServices:()=>switchTo('Layanan Online'),
-      onNews:()=>switchTo('Berita & Kegiatan'),
-      onInnovations:()=>switchTo('Inovasi'),
-      onAbout:showOfficeProfile,
-    ),
+    else const SizedBox.shrink(), // authenticated roles handled above
 
     Padding(padding:const EdgeInsets.symmetric(horizontal:12),child:Column(
       crossAxisAlignment:CrossAxisAlignment.stretch,children:[
