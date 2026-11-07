@@ -1524,11 +1524,74 @@ class ChatPage extends StatefulWidget{const ChatPage({super.key});@override Stat
 class _ChatState extends State<ChatPage>{final ctrl=TextEditingController();List<dynamic> messages=[];bool busy=false;Timer?timer;@override void initState(){super.initState();refresh();timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());} @override void dispose(){timer?.cancel();ctrl.dispose();super.dispose();}
  Future<void> refresh()async{try{final d=await api.call('chat');if(mounted)setState(()=>messages=List<dynamic>.from(d['messages']??[]));}catch(_){}}
  Future<void> send()async{if(ctrl.text.trim().isEmpty)return;setState(()=>busy=true);try{await api.call('chat_send',body:{'message':ctrl.text.trim()});ctrl.clear();await refresh();}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>busy=false);}}
- @override Widget build(BuildContext c)=>Column(children:[
-Padding(padding:const EdgeInsets.all(12),child:const CikokoPremiumHeader(
- title:'Hubungi Admin',subtitle:'Petugas akan membantu selama jam pelayanan.',
- icon:Icons.support_agent_outlined)),
-Expanded(child:ListView(padding:const EdgeInsets.all(12),children:[for(final m in messages)Align(alignment:m['sender']=='admin'?Alignment.centerLeft:Alignment.centerRight,child:Card(color:m['sender']=='admin'?Colors.white:const Color(0xffdef0ff),child:Padding(padding:const EdgeInsets.all(12),child:Text('${m['message']}'))))])),SafeArea(child:Padding(padding:const EdgeInsets.all(10),child:Row(children:[Expanded(child:TextField(controller:ctrl,maxLines:3,minLines:1,decoration:const InputDecoration(hintText:'Tulis pesan ke admin...'))),IconButton(onPressed:busy?null:send,icon:const Icon(Icons.send,color:blue))])))]);
+ @override
+ Widget build(BuildContext context) {
+  final scheme=Theme.of(context).colorScheme;
+  return Column(children:[
+   const Padding(
+    padding:EdgeInsets.fromLTRB(13,12,13,8),
+    child:CikokoPremiumHeader(
+     title:'Hubungi Admin',
+     subtitle:'Pesan hanya ditampilkan dalam percakapan akun Anda.',
+     icon:Icons.support_agent_outlined)),
+   Expanded(child:ListView(
+    padding:const EdgeInsets.fromLTRB(13,10,13,15),
+    children:[
+     if(messages.isEmpty)
+      const CikokoEmptyState(
+       icon:Icons.chat_bubble_outline_rounded,
+       title:'Belum ada pesan',
+       subtitle:'Kirim pesan untuk menghubungi petugas Kelurahan Cikoko.'),
+     for(final message in messages)
+      Align(
+       alignment:message['sender']=='admin'
+         ?Alignment.centerLeft:Alignment.centerRight,
+       child:ConstrainedBox(
+        constraints:const BoxConstraints(maxWidth:340),
+        child:Container(
+         margin:const EdgeInsets.only(bottom:10),
+         padding:const EdgeInsets.fromLTRB(13,11,13,11),
+         decoration:BoxDecoration(
+          color:message['sender']=='admin'
+            ?scheme.surface:scheme.primaryContainer,
+          border:Border.all(color:scheme.outlineVariant),
+          borderRadius:BorderRadius.only(
+           topLeft:const Radius.circular(18),
+           topRight:const Radius.circular(18),
+           bottomLeft:Radius.circular(message['sender']=='admin'?5:18),
+           bottomRight:Radius.circular(message['sender']=='admin'?18:5)),
+         ),
+         child:Text('${message['message']??''}',
+          style:TextStyle(color:scheme.onSurface,fontSize:12.5,height:1.45)),
+        ),
+       ),
+      ),
+    ],
+   )),
+   SafeArea(top:false,child:Padding(
+    padding:const EdgeInsets.fromLTRB(12,8,12,12),
+    child:Row(children:[
+     Expanded(child:TextField(
+      controller:ctrl,
+      maxLines:3,minLines:1,
+      decoration:const InputDecoration(
+       hintText:'Tulis pesan ke admin...',
+       prefixIcon:Icon(Icons.chat_bubble_outline_rounded)),
+     )),
+     const SizedBox(width:9),
+     SizedBox(width:48,height:48,
+      child:FilledButton(
+       onPressed:busy?null:send,
+       style:FilledButton.styleFrom(padding:EdgeInsets.zero,
+        shape:RoundedRectangleBorder(
+         borderRadius:BorderRadius.circular(15))),
+       child:const Icon(Icons.send_rounded),
+      )),
+    ]),
+   )),
+  ]);
+ }
+
 }
 class AdminChatPage extends StatefulWidget{const AdminChatPage({super.key});@override State<AdminChatPage> createState()=>_AdminChatState();}
 class _AdminChatState extends State<AdminChatPage>{List<dynamic> threads=[];@override void initState(){super.initState();load();}
@@ -1538,20 +1601,32 @@ class _AdminChatState extends State<AdminChatPage>{List<dynamic> threads=[];@ove
      builder:(_)=>AdminReplySheet(thread:thread));
    if(sent==true&&mounted)await load();
  }
- @override Widget build(BuildContext c)=>ListView(padding:const EdgeInsets.all(12),children:[
- const CikokoPremiumHeader(title:'Pesan Masuk',
-  subtitle:'Baca pesan dan balas kebutuhan warga.',icon:Icons.mark_chat_unread_outlined),
- const SizedBox(height:12),
- for(final t in threads)Card(child:ListTile(
-  leading:const CircleAvatar(backgroundColor:Color(0xFFE7F1FF),
-   child:Icon(Icons.person_outline,color:blue)),
-  title:Text('${t['name']}'),
-  subtitle:Text('${t['message']}',maxLines:2,overflow:TextOverflow.ellipsis),
-  trailing:const Icon(Icons.reply,color:blue),
-  onTap:()=>reply(Map<String,dynamic>.from(t)))),
- if(threads.isEmpty)const ListTile(title:Text('Belum ada pesan masuk.')),
- const CikokoPageSignature(),
-]);
+ @override
+ Widget build(BuildContext context) => ListView(
+  padding:const EdgeInsets.fromLTRB(14,12,14,28),
+  children:[
+   const CikokoPremiumHeader(
+    title:'Pesan Masuk',
+    subtitle:'Percakapan warga yang tersedia untuk akun petugas ini.',
+    icon:Icons.mark_chat_unread_outlined),
+   const SizedBox(height:12),
+   if(threads.isEmpty)
+    const CikokoEmptyState(icon:Icons.mark_chat_read_outlined,
+     title:'Belum ada pesan masuk',
+     subtitle:'Pesan warga akan tampil saat diterima oleh layanan.'),
+   for(final thread in threads)
+    Padding(padding:const EdgeInsets.only(bottom:8),
+     child:CikokoPremiumTile(
+      icon:Icons.forum_outlined,
+      title:'${thread['name']??'Warga'}',
+      subtitle:'${thread['message']??''}',
+      accent:CikokoPalette.blue,
+      onTap:()=>reply(Map<String,dynamic>.from(thread as Map)),
+     )),
+   const CikokoPageSignature(),
+  ],
+ );
+
 }
 class AdminReplySheet extends StatefulWidget{
  final Map<String,dynamic> thread;
