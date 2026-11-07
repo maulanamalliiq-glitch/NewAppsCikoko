@@ -68,9 +68,76 @@ class CikokoApp extends StatelessWidget {
  ]),theme:CikokoDesign.light,darkTheme:CikokoDesign.dark,
     themeMode:CikokoSettings.themeMode.value,home:const Entry()));
 }
-class Entry extends StatefulWidget{const Entry({super.key});@override State<Entry> createState()=>_EntryState();}
-class _EntryState extends State<Entry>{bool loading=true;@override void initState(){super.initState();api.restore().whenComplete((){if(mounted)setState(()=>loading=false);});}
- @override Widget build(BuildContext c)=>loading?const Scaffold(body:Center(child:Column(mainAxisSize:MainAxisSize.min,children:[Logo(size:110),SizedBox(height:18),Text('Kelurahan Cikoko',style:TextStyle(fontSize:19,color:navy,fontWeight:FontWeight.w800)),SizedBox(height:20),CircularProgressIndicator()]))):HomePage(key:ValueKey(api.token??'guest'),onAuthenticated:()=>setState((){}),onLogout:()=>setState((){}));}
+/// The public entry route is a standalone login, never a scrollable guest
+/// dashboard. The authenticated dashboard is built only after login succeeds.
+class CikokoAuthGate extends StatelessWidget {
+  final bool authenticated;
+  final VoidCallback onAuthenticated;
+  final VoidCallback onLogout;
+
+  const CikokoAuthGate({
+    super.key,
+    required this.authenticated,
+    required this.onAuthenticated,
+    required this.onLogout,
+  });
+
+  @override
+  Widget build(BuildContext context) => authenticated
+      ? HomePage(
+          key: const ValueKey('authenticated_home'),
+          onAuthenticated: onAuthenticated,
+          onLogout: onLogout,
+        )
+      : LoginPage(
+          key: const ValueKey('standalone_login'),
+          onLogin: onAuthenticated,
+        );
+}
+
+class Entry extends StatefulWidget {
+  const Entry({super.key});
+  @override
+  State<Entry> createState() => _EntryState();
+}
+
+class _EntryState extends State<Entry> {
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    api.restore().whenComplete(() {
+      if (mounted) setState(() => loading = false);
+    });
+  }
+
+  void refreshSession() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return const Scaffold(
+        body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Logo(size: 110),
+          SizedBox(height: 18),
+          Text('Kelurahan Cikoko',
+            style: TextStyle(fontSize: 19, color: navy,
+              fontWeight: FontWeight.w800)),
+          SizedBox(height: 20),
+          CircularProgressIndicator(),
+        ])),
+      );
+    }
+    return CikokoAuthGate(
+      authenticated: api.token != null,
+      onAuthenticated: refreshSession,
+      onLogout: refreshSession,
+    );
+  }
+}
 class Logo extends StatelessWidget{final double size;const Logo({super.key,this.size=58});@override Widget build(BuildContext c)=>ClipOval(child:Image.asset('assets/logo.png',width:size,height:size,fit:BoxFit.cover));}
 class LoginPage extends StatefulWidget{final VoidCallback onLogin;final bool startWithRegistration;const LoginPage({super.key,required this.onLogin,this.startWithRegistration=false});@override State<LoginPage> createState()=>_LoginState();}
 class _LoginState extends State<LoginPage>{final user=TextEditingController(),pass=TextEditingController();bool busy=false,signup=false,showPassword=false;final fields=<String,TextEditingController>{};
@@ -87,20 +154,26 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
     keyboardDismissBehavior:ScrollViewKeyboardDismissBehavior.onDrag,
     child:ConstrainedBox(constraints:BoxConstraints(minHeight:box.maxHeight),
      child:Column(children:[
-      SizedBox(height:244,width:double.infinity,child:Stack(fit:StackFit.expand,children:[
+      // Keep the login form in the first viewport on ordinary phones.
+      // Registration and the visible keyboard may still scroll when needed.
+      SizedBox(
+        height:signup ? 98 : (box.maxHeight < 650 ? 92 : 136),
+        width:double.infinity,
+        child:Stack(fit:StackFit.expand,children:[
        const CikokoMonasBackdrop(),
        const DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(
         begin:Alignment.topCenter,end:Alignment.bottomCenter,
         colors:[Color(0x000B4D9D),Color(0x000B4D9D),Color(0x752356A1)]))),
-       Positioned(top:12,left:12,child:Material(
-        color:Colors.white.withValues(alpha:.91),shape:const CircleBorder(),
-        child:IconButton(tooltip:'Kembali',onPressed:()=>Navigator.of(context).maybePop(),
-         icon:const Icon(Icons.arrow_back_rounded,color:CikokoPalette.navy)))),
+       if (Navigator.of(context).canPop())
+         Positioned(top:12,left:12,child:Material(
+          color:Colors.white.withValues(alpha:.91),shape:const CircleBorder(),
+          child:IconButton(tooltip:'Kembali',onPressed:()=>Navigator.of(context).maybePop(),
+           icon:const Icon(Icons.arrow_back_rounded,color:CikokoPalette.navy)))),
       ])),
       Transform.translate(offset:const Offset(0,-14),child:Container(
        constraints:const BoxConstraints(maxWidth:480),
        width:double.infinity,
-       padding:const EdgeInsets.fromLTRB(20,23,20,22),
+       padding:const EdgeInsets.fromLTRB(20,16,20,16),
        decoration:const BoxDecoration(color:Colors.white,
         borderRadius:BorderRadius.only(topLeft:Radius.circular(25),
          topRight:Radius.circular(25),bottomLeft:Radius.circular(18),
@@ -113,14 +186,14 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
         ]),
         const SizedBox(height:8),
         const Text('Layanan Digital Kelurahan Cikoko',style:TextStyle(color:CikokoPalette.blue,fontSize:12,fontWeight:FontWeight.w700)),
-        const SizedBox(height:17),
+        const SizedBox(height:12),
         Text(title,style:const TextStyle(color:CikokoPalette.navy,
          fontSize:23,fontWeight:FontWeight.w700)),
         const SizedBox(height:5),
         Text(signup?'Daftarkan akun untuk layanan Kelurahan Cikoko.':
          'Selamat datang kembali. Masuk untuk melanjutkan layanan.',
          style:const TextStyle(color:CikokoPalette.muted,fontSize:12,height:1.4)),
-        const SizedBox(height:20),
+        const SizedBox(height:15),
         if(signup)
          for(final entry in <String,String>{
           'name':'Nama lengkap','username':'Username','password':'Kata sandi',
@@ -181,7 +254,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
          textAlign:TextAlign.center,style:TextStyle(
           fontSize:10.5,color:CikokoPalette.muted))),
        ]))),
-      const Padding(padding:EdgeInsets.only(top:7,bottom:22),
+      const Padding(padding:EdgeInsets.only(top:5,bottom:10),
        child:Text('Copyright © Cikoko Smart',
         style:TextStyle(color:CikokoPalette.muted,fontSize:10.5))),
      ])),
