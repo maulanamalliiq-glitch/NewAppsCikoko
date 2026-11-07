@@ -1,0 +1,17 @@
+name: QA Six Screenshots
+on:
+  push:
+    branches: [fix/screenshot-six-issues-20261106]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter create --platforms=android --project-name=cikoko . && flutter pub get && flutter analyze --no-fatal-infos --no-fatal-warnings && flutter test
+        working-directory: flutter

@@ -237,15 +237,25 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
           start:const Color(0xFF143D85),end:const Color(0xFF407FE0)),
         const SizedBox(height:14),
         if (widget.bendaharaOnly && roles.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              'Peran Bendahara belum tersedia dari API cPanel. '
-              'Pembuatan akun dinonaktifkan hingga server mengirimkan '
-              'bendahara_rt atau bendahara_rw.',
-              style: TextStyle(color: Colors.deepOrange),
-            ),
-          ),
+          Card(child:Padding(
+            padding:const EdgeInsets.all(14),
+            child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+              Row(children:[
+                Icon(Icons.warning_amber_rounded,color:Theme.of(context).colorScheme.error),
+                const SizedBox(width:8),
+                const Expanded(child:Text('Peran Bendahara belum aktif di server',
+                  style:TextStyle(fontWeight:FontWeight.bold))),
+              ]),
+              const SizedBox(height:8),
+              const Text('Server belum mengirim peran Bendahara RT/RW. '
+                'Sinkronkan API cPanel dan daftar peran resmi, kemudian muat ulang. '
+                'Pembuatan akun dinonaktifkan agar tidak membuat akun dengan peran yang salah.'),
+              const SizedBox(height:8),
+              OutlinedButton.icon(onPressed:load,icon:const Icon(Icons.refresh),
+                label:const Text('Periksa ulang peran')),
+            ]),
+          )),
+
         const SizedBox(height: 12),
         Card(child: Column(children: [
           ListTile(

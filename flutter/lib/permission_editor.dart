@@ -2,6 +2,28 @@ import 'package:flutter/material.dart';
 import 'premium_ui.dart';
 import 'api.dart';
 
+const _permissionLabels = <String,String>{
+ 'report:jumantik':'Laporan Jumantik',
+ 'report:kegiatan':'Laporan Kegiatan',
+ 'report:fkdm':'Laporan FKDM',
+ 'report:lmk':'Laporan LMK',
+ 'report:posyandu':'Laporan Posyandu',
+ 'report:pkk':'Laporan PKK',
+ 'report:kerja_bakti':'Laporan Kerja Bakti',
+ 'report:ppsu':'Laporan PPSU',
+ 'reports:view':'Melihat Semua Laporan',
+ 'reports:verify':'Memverifikasi Laporan',
+ 'waris:create':'Mengajukan Surat Ahli Waris',
+ 'waris:view':'Melihat Surat Ahli Waris',
+ 'waris:verify':'Memverifikasi Surat Ahli Waris',
+ 'content:create':'Mengelola Konten',
+ 'archive:create':'Membuat Arsip',
+ 'archive:view':'Melihat Arsip',
+ 'chat:reply':'Membalas Pesan Warga',
+};
+String cikokoPermissionLabel(String key) =>
+ _permissionLabels[key] ?? key.replaceAll(':',' / ').replaceAll('_',' ');
+
 class RolePermissionPage extends StatefulWidget {final CikokoApi api;const RolePermissionPage({super.key,required this.api});@override State<RolePermissionPage> createState()=>_RolePermissionPageState();}
 class _RolePermissionPageState extends State<RolePermissionPage> {
  Map<String,dynamic>? data;
@@ -22,7 +44,7 @@ class _RolePermissionPageState extends State<RolePermissionPage> {
   catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Gagal menyimpan hak akses: $e')));}
   finally{if(mounted)setState(()=>busy=false);}
  }
- @override Widget build(BuildContext c){if(error!=null)return Center(child:Text('Gagal memuat hak akses: $error'));if(data==null)return const Center(child:CircularProgressIndicator());
+ @override Widget build(BuildContext c){if(error!=null)return Center(child:Column(mainAxisSize:MainAxisSize.min,children:[Text('Hak akses belum dapat dimuat: $error',textAlign:TextAlign.center),const SizedBox(height:12),FilledButton.icon(onPressed:load,icon:const Icon(Icons.refresh),label:const Text('Coba lagi'))]));if(data==null)return const Center(child:CircularProgressIndicator());
   final roles=Map<String,dynamic>.from(data!['roles'] as Map);
   final keys=(data!['keys'] as List<dynamic>).cast<String>().where((e)=>e!='role:manage').toList();
   return ListView(padding:const EdgeInsets.all(14),children:[
@@ -32,7 +54,7 @@ class _RolePermissionPageState extends State<RolePermissionPage> {
     start:Color(0xFF42378A),end:Color(0xFF1769D2)),
    const SizedBox(height:13),
    DropdownButtonFormField<String>(initialValue:role,decoration:const InputDecoration(labelText:'Pilih role'),items:[for(final e in roles.entries)if(e.key!='admin')DropdownMenuItem(value:e.key,child:Text('${e.value}'))],onChanged:busy?null:(r){if(r!=null)setState(()=>role=r);}),
-   const SizedBox(height:8),for(final key in keys)Card(child:SwitchListTile(dense:true,title:Text(key.replaceAll(':',' / ').replaceAll('_',' ')),value:allowed(key),onChanged:busy?null:(v)=>change(key,v))),
+   const SizedBox(height:8),for(final key in keys)Card(child:SwitchListTile(dense:true,title:Text(cikokoPermissionLabel(key)),value:allowed(key),onChanged:busy?null:(v)=>change(key,v))),
    const SizedBox(height:18),const CikokoPageSignature(),
   ]);
  }

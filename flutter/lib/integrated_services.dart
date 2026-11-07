@@ -86,7 +86,12 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
       final response=await http.Response.fromStream(await request.send().timeout(const Duration(seconds:40)));
       final data=jsonDecode(utf8.decode(response.bodyBytes)) as Map<String,dynamic>;
       if(response.statusCode!=200||data['ok']!=true)throw Exception('${data['error']??'Upload gagal'}');
-      return '${data['url']??''}';
+      final uploadedUrl = '${data['url']??''}';
+      final verified = Uri.tryParse(uploadedUrl);
+      if (verified == null || verified.scheme != 'https' || verified.host.isEmpty) {
+        throw const FormatException('URL logo tidak valid');
+      }
+      return uploadedUrl;
     }on TimeoutException{
       _message('Unggah logo terlalu lama. Periksa jaringan dan coba kembali.');
       return null;
@@ -128,18 +133,35 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
             icon:Icon(uploading?Icons.hourglass_top:Icons.photo_library_outlined),
             label:Text(uploading?'Mengunggah logo...':'Pilih Logo dari Galeri'),
           ),
-          if(logo.text.isNotEmpty)Padding(
-            padding:const EdgeInsets.symmetric(vertical:8),
-            child:Image.network(logo.text,height:64,width:64,fit:BoxFit.contain,
-              errorBuilder:(_,__,___)=>const Icon(Icons.image_not_supported_outlined)),
+          const SizedBox(height:10),
+          Container(
+            width:double.infinity,
+            padding:const EdgeInsets.all(12),
+            decoration:BoxDecoration(
+              border:Border.all(color:Theme.of(ctx).colorScheme.outlineVariant),
+              borderRadius:BorderRadius.circular(14),
+            ),
+            child:Column(children:[
+              if(logo.text.isNotEmpty)
+                Image.network(logo.text,height:90,width:90,fit:BoxFit.contain,
+                  errorBuilder:(_,__,___)=>const Icon(Icons.broken_image_outlined,size:48))
+              else
+                Icon(Icons.image_outlined,size:48,color:Theme.of(ctx).colorScheme.onSurfaceVariant),
+              const SizedBox(height:6),
+              Text(logo.text.isEmpty?'Belum ada logo':'Pratinjau logo layanan',
+                style:TextStyle(color:Theme.of(ctx).colorScheme.onSurfaceVariant)),
+              if(uploading)const Padding(
+                padding:EdgeInsets.only(top:8),child:LinearProgressIndicator()),
+            ]),
           ),
+          const SizedBox(height:8),
           TextFormField(controller:link,decoration:const InputDecoration(labelText:'Link Lihat Selengkapnya (HTTPS)'),keyboardType:TextInputType.url,
               validator:(v){final x=(v??'').trim();return x.isNotEmpty&&(Uri.tryParse(x)?.scheme!='https')?'Gunakan alamat HTTPS':null;}),
           SwitchListTile(contentPadding:EdgeInsets.zero,title:const Text('Tampilkan kepada warga'),value:active,onChanged:(v)=>change(()=>active=v)),
         ]))),
         actions:[
           TextButton(onPressed:()=>Navigator.pop(ctx),child:const Text('Batal')),
-          FilledButton(onPressed:(){if(form.currentState!.validate())Navigator.pop(ctx,{
+          FilledButton(onPressed:uploading?null:(){if(form.currentState!.validate())Navigator.pop(ctx,{
             'id':'${old?['id']??DateTime.now().microsecondsSinceEpoch}',
             'title':title.text.trim(),'description':desc.text.trim(),
             'logo_url':logo.text.trim(),'url':link.text.trim(),'active':active,
