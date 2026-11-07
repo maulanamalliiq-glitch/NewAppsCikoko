@@ -746,16 +746,88 @@ class _ArchiveEditorState extends State<ArchiveEditorPage>{
  final files={for(final e in photos.entries)e.key:[e.value]};await widget.api.upload('v211_archive_save',fields,files);if(mounted){civicMessage(context,'Arsip Ahli Waris berhasil disimpan.');if(widget.editId!=null)Navigator.of(context).pop(true);else{for(final c in data.values){c.clear();}data['archive_year']!.text='${DateTime.now().year}';for(final c in children){c.dispose();}children.clear();setState(()=>photos.clear());}}}catch(_){if(mounted)civicMessage(context,'Arsip belum berhasil disimpan. Mohon periksa kembali data dan lampiran.');}finally{if(mounted)setState(()=>saving=false);}}
  String _quote(String v)=>'"${v.replaceAll('\\','\\\\').replaceAll('"','\\"').replaceAll('\n',' ')}"';
  Widget field(String key,String label,{int lines=1})=>Padding(padding:const EdgeInsets.only(bottom:10),child:TextField(controller:data[key],maxLines:lines,decoration:InputDecoration(labelText:label)));
- @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(14),children:[Text(widget.editId==null?'Tambah Arsip Ahli Waris':'Edit Arsip Ahli Waris',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:19,fontWeight:FontWeight.w800)),if(widget.editId!=null&&!loaded)const LinearProgressIndicator(),const SizedBox(height:10),
-  const Text('Data Surat dan Pemohon',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800)),
-  field('archive_year','Tahun Surat'),field('reference_no','Nomor Surat'),field('name','Nama Pemohon'),field('nik','NIK Pemohon'),field('phone','Nomor HP'),field('address','Alamat Pemohon',lines:2),field('relation','Hubungan dengan Pewaris'),
-  const Text('Data Pewaris',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800)),field('deceased_name','Nama Almarhum/Almarhumah'),field('birthplace','Tempat Lahir'),field('birthdate','Tanggal Lahir (YYYY-MM-DD)'),field('marriage_date','Tanggal Menikah (YYYY-MM-DD)'),field('marital_status','Status Perkawinan'),field('deathdate','Tanggal Meninggal (YYYY-MM-DD)'),field('heirs','Daftar Ahli Waris',lines:3),field('notes','Catatan Arsip',lines:3),
-  const SizedBox(height:8),const Text('Dokumen Persyaratan',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800)),
-  for(final item in const <String,String>{'r1':'Surat Pengantar RT/RW','r2':'Surat Permohonan','r3':'Pernyataan Keabsahan','r4':'KTP/KK/Akta Lahir Ahli Waris','r5':'Surat Kematian','r6':'Surat Nikah','r7':'Akta Cerai (jika ada)','r8':'Surat Kematian Ahli Waris (jika ada)'}.entries)photoEntry(item.key,item.value),
-  Row(children:[const Expanded(child:Text('Daftar Anak (maksimal 10)',style:TextStyle(color:civicBlue,fontWeight:FontWeight.w800))),TextButton(onPressed:children.length>=10?null:()=>setState(()=>children.add(TextEditingController())),child:const Text('+ Tambah Anak'))]),
-  for(var i=0;i<children.length;i++)Card(child:Padding(padding:const EdgeInsets.all(10),child:Column(children:[TextField(controller:children[i],decoration:InputDecoration(labelText:'Nama anak ke-${i+1}')),photoEntry('child_${i+1}','KTP, KK dan Akta Lahir anak ke-${i+1}')]))),
-  const SizedBox(height:15),FilledButton.icon(onPressed:saving?null:save,icon:const Icon(Icons.save_outlined),label:Text(saving?'Menyimpan…':'Simpan Data Arsip')),const SizedBox(height:25),
- ]);
+ @override
+ Widget build(BuildContext context)=>ListView(
+  padding:const EdgeInsets.fromLTRB(14,12,14,30),
+  children:[
+   CikokoPremiumHeader(
+    title:widget.editId==null?'Tambah Arsip Ahli Waris':'Edit Arsip Ahli Waris',
+    subtitle:'Pencatatan dokumen arsip sesuai kewenangan petugas.',
+    icon:Icons.folder_copy_outlined),
+   if(widget.editId!=null&&!loaded)
+    const Padding(padding:EdgeInsets.all(10),
+     child:LinearProgressIndicator()),
+   const SizedBox(height:13),
+   CikokoFlowSection(
+    title:'01 · Data Surat dan Pemohon',
+    subtitle:'Nomor surat dan identitas yang tercatat',
+    icon:Icons.badge_outlined,
+    child:Column(children:[
+     field('archive_year','Tahun Surat'),
+     field('reference_no','Nomor Surat'),
+     field('name','Nama Pemohon'),
+     field('nik','NIK Pemohon'),
+     field('phone','Nomor HP'),
+     field('address','Alamat Pemohon',lines:2),
+     field('relation','Hubungan dengan Pewaris'),
+    ])),
+   CikokoFlowSection(
+    title:'02 · Data Pewaris',
+    subtitle:'Informasi sesuai dokumen pendukung',
+    icon:Icons.family_restroom_outlined,
+    child:Column(children:[
+     field('deceased_name','Nama Almarhum/Almarhumah'),
+     field('birthplace','Tempat Lahir'),
+     field('birthdate','Tanggal Lahir (YYYY-MM-DD)'),
+     field('marriage_date','Tanggal Menikah (YYYY-MM-DD)'),
+     field('marital_status','Status Perkawinan'),
+     field('deathdate','Tanggal Meninggal (YYYY-MM-DD)'),
+     field('heirs','Daftar Ahli Waris',lines:3),
+     field('notes','Catatan Arsip',lines:3),
+    ])),
+   const CikokoPremiumSection(
+    title:'03 · Dokumen Persyaratan',
+    subtitle:'Unggah, lihat, atau ganti lampiran pada tiap kolom.'),
+   for(final item in const <String,String>{
+    'r1':'Surat Pengantar RT/RW',
+    'r2':'Surat Permohonan',
+    'r3':'Pernyataan Keabsahan',
+    'r4':'KTP/KK/Akta Lahir Ahli Waris',
+    'r5':'Surat Kematian',
+    'r6':'Surat Nikah',
+    'r7':'Akta Cerai (jika ada)',
+    'r8':'Surat Kematian Ahli Waris (jika ada)',
+   }.entries)photoEntry(item.key,item.value),
+   const SizedBox(height:12),
+   CikokoPremiumSurface(child:Column(
+    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+     Row(children:[
+      Expanded(child:Text('04 · Daftar Anak',
+       style:Theme.of(context).textTheme.titleMedium)),
+      TextButton.icon(
+       onPressed:children.length>=10?null:()=>
+        setState(()=>children.add(TextEditingController())),
+       icon:const Icon(Icons.add_rounded),
+       label:const Text('Tambah Anak')),
+     ]),
+     for(var i=0;i<children.length;i++)
+      Card(child:Padding(padding:const EdgeInsets.all(10),
+       child:Column(children:[
+        TextField(controller:children[i],
+         decoration:InputDecoration(labelText:'Nama anak ke-${i+1}')),
+        photoEntry('child_${i+1}',
+         'KTP, KK dan Akta Lahir anak ke-${i+1}'),
+       ]))),
+    ])),
+   const SizedBox(height:13),
+   FilledButton.icon(
+    onPressed:saving?null:save,
+    icon:const Icon(Icons.save_outlined),
+    label:Text(saving?'Menyimpan…':'Simpan Data Arsip')),
+   const CikokoPageSignature(),
+  ],
+ );
+
 }
 
 class PpsuHighlights extends StatelessWidget {
