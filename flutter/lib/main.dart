@@ -1464,29 +1464,61 @@ class HistoryPage extends StatefulWidget{const HistoryPage({super.key});@overrid
 class _HistoryState extends State<HistoryPage>{Future<Map<String,dynamic>>? future;
  @override void initState(){super.initState();reload();}
  void reload(){setState((){future=api.call('history');});}
- @override Widget build(BuildContext c)=>FutureBuilder<Map<String,dynamic>>(future:future,builder:(c,s){
- if(s.hasError)return const Center(child:Padding(padding:EdgeInsets.all(18),child:Text('Riwayat pengajuan belum dapat ditampilkan. Silakan coba kembali.',textAlign:TextAlign.center)));
- if(!s.hasData)return const Center(child:CircularProgressIndicator());
- final rows=List<dynamic>.from(s.data!['items']??[]);
- return RefreshIndicator(onRefresh:()async{reload();try{await future;}catch(_){/* Ditampilkan oleh FutureBuilder. */}},child:ListView(padding:const EdgeInsets.all(12),children:[
-  const CikokoPremiumHeader(title:'Riwayat Pengajuan',
-   subtitle:'Pantau status surat dan layanan yang pernah Anda ajukan.',
-   icon:Icons.history_rounded),const SizedBox(height:12),
-  for(final r in rows)Card(child:ListTile(
-    leading:const CircleAvatar(child:Icon(Icons.description_outlined)),
-    title:Text('${r['title']??r['reference']??'Pengajuan'}',style:const TextStyle(fontSize:13,fontWeight:FontWeight.w700)),
-    subtitle:Text('${r['reference']??''} • ${r['status']??''}\n${r['created_at']??''}',style:const TextStyle(fontSize:11)),
-    trailing:const Icon(Icons.chevron_right),
-    onTap:(){
-      final row=Map<String,dynamic>.from(r);
-      final id=cikokoPositiveId(row);
-      final ref=cikokoWarisReference(row);
-      if(id==null && ref==null){notify(context,'Nomor pengajuan tidak diterima dari server. Pastikan API V2525 aktif.',error:true);reload();return;}
-      showCikokoDocument(context,api,id:id??0,reference:ref??'',
-        kind:cikokoDocumentKind(row),onChanged:reload);
-    },
-  )),if(rows.isEmpty)const ListTile(title:Text('Belum ada riwayat pengajuan.')),
-  const CikokoPageSignature()]));});
+ @override
+ Widget build(BuildContext context) => FutureBuilder<Map<String,dynamic>>(
+  future:future,
+  builder:(context,snapshot) {
+   if(snapshot.hasError){
+    return Center(child:Padding(padding:const EdgeInsets.all(14),
+     child:CikokoEmptyState(
+      icon:Icons.cloud_off_outlined,
+      title:'Riwayat belum dapat dimuat',
+      subtitle:'Periksa koneksi kemudian coba lagi.',
+      action:FilledButton.icon(
+       onPressed:reload,
+       icon:const Icon(Icons.refresh_rounded),
+       label:const Text('Muat Ulang')),
+     )));
+   }
+   if(!snapshot.hasData){
+    return const Center(child:CircularProgressIndicator());
+   }
+   final rows=List<dynamic>.from(snapshot.data!['items']??[]);
+   return RefreshIndicator(
+    onRefresh:()async{reload();try{await future;}catch(_){}},
+    child:ListView(padding:const EdgeInsets.fromLTRB(14,12,14,26),children:[
+     const CikokoPremiumHeader(
+      title:'Riwayat Pengajuan',
+      subtitle:'Pantau dokumen dan status yang terhubung ke akun Anda.',
+      icon:Icons.history_rounded),
+     const SizedBox(height:14),
+     if(rows.isEmpty)
+      const CikokoEmptyState(icon:Icons.history_toggle_off_rounded,
+       title:'Belum ada riwayat pengajuan',
+       subtitle:'Permohonan yang telah dikirim akan ditampilkan di sini.'),
+     for(final raw in rows)
+      CikokoRecordCard(
+       title:'${raw['title']??raw['reference']??'Pengajuan'}',
+       subtitle:'${raw['reference']??''}  ·  ${raw['created_at']??''}',
+       status:'${raw['status']??'proses'}',
+       statusLabel:'Status: ${(raw['status']??'proses').toString().replaceAll('_',' ')}',
+       onTap:(){
+        final row=Map<String,dynamic>.from(raw as Map);
+        final id=cikokoPositiveId(row);
+        final ref=cikokoWarisReference(row);
+        if(id==null&&ref==null){
+         notify(context,'Nomor pengajuan belum tersedia dari server.',error:true);
+         reload();return;
+        }
+        showCikokoDocument(context,api,id:id??0,reference:ref??'',
+         kind:cikokoDocumentKind(row),onChanged:reload);
+       },
+      ),
+     const CikokoPageSignature(),
+    ]),
+   );
+  },
+ );
 }
 class ChatPage extends StatefulWidget{const ChatPage({super.key});@override State<ChatPage> createState()=>_ChatState();}
 class _ChatState extends State<ChatPage>{final ctrl=TextEditingController();List<dynamic> messages=[];bool busy=false;Timer?timer;@override void initState(){super.initState();refresh();timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());} @override void dispose(){timer?.cancel();ctrl.dispose();super.dispose();}
