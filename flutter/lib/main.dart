@@ -21,6 +21,7 @@ import 'structured_drawer.dart';
 import 'integrated_services.dart';
 import 'waris_requirements.dart';
 import 'admin_accounts.dart';
+import 'notifications_page.dart';
 import 'mobile_editor.dart';
 import 'permission_editor.dart';
 import 'document_detail.dart';
@@ -777,18 +778,23 @@ class _HomeState extends State<HomePage> {
       actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Tutup'))],
     ));
   }
-  Widget eventList()=>guest?Center(child:Card(child:Padding(padding:const EdgeInsets.all(22),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.notifications_outlined,size:40,color:blue),const Text('Notifikasi surat dan laporan memerlukan login.'),const SizedBox(height:12),FilledButton(onPressed:openLogin,child:const Text('Login'))])))):ListView(padding:const EdgeInsets.all(12),children:[
-    const CikokoPremiumHeader(title:'Notifikasi',
-      subtitle:'Perkembangan terbaru layanan dan pesan Anda.',
-      icon:Icons.notifications_active_outlined),
-    const SizedBox(height:10),
-    for(final e in events)Card(child:ListTile(
-      leading:CircleAvatar(backgroundColor:const Color(0xffeaf3ff),child:Icon('${e['is_read']??0}'=='1'?Icons.notifications_none:Icons.notifications_active_outlined,color:blue)),
-      title:Text('${e['title']??''}',style:TextStyle(fontWeight:'${e['is_read']??0}'=='1'?FontWeight.w400:FontWeight.w700,fontSize:13)),
-      subtitle:Text('${e['message']??''}\n${e['created_at']??''}',maxLines:3,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11)),
-      trailing:const Icon(Icons.chevron_right),onTap:()=>openNotification(Map<String,dynamic>.from(e)),
-    )),if(events.isEmpty)const ListTile(title:Text('Belum ada notifikasi.')),
-    const CikokoPageSignature()]);
+  Widget eventList() => guest
+    ? Center(child: Card(child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.notifications_outlined, size: 40, color: blue),
+          const Text('Notifikasi surat dan laporan memerlukan login.'),
+          const SizedBox(height: 12),
+          FilledButton(onPressed: openLogin, child: const Text('Login')),
+        ]),
+      )))
+    : CikokoNotificationsPage(
+        // The inbox has already been scoped to the authenticated account
+        // by cikokoEventsForAccount() in refresh().
+        events: events.whereType<Map>()
+          .map((event) => Map<String, dynamic>.from(event)).toList(),
+        onOpen: (event) { openNotification(event); },
+      );
  Widget profilePage()=>guest?Center(child:Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.person_outline,size:42,color:blue),const Text('Silakan masuk untuk mengelola profil.'),FilledButton(onPressed:openLogin,child:const Text('Masuk'))])))):CikokoProfileEditor(api:api);
 }
 class Field extends StatelessWidget {
