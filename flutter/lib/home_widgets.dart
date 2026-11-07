@@ -252,10 +252,10 @@ class CikokoResidentHero extends StatelessWidget {
          child:const Icon(Icons.verified_user_outlined,color:Colors.white,size:25)),
         const SizedBox(width:12),
         Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-         Text(CikokoSettings.label('Layanan Cepat'),style:TextStyle(color:homeNavy,fontSize:14,fontWeight:FontWeight.w600)),
+         Text(CikokoSettings.label('Layanan Cepat'),style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:14,fontWeight:FontWeight.w700)),
          SizedBox(height:3),
          Text(CikokoSettings.tr('Urus administrasi lebih mudah dan cepat','Simpler and faster public services'),
-          style:TextStyle(color:homeMuted,fontSize:10.5)),
+          style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:10.5)),
         ])),
         const Icon(Icons.chevron_right_rounded,color:homeBlue),
        ])))),
@@ -483,7 +483,7 @@ class CikokoStaffHero extends StatelessWidget {
          const SizedBox(width:10),
          Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
           Text(CikokoSettings.label(admin?'Pusat Pengelolaan Cikoko':'Penanganan Laporan'),
-           style:const TextStyle(color:homeNavy,fontSize:13,fontWeight:FontWeight.w600)),
+           style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:13,fontWeight:FontWeight.w700)),
           const SizedBox(height:2),
           const Text('Cepat, tepat, dan terpantau',
            style:TextStyle(color:homeMuted,fontSize:11)),
@@ -514,7 +514,7 @@ class _StaffAction extends StatelessWidget {
         title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis,
           style: TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurface)),
         subtitle: Text(subtitle, maxLines: 2, overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 9.5, color: homeMuted)),
+          style: TextStyle(fontSize: 9.5,color:Theme.of(context).colorScheme.onSurfaceVariant)),
       ),
     );
   }

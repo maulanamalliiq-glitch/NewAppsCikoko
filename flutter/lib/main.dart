@@ -149,7 +149,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
  Widget build(BuildContext context) {
   final title=signup?'Daftar Akun Warga':'Masuk ke Cikoko SmartAPP';
   return Scaffold(
-   backgroundColor:const Color(0xFFF4F8FF),
+   backgroundColor:Theme.of(context).scaffoldBackgroundColor,
    body:SafeArea(child:LayoutBuilder(builder:(context,box)=>SingleChildScrollView(
     keyboardDismissBehavior:ScrollViewKeyboardDismissBehavior.onDrag,
     child:ConstrainedBox(constraints:BoxConstraints(minHeight:box.maxHeight),
@@ -174,25 +174,25 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
        constraints:const BoxConstraints(maxWidth:480),
        width:double.infinity,
        padding:const EdgeInsets.fromLTRB(20,16,20,16),
-       decoration:const BoxDecoration(color:Colors.white,
+       decoration:BoxDecoration(color:Theme.of(context).colorScheme.surface,
         borderRadius:BorderRadius.only(topLeft:Radius.circular(25),
          topRight:Radius.circular(25),bottomLeft:Radius.circular(18),
          bottomRight:Radius.circular(18))),
        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Row(children:[
-         Container(width:54,height:54,decoration:BoxDecoration(color:const Color(0xFFF4F8FF),borderRadius:BorderRadius.circular(15)),child:const Center(child:CikokoBrandMark(size:44))),
+         Container(width:54,height:54,decoration:BoxDecoration(color:Theme.of(context).colorScheme.primaryContainer,borderRadius:BorderRadius.circular(15)),child:const Center(child:CikokoBrandMark(size:44))),
          const SizedBox(width:11),
-         const Expanded(child:Text('Cikoko\nSmartAPP',style:TextStyle(color:CikokoPalette.navy,fontSize:23,fontWeight:FontWeight.w900,height:1.04))),
+         Expanded(child:Text('Cikoko\nSmartAPP',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:23,fontWeight:FontWeight.w900,height:1.04))),
         ]),
         const SizedBox(height:8),
-        const Text('Layanan Digital Kelurahan Cikoko',style:TextStyle(color:CikokoPalette.blue,fontSize:12,fontWeight:FontWeight.w700)),
+        Text('Layanan Digital Kelurahan Cikoko',style:TextStyle(color:Theme.of(context).colorScheme.primary,fontSize:12,fontWeight:FontWeight.w700)),
         const SizedBox(height:12),
-        Text(title,style:const TextStyle(color:CikokoPalette.navy,
-         fontSize:23,fontWeight:FontWeight.w700)),
+        Text(title,style:TextStyle(color:Theme.of(context).colorScheme.onSurface,
+         fontSize:23,fontWeight:FontWeight.w800)),
         const SizedBox(height:5),
         Text(signup?'Daftarkan akun untuk layanan Kelurahan Cikoko.':
          'Selamat datang kembali. Masuk untuk melanjutkan layanan.',
-         style:const TextStyle(color:CikokoPalette.muted,fontSize:12,height:1.4)),
+         style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:12,height:1.4)),
         const SizedBox(height:15),
         if(signup)
          for(final entry in <String,String>{
@@ -250,13 +250,13 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
          onPressed:busy?null:()=>setState(()=>signup=!signup),
          child:Text(signup?'Sudah punya akun? Masuk':'Daftar Akun Baru'))),
         const SizedBox(height:10),
-        const Center(child:Text('Data digunakan untuk pelayanan Kelurahan Cikoko.',
+        Center(child:Text('Data digunakan untuk pelayanan Kelurahan Cikoko.',
          textAlign:TextAlign.center,style:TextStyle(
-          fontSize:10.5,color:CikokoPalette.muted))),
+          fontSize:10.5,color:Theme.of(context).colorScheme.onSurfaceVariant))),
        ]))),
-      const Padding(padding:EdgeInsets.only(top:5,bottom:10),
+      Padding(padding:const EdgeInsets.only(top:5,bottom:10),
        child:Text('Copyright © Cikoko Smart',
-        style:TextStyle(color:CikokoPalette.muted,fontSize:10.5))),
+        style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:10.5))),
      ])),
     ))),
   );
@@ -534,65 +534,78 @@ class _HomeState extends State<HomePage> {
     default: return featureUnavailable(section);
   }}
   Widget featureUnavailable(String name) => Center(child:Padding(padding:const EdgeInsets.all(22),child:Card(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.construction_outlined,size:44,color:blue),const SizedBox(height:16),Text(name,style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:10),const Text('Halaman ini tercantum dalam rancangan role, tetapi modul data dan API belum tersedia. Tidak ada perubahan data yang dilakukan.',textAlign:TextAlign.center),const SizedBox(height:18),FilledButton(onPressed:()=>switchTo('Dashboard'),child:const Text('Kembali ke Beranda'))])))));
-  Widget menuPage(){
-    final query=menuQuery.trim().toLowerCase();
-    final filtered=modules.where((feature)=>query.isEmpty||
-      feature.title.toLowerCase().contains(query)||
+  Widget menuPage() {
+    final query = menuQuery.trim().toLowerCase();
+    final filtered = modules.where((feature) => query.isEmpty ||
+      feature.title.toLowerCase().contains(query) ||
       feature.description.toLowerCase().contains(query)).toList();
-    return ListView(padding:const EdgeInsets.fromLTRB(15,16,15,24),children:[
-    Text('Menu Layanan',style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:22,fontWeight:FontWeight.w700)),
-    const SizedBox(height:4),
-    Text('Pilih layanan sesuai akses $roleLabel',
-     style:TextStyle(color:Theme.of(context).colorScheme.onSurfaceVariant,fontSize:12)),
-    const SizedBox(height:14),
-    if(!permissionsOk)const Card(child:ListTile(
-     leading:Icon(Icons.warning_amber_rounded,color:Colors.orange),
-     title:Text('Izin server belum berhasil dimuat'),
-     subtitle:Text('Menu khusus disembunyikan sampai koneksi pulih.'))),
-    TextField(
-      onChanged:(value)=>setState(()=>menuQuery=value),
-      decoration:const InputDecoration(
-        hintText:'Cari layanan dan fitur...',
-        prefixIcon:Icon(Icons.search_rounded,size:21),
-        filled:true,fillColor:Colors.white)),
-    if(filtered.isEmpty)const Padding(
-      padding:EdgeInsets.symmetric(vertical:18),
-      child:Center(child:Text('Layanan tidak ditemukan.',
-        style:TextStyle(color:CikokoDesign.muted,fontSize:12)))),
-    const SizedBox(height:14),
-    LayoutBuilder(builder:(context,constraints)=>GridView.builder(
-     shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),
-     itemCount:filtered.length,
-     gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount:constraints.maxWidth>700?4:2,
-      mainAxisSpacing:10,crossAxisSpacing:10,mainAxisExtent:103),
-     itemBuilder:(context,i){
-      final f=filtered[i];
-      const colors=[Color(0xFF8653D7),Color(0xFFED6A38),
-       Color(0xFF2187DB),Color(0xFF17A983),Color(0xFFE3A12A),Color(0xFFB857CB)];
-      final accent=colors[i%colors.length];
-      return Material(color:Theme.of(context).colorScheme.surface,borderRadius:BorderRadius.circular(15),
-       child:InkWell(onTap:()=>switchTo(f.route),borderRadius:BorderRadius.circular(15),
-        child:Container(
-         padding:const EdgeInsets.all(11),
-         decoration:BoxDecoration(borderRadius:BorderRadius.circular(15),
-          border:Border.all(color:CikokoDesign.outline)),
-         child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
-          Container(width:36,height:36,
-           decoration:BoxDecoration(color:accent.withValues(alpha:.12),
-            borderRadius:BorderRadius.circular(10)),
-           child:Icon(iconFor(f.route),size:21,color:accent)),
-          const SizedBox(height:8),
-          Text(f.title,maxLines:2,overflow:TextOverflow.ellipsis,
-           textAlign:TextAlign.center,
-           style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontSize:11.5,
-            fontWeight:FontWeight.w500,height:1.2)),
-         ]))),
-      );
-     })),
-    const SizedBox(height:20),const _PageCopyright(),
-  ]);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
+      children: [
+        CikokoPremiumHeader(
+          title: 'Menu Layanan',
+          subtitle: 'Pilih layanan sesuai akses $roleLabel.',
+          icon: Icons.dashboard_customize_outlined,
+        ),
+        const SizedBox(height: 14),
+        if (!permissionsOk)
+          const Card(child: ListTile(
+            leading: Icon(Icons.warning_amber_rounded, color: Colors.orange),
+            title: Text('Izin server belum berhasil dimuat'),
+            subtitle: Text('Menu khusus disembunyikan sampai koneksi pulih.'),
+          )),
+        TextField(
+          key: const Key('premium_menu_search'),
+          onChanged: (value) => setState(() => menuQuery = value),
+          decoration: const InputDecoration(
+            hintText: 'Cari layanan dan fitur...',
+            prefixIcon: Icon(Icons.search_rounded, size: 21),
+          ),
+        ),
+        const SizedBox(height: 14),
+        CikokoPremiumSection(
+          title: 'Layanan Tersedia',
+          subtitle: '${filtered.length} menu sesuai hak akses akun',
+        ),
+        const SizedBox(height: 5),
+        if (filtered.isEmpty)
+          const CikokoEmptyState(
+            icon: Icons.search_off_rounded,
+            title: 'Layanan tidak ditemukan',
+            subtitle: 'Coba kata kunci lain atau periksa hak akses akun.',
+          )
+        else LayoutBuilder(builder: (context, constraints) {
+          final columns = constraints.maxWidth > 700
+            ? 4 : constraints.maxWidth > 480 ? 3 : 2;
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: filtered.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: columns,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              mainAxisExtent: 113,
+            ),
+            itemBuilder: (context, index) {
+              final feature = filtered[index];
+              return CikokoMenuGridCard(
+                key: Key('menu_${feature.route}'),
+                title: feature.title,
+                icon: iconFor(feature.route),
+                accent: CikokoMenuAccent.forRoute(feature.route),
+                onTap: () => switchTo(feature.route),
+              );
+            },
+          );
+        }),
+        const SizedBox(height: 18),
+        const _PageCopyright(),
+      ],
+    );
   }
+
   Future<void> showOfficeProfile() async {
     await showModalBottomSheet<void>(context:context,isScrollControlled:true,
       showDragHandle:true,builder:(sheetContext)=>SafeArea(child:Padding(
@@ -774,7 +787,43 @@ class _HomeState extends State<HomePage> {
     const SizedBox(height:74),
     ])),
   ]);
- Widget feed(String type)=>ListView(padding:const EdgeInsets.all(14),children:[for(final v in items.where((e)=>e['type']==type))contentCard(Map<String,dynamic>.from(v)),if(!items.any((e)=>e['type']==type))const Padding(padding:EdgeInsets.all(18),child:Text('Belum ada konten pada kategori ini.')),const SizedBox(height:22),const _PageCopyright()]);
+ Widget feed(String type) {
+  final title = switch (type) {
+    'berita' => 'Berita & Kegiatan',
+    'pengumuman' => 'Pengumuman',
+    'galeri' => 'Galeri Cikoko',
+    _ => 'Layanan Online',
+  };
+  final icon = switch (type) {
+    'berita' => Icons.newspaper_outlined,
+    'pengumuman' => Icons.campaign_outlined,
+    'galeri' => Icons.photo_library_outlined,
+    _ => Icons.widgets_outlined,
+  };
+  final content = items.where((entry) => entry['type'] == type).toList();
+  return ListView(
+    padding: const EdgeInsets.fromLTRB(14, 14, 14, 28),
+    children: [
+      CikokoPremiumHeader(
+        title: title,
+        subtitle: 'Informasi dan layanan resmi Kelurahan Cikoko.',
+        icon: icon,
+      ),
+      const SizedBox(height: 14),
+      if (content.isEmpty)
+        const CikokoEmptyState(
+          icon: Icons.inbox_outlined,
+          title: 'Belum ada konten',
+          subtitle: 'Informasi pada kategori ini belum tersedia.',
+        )
+      else
+        for (final entry in content)
+          contentCard(Map<String, dynamic>.from(entry)),
+      const SizedBox(height: 12),
+      const _PageCopyright(),
+    ],
+  );
+}
  Widget contentCard(Map<String, dynamic> item) {
    final image = api.media('${item['image']??''}');
    final title = '${item['title']??''}';
@@ -798,14 +847,15 @@ class _HomeState extends State<HomePage> {
      margin: const EdgeInsets.only(bottom:9),
      elevation:0,
      clipBehavior:Clip.antiAlias,
-     shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(13),side:const BorderSide(color:Color(0xffe0e8f1))),
+     shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(15),
+       side:BorderSide(color:Theme.of(context).colorScheme.outlineVariant)),
      child:InkWell(onTap:detail,child:Padding(
        padding:const EdgeInsets.all(9),
        child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
          ClipRRect(borderRadius:BorderRadius.circular(9),
-           child:image.isEmpty?Container(width:104,height:91,color:const Color(0xffeaf2fc),child:const Icon(Icons.newspaper_outlined,color:blue,size:27)):
+           child:image.isEmpty?Container(width:104,height:91,color:Theme.of(context).colorScheme.primaryContainer,child:const Icon(Icons.newspaper_outlined,color:blue,size:27)):
              Image.network(image,width:104,height:91,fit:BoxFit.cover,
-               errorBuilder:(_,__,___)=>Container(width:104,height:91,color:const Color(0xffeaf2fc),child:const Icon(Icons.image_not_supported_outlined,color:blue)))),
+               errorBuilder:(_,__,___)=>Container(width:104,height:91,color:Theme.of(context).colorScheme.primaryContainer,child:const Icon(Icons.image_not_supported_outlined,color:blue)))),
          const SizedBox(width:11),
          Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
            Text('${item['type']??''}'.toUpperCase(),style:const TextStyle(fontSize:9.5,letterSpacing:.65,color:blue,fontWeight:FontWeight.w700)),

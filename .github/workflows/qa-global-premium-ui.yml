@@ -1,0 +1,31 @@
+name: QA - Global Premium UI Consistency
+on:
+  push:
+    branches: [feat/global-premium-consistency-20261107]
+    paths:
+      - 'flutter/**'
+      - '.github/workflows/qa-global-premium-ui.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flutter-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Restore Android project
+        working-directory: flutter
+        run: flutter create --platforms=android --project-name=cikoko .
+      - name: Install packages
+        working-directory: flutter
+        run: flutter pub get
+      - name: Analyze Flutter source
+        working-directory: flutter
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Run complete widget and unit suite
+        working-directory: flutter
+        run: flutter test

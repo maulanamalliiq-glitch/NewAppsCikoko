@@ -182,11 +182,11 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
           dense: true,
           minLeadingWidth: 26,
           leading: Icon(active ? Icons.home_rounded : Icons.home_outlined,
-              size: 21, color: active ? _blue : _muted),
+              size: 21, color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
           title: Text(CikokoSettings.label('Beranda'), style: TextStyle(
               fontSize: 13.5, fontWeight: FontWeight.w700,
-              color: active ? _blue : Theme.of(context).colorScheme.onSurface)),
-          trailing: active ? const Icon(Icons.circle, size: 8, color: _blue) : null,
+              color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface)),
+          trailing: active ? Icon(Icons.circle, size: 8, color: Theme.of(context).colorScheme.primary) : null,
           onTap: () => widget.onNavigate('Dashboard'),
         ),
       ),
@@ -232,7 +232,7 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
                 const SizedBox(width: 7),
                 Icon(expanded ? Icons.keyboard_arrow_up_rounded :
                     Icons.keyboard_arrow_down_rounded, size: 20,
-                    color: _muted),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant),
               ]),
             ),
           ),
@@ -244,8 +244,8 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
           child: expanded ? Padding(
             padding: const EdgeInsets.fromLTRB(19, 3, 0, 5),
             child: DecoratedBox(
-              decoration: const BoxDecoration(border: Border(
-                  left: BorderSide(color: CikokoPalette.border, width: 2))),
+              decoration: BoxDecoration(border: Border(
+                  left: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 2))),
               child: Column(children: [
                 for (final feature in group.features)
                   _submenu(feature),
@@ -271,15 +271,15 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
           contentPadding: const EdgeInsets.symmetric(horizontal: 9),
           minLeadingWidth: 18,
           leading: Icon(widget.iconFor(feature.route), size: 18,
-              color: active ? _blue : CikokoPalette.purple),
+              color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant),
           title: Text(CikokoSettings.label(feature.title), maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 12.5,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  color: active ? _blue : Theme.of(context).colorScheme.onSurface)),
-          subtitle: feature.connected ? null : const Text(
+                  color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface)),
+          subtitle: feature.connected ? null : Text(
               'Modul belum tersedia',
-              style: TextStyle(fontSize: 9.5, color: _muted)),
+              style: TextStyle(fontSize: 9.5, color: Theme.of(context).colorScheme.onSurfaceVariant)),
           trailing: const Icon(Icons.chevron_right_rounded,
               size: 17, color: Color(0xff9aafc4)),
           onTap: () => widget.onNavigate(feature.route),
@@ -333,8 +333,8 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 6, 12, 8),
             child: Text(CikokoSettings.tr('KATEGORI MENU','MENU CATEGORIES'),
-              style: const TextStyle(color: _muted, letterSpacing: 1.05,
-                  fontSize: 10, fontWeight: FontWeight.w600))),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 1.05,
+                  fontSize: 10, fontWeight: FontWeight.w700))),
           for (final group in groups) _group(group),
           if (groups.isEmpty) const Padding(
             padding: EdgeInsets.all(18),
@@ -348,7 +348,7 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
           key: Key(widget.guest ? 'nav_login' : 'nav_logout'),
           dense: true,
           leading: Icon(widget.guest ? Icons.login_rounded :
-              Icons.logout_rounded, color: widget.guest ? _blue : _navy),
+              Icons.logout_rounded, color: Theme.of(context).colorScheme.primary),
           title: Text(CikokoSettings.label(widget.guest ? 'Login / Daftar Warga' : 'Keluar'),
               style: const TextStyle(fontSize: 13.5,
                   fontWeight: FontWeight.w700)),
