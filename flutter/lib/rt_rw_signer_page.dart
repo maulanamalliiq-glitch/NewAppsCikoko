@@ -27,7 +27,7 @@ class _RtRwSignerPageState extends State<RtRwSignerPage> {
     if(saving)return;
     if(signature==null||stamp==null||password.text.isEmpty){
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content:Text('Lengkapi kedua gambar dan password akun.')));
+        content:Text('Mohon lengkapi kedua gambar dan kata sandi akun.')));
       return;
     }
     setState(()=>saving=true);
@@ -39,7 +39,7 @@ class _RtRwSignerPageState extends State<RtRwSignerPage> {
       if(mounted){setState(reload);ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content:Text('TTD dan stempel tersimpan.')));}
     }catch(e){
-      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('$e')));
+      if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(cikokoFormalMessage(e))));
     }finally{if(mounted)setState(()=>saving=false);}
   }
   @override Widget build(BuildContext context)=>Scaffold(
@@ -53,7 +53,7 @@ class _RtRwSignerPageState extends State<RtRwSignerPage> {
         'Gambar ini akan direkam saat Anda menyetujui surat, bukan digunakan otomatis tanpa persetujuan.'),
       const SizedBox(height:14),
       FutureBuilder<Map<String,dynamic>>(future:status,builder:(context,s){
-        if(s.hasError)return Text('Status belum dapat dimuat: ${s.error}');
+        if(s.hasError)return Text(cikokoFormalMessage(s.error));
         if(!s.hasData)return const LinearProgressIndicator();
         return Text(s.data?['ready']==true?'TTD dan stempel sudah tersedia':'TTD/stempel belum didaftarkan',
           style:const TextStyle(fontWeight:FontWeight.bold));

@@ -349,7 +349,7 @@ class _CikokoStructuredDrawerState extends State<CikokoStructuredDrawer> {
           dense: true,
           leading: Icon(widget.guest ? Icons.login_rounded :
               Icons.logout_rounded, color: Theme.of(context).colorScheme.primary),
-          title: Text(CikokoSettings.label(widget.guest ? 'Login / Daftar Warga' : 'Keluar'),
+          title: Text(CikokoSettings.label(widget.guest ? 'Masuk / Daftar Warga' : 'Keluar'),
               style: const TextStyle(fontSize: 13.5,
                   fontWeight: FontWeight.w700)),
           onTap: widget.guest ? widget.onLogin : widget.onLogout,

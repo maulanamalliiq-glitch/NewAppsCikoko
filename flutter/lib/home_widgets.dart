@@ -151,17 +151,6 @@ class CikokoWelcomeHero extends StatelessWidget {
                       style: TextStyle(color: Color(0xFFE2EEFF), fontSize: 9.5)),
                   ],
                 )),
-                const SizedBox(width: 7),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFC341),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: const Text('Premium', style: TextStyle(
-                    color: Color(0xFF07346E), fontSize: 10,
-                    fontWeight: FontWeight.w800)),
-                ),
               ]),
               const SizedBox(height: 21),
               Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
@@ -187,7 +176,7 @@ class CikokoWelcomeHero extends StatelessWidget {
                 Expanded(child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(CikokoSettings.tr('Hai, ', 'Hi, ') + displayName,
+                    Text(CikokoSettings.tr('Selamat datang, ', 'Welcome, ') + displayName,
                       maxLines: 2, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(color: Colors.white,
                         fontSize: 19, fontWeight: FontWeight.w800, height: 1.15)),

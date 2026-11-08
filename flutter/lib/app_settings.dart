@@ -53,7 +53,7 @@ abstract final class CikokoSettings {
     'Bahasa aplikasi':'App Language',
     'Informasi pribadi':'Personal Information',
     'Keluar':'Sign Out',
-    'Login / Daftar Warga':'Login / Register',
+    'Masuk / Daftar Warga':'Login / Register',
     'Hak Akses Role':'Role Permissions',
     'Kelola Akun Petugas':'Manage Staff Accounts',
     'Manajemen Pengguna':'User Management',

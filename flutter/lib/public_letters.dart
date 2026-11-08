@@ -87,7 +87,7 @@ class _PublicLetterStatusState extends State<PublicLetterStatusSheet>{
           const Text('Informasi status surat belum dapat ditampilkan. Silakan coba kembali.',textAlign:TextAlign.center),
           const SizedBox(height:12),
           OutlinedButton.icon(onPressed:reload,icon:const Icon(Icons.refresh),
-            label:const Text('Coba lagi')),
+            label:const Text('Coba Kembali')),
         ])));
       if(!s.hasData)return const Center(child:CircularProgressIndicator());
       final rows=List<dynamic>.from(s.data!['items']??[]).map((raw){
@@ -113,7 +113,7 @@ class _PublicLetterStatusState extends State<PublicLetterStatusSheet>{
           const Icon(Icons.mark_email_read_outlined,size:42,color:Color(0xff2467ba)),
           const SizedBox(height:12),
           Text(reported>0
-              ?'Terdapat $reported pengajuan pada kategori ini, tetapi daftar nomor surat belum tersedia dari layanan server.'
+              ?'Terdapat $reported pengajuan pada kategori ini. Daftar nomor surat belum dapat ditampilkan.'
               :'Tidak ada pengajuan pada kategori ini. Pilih Semua untuk melihat seluruh status.',
               textAlign:TextAlign.center),
           const SizedBox(height:10),

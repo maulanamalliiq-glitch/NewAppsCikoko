@@ -60,7 +60,7 @@ class CikokoApp extends StatelessWidget {
                Icon(value==1?Icons.check_circle:Icons.sync,
                  color:value==1?Colors.green:blue,size:17),
                const SizedBox(width:8),
-               Expanded(child:Text(value==1?'Server mengonfirmasi berhasil':value>=.94?'Menunggu konfirmasi penyimpanan server':value>0?'Mengirim data ke server':'Menghubungkan ke layanan',
+               Expanded(child:Text(value==1?'Data berhasil disimpan':value>=.94?'Menyelesaikan penyimpanan':value>0?'Mengirim data':'Menghubungkan ke layanan',
                  style:const TextStyle(fontSize:12,fontWeight:FontWeight.w600))),
                if(value>0 && value<.94)Text('${(100*value).round()}%',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w700)),
              ]),
@@ -136,7 +136,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
  @override void initState(){super.initState();signup=widget.startWithRegistration;}
  @override void dispose(){user.dispose();pass.dispose();for(final c in fields.values){c.dispose();}super.dispose();}
  TextEditingController ctrl(String key)=>fields.putIfAbsent(key,()=>TextEditingController());
- Future<void> submit() async{setState(()=>busy=true);try{if(signup){if(ctrl('password').text!=ctrl('confirm').text)throw ApiError('Konfirmasi password tidak sama');await api.register({for(final k in ['name','username','password','confirm','address','rt','rw','phone','email']) k:ctrl(k).text.trim()});if(mounted){setState(()=>signup=false);notify(context,'Akun warga aktif. Silakan login.');}}else{await api.login(user.text.trim(),pass.text);widget.onLogin();}}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>busy=false);}}
+ Future<void> submit() async{setState(()=>busy=true);try{if(signup){if(ctrl('password').text!=ctrl('confirm').text)throw ApiError('Konfirmasi kata sandi tidak sesuai.');await api.register({for(final k in ['name','username','password','confirm','address','rt','rw','phone','email']) k:ctrl(k).text.trim()});if(mounted){setState(()=>signup=false);notify(context,'Pendaftaran berhasil. Silakan masuk menggunakan akun Anda.');}}else{await api.login(user.text.trim(),pass.text);widget.onLogin();}}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>busy=false);}}
  @override
  Widget build(BuildContext context) {
   final title=signup?'Daftar Akun Warga':'Masuk ke Cikoko SmartAPP';
@@ -188,7 +188,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
         const SizedBox(height:15),
         if(signup)
          for(final entry in <String,String>{
-          'name':'Nama lengkap','username':'Username','password':'Kata sandi',
+          'name':'Nama lengkap','username':'Nama Pengguna','password':'Kata sandi',
           'confirm':'Ulangi kata sandi','address':'Alamat lengkap',
           'rt':'RT (contoh: 02)','rw':'RW (contoh: 05)',
           'phone':'Nomor telepon','email':'Email',
@@ -208,7 +208,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
               color:CikokoPalette.blue,size:20)))),
         if(!signup)...[
          TextField(controller:user,textInputAction:TextInputAction.next,
-          decoration:const InputDecoration(labelText:'Username',
+          decoration:const InputDecoration(labelText:'Nama Pengguna',
            prefixIcon:Icon(Icons.alternate_email_rounded,color:CikokoPalette.blue))),
          const SizedBox(height:12),
          TextField(controller:pass,obscureText:!showPassword,
@@ -301,7 +301,7 @@ class _HomeState extends State<HomePage> {
     } catch (_) {
       if(mounted)setState(() {
         notificationSyncLoading=false;
-        notificationSyncError='Notifikasi belum dapat disinkronkan dari server.';
+        notificationSyncError='Notifikasi belum dapat dimuat. Silakan coba kembali.';
       });
     }
   }
@@ -570,7 +570,7 @@ class _HomeState extends State<HomePage> {
           : const Center(child:Text('Hanya Admin Utama yang dapat mengelola akun.'));
     default: return featureUnavailable(section);
   }}
-  Widget featureUnavailable(String name) => Center(child:Padding(padding:const EdgeInsets.all(22),child:Card(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.construction_outlined,size:44,color:blue),const SizedBox(height:16),Text(name,style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:10),const Text('Halaman ini tercantum dalam rancangan role, tetapi modul data dan API belum tersedia. Tidak ada perubahan data yang dilakukan.',textAlign:TextAlign.center),const SizedBox(height:18),FilledButton(onPressed:()=>switchTo('Dashboard'),child:const Text('Kembali ke Beranda'))])))));
+  Widget featureUnavailable(String name) => Center(child:Padding(padding:const EdgeInsets.all(22),child:Card(child:Padding(padding:const EdgeInsets.all(24),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.construction_outlined,size:44,color:blue),const SizedBox(height:16),Text(name,style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:10),const Text('Layanan ini belum tersedia. Silakan menghubungi petugas kelurahan untuk informasi lebih lanjut.',textAlign:TextAlign.center),const SizedBox(height:18),FilledButton(onPressed:()=>switchTo('Dashboard'),child:const Text('Kembali ke Beranda'))])))));
   Widget menuPage() {
     final query = menuQuery.trim().toLowerCase();
     final filtered = modules.where((feature) => query.isEmpty ||
@@ -589,7 +589,7 @@ class _HomeState extends State<HomePage> {
         if (!permissionsOk)
           const Card(child: ListTile(
             leading: Icon(Icons.warning_amber_rounded, color: Colors.orange),
-            title: Text('Izin server belum berhasil dimuat'),
+            title: Text('Hak akses belum dapat dimuat'),
             subtitle: Text('Menu khusus disembunyikan sampai koneksi pulih.'),
           )),
         TextField(
@@ -943,7 +943,7 @@ class _HomeState extends State<HomePage> {
           const Icon(Icons.notifications_outlined, size: 40, color: blue),
           const Text('Notifikasi surat dan laporan memerlukan login.'),
           const SizedBox(height: 12),
-          FilledButton(onPressed: openLogin, child: const Text('Login')),
+          FilledButton(onPressed: openLogin, child: const Text('Masuk')),
         ]),
       )))
     : CikokoNotificationsPage(
@@ -1186,7 +1186,7 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
         await uploadWitnessDocuments(savedReference!);
         if(mounted){setState(()=>completed=true);notify(context,'KTP kedua saksi berhasil melengkapi pengajuan '+savedReference!);}
       }catch(_){
-        await showIncomplete(['Pengajuan '+savedReference!+' sudah tersimpan. KTP saksi belum dapat ditambahkan. Coba lagi, atau lengkapi melalui Riwayat Pengajuan.']);
+        await showIncomplete(['Pengajuan '+savedReference!+' sudah tersimpan. KTP saksi belum dapat ditambahkan. Coba Kembali, atau lengkapi melalui Riwayat Pengajuan.']);
       }finally{if(mounted)setState(()=>sending=false);}
       return;
     }
@@ -1283,8 +1283,7 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
        });
      }else{
        if(maxFiles>0&&count>maxFiles){
-         throw ApiError('Server hanya menerima '+maxFiles.toString()+
-           ' foto per permintaan. Perbarui API cPanel agar mendukung unggah bertahap tanpa perubahan hosting.');
+         throw ApiError('Dokumen belum dapat dikirim. Foto yang telah dipilih tetap tersedia. Silakan coba kembali atau hubungi petugas kelurahan.');
        }
        response=await api.upload('waris',data,mainPhotos,
          progress:(value){if(mounted)setState(()=>progress=value);});
@@ -1297,9 +1296,8 @@ class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingContr
      final raw=e.toString();
      final text=raw.contains('Endpoint tidak tersedia')||
         raw.contains('Persyaratan foto belum lengkap: r4')
-       ?'Server cPanel masih menggunakan format dokumen Ahli Waris lama (r4). '
-        'Formulir HP sudah terpisah, tetapi server perlu Patch Ahli Waris terbaru. '
-        'Foto yang sudah dipilih tetap berada dalam formulir.'
+       ?'Pengajuan belum dapat dikirim. Silakan coba kembali atau hubungi petugas kelurahan. '
+        'Foto yang telah dipilih tetap tersedia dalam formulir.'
        :raw;
      await showIncomplete([savedReference!=null
         ?'Pengajuan '+savedReference!+' sudah tersimpan. KTP saksi belum berhasil ditambahkan. Jangan mengirim pengajuan baru. Gunakan Coba Lengkapi KTP Saksi atau buka Riwayat.'
@@ -1538,7 +1536,7 @@ class _HistoryState extends State<HistoryPage>{Future<Map<String,dynamic>>? futu
         final id=cikokoPositiveId(row);
         final ref=cikokoWarisReference(row);
         if(id==null&&ref==null){
-         notify(context,'Nomor pengajuan belum tersedia dari server.',error:true);
+         notify(context,'Nomor pengajuan belum tersedia. Silakan muat ulang daftar pengajuan.',error:true);
          reload();return;
         }
         showCikokoDocument(context,api,id:id??0,reference:ref??'',
@@ -1705,7 +1703,7 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
   final id=cikokoPositiveId(r);
   final ref=cikokoWarisReference(r);
   if(id==null && ref==null){
-    if(mounted)notify(context,'Server belum mengirim ID pengajuan. Pastikan API V2525 aktif lalu muat ulang.',error:true);
+    if(mounted)notify(context,'Nomor pengajuan belum tersedia. Silakan muat ulang daftar pengajuan.',error:true);
     await load();return;
   }
   try{
@@ -1760,7 +1758,7 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
    builder:(dialog)=>AlertDialog(
     title:const Text('Konfirmasi Perubahan Status'),
     content:Text('Ubah status pengajuan menjadi "${status.replaceAll('_',' ')}"? '
-     'Perubahan akan disimpan pada server.'),
+     'Perubahan data akan disimpan.'),
     actions:[
      TextButton(onPressed:()=>Navigator.pop(dialog,false),
       child:const Text('Batal')),
@@ -1816,7 +1814,7 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
        final id=cikokoPositiveId(row);
        final ref=cikokoWarisReference(row);
        if(id==null&&ref==null){
-        notify(context,'Nomor dokumen tidak tersedia dari server.',error:true);
+        notify(context,'Nomor dokumen belum tersedia. Silakan muat ulang daftar dokumen.',error:true);
         load();return;
        }
        showCikokoDocument(context,api,id:id??0,
