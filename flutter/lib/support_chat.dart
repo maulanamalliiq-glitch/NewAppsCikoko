@@ -93,7 +93,17 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
             final old=entry.value;
             if(!entry.key.startsWith('pending-')||
               old['sender']!=row['sender']||old['message']!=row['message'])continue;
-            if(serverId>(int.tryParse('${old['after_id']??0}')??0)){
+            // A request started before the POST can return an older message
+            // with identical text. Only merge when the server timestamp is
+            // close to this local send, preventing the new bubble vanishing.
+            final localTime=DateTime.tryParse('${old['local_sent_at']??''}');
+            final serverTime=DateTime.tryParse(
+              '${row['created_at']??''}'.replaceFirst(' ','T'));
+            final timeMatches=localTime!=null && serverTime!=null &&
+              !serverTime.isBefore(localTime.subtract(const Duration(minutes:2))) &&
+              !serverTime.isAfter(localTime.add(const Duration(minutes:5)));
+            if(serverId>(int.tryParse('${old['after_id']??0}')??0) &&
+              timeMatches){
               matchingLocal=entry.key;
               break;
             }
@@ -136,7 +146,8 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
     setState((){
       sending=true;
       messages.add({'id':key,'sender':ownSender,'message':text,
-        'created_at':'Sekarang','delivery_status':'pending','after_id':newestServerId});
+        'created_at':'Sekarang','delivery_status':'pending','after_id':newestServerId,
+        'local_sent_at':DateTime.now().toIso8601String()});
       _sort();
     });
     _scrollToBottom();
