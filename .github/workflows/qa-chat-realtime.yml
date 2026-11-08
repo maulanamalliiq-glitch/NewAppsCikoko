@@ -1,0 +1,28 @@
+name: QA - Corner Chat and Live Notifications
+on:
+  push:
+    branches: [fix/chat-notification-delivery-20261108]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flutter-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Restore Android tooling
+        working-directory: flutter
+        run: flutter create --platforms=android --project-name=cikoko .
+      - name: Resolve dependencies
+        working-directory: flutter
+        run: flutter pub get
+      - name: Analyze application
+        working-directory: flutter
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Run regression tests
+        working-directory: flutter
+        run: flutter test

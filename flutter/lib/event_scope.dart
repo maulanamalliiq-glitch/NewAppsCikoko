@@ -26,3 +26,19 @@ bool cikokoPushBelongsToAccount(Map<String, dynamic> data, Object? accountId) {
   if (viewer.isEmpty) return false;
   return (data['account_id'] ?? '').toString().trim() == viewer;
 }
+
+/// Seed even an empty inbox so the first later event is treated as new.
+class CikokoEventTracker {
+  final Set<String> _seen={};
+  bool _seeded=false;
+  void markSeen(Object? id){final value='${id??''}';if(value.isNotEmpty)_seen.add(value);}
+  List<Map<String,dynamic>> takeNew(Iterable<dynamic> input){
+    final events=input.whereType<Map>().map((e)=>Map<String,dynamic>.from(e)).toList();
+    final ids=events.map((e)=>'${e['id']??''}').where((id)=>id.isNotEmpty).toSet();
+    if(!_seeded){_seen.addAll(ids);_seeded=true;return [];}
+    final fresh=events.where((e)=>'${e['id']??''}'.isNotEmpty&&!_seen.contains('${e['id']}')&&e['is_read']!=true&&'${e['is_read']??0}'!='1').take(3).toList();
+    _seen.addAll(ids);
+    if(_seen.length>350){_seen.clear();_seen.addAll(ids);}
+    return fresh;
+  }
+}

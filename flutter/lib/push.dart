@@ -5,8 +5,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'api.dart';
 
-String destinationForPushCategory(String category,{required bool isStaff}) {
-  if(category=='chat')return isStaff?'Pesan Masuk':'Hubungi Kami';
+String destinationForPushCategory(String category,{required bool isStaff,bool? canReply}) {
+  if(category=='chat')return (canReply??isStaff)?'Pesan Masuk':'Hubungi Kami';
   if(category=='rt_rw_surat'||category=='rt_rw_status')return isStaff?'Surat Wilayah':'Surat Pengantar RT/RW';
   if(category=='surat'||category=='progres_surat'||category=='laporan_masuk')return isStaff?'Verifikasi Laporan':'Riwayat';
   return 'Notifikasi';
@@ -21,8 +21,7 @@ class PushService {
   StreamSubscription<String>? refresh;
   StreamSubscription<RemoteMessage>? incoming;
   StreamSubscription<RemoteMessage>? opened;
-  final Set<String> _seenEventIds={};
-  bool _seeded=false;
+  final eventTracker=CikokoEventTracker();
   bool _initialized=false;
   Future<void> start(void Function() onRefresh,{void Function(RemoteMessage)? onOpen}) async {
     // Notifications while the app is open work even when FCM configuration
@@ -47,13 +46,14 @@ class PushService {
       incoming=FirebaseMessaging.onMessage.listen((m) async {
         if(api.token==null || !cikokoPushBelongsToAccount(m.data,api.profile?['id']))return;
         final id=m.data['event_id'];
-        if(id is String && id.isNotEmpty){_seenEventIds.add(id);}
         final n=m.notification;
         if(n!=null&&_initialized) {
-          await local.show(m.hashCode,n.title,n.body,
+          try {await local.show(m.hashCode,n.title,n.body,
             const NotificationDetails(android:AndroidNotificationDetails('cikoko_updates_v2',
               'Aktivitas dan Pelayanan Cikoko',importance:Importance.max,priority:Priority.high,
               playSound:true,enableVibration:true)));
+          eventTracker.markSeen(id);
+          }catch(_){/* The inbox refresh can still display this new event. */}
         }
         onRefresh();
       });
@@ -69,12 +69,7 @@ class PushService {
   // Cadangan saat aplikasi aktif: notifikasi baru dari polling API tetap tampil.
   // Push ketika aplikasi tertutup memerlukan konfigurasi FCM server + cron.
   Future<void> onEvents(List<dynamic> events) async {
-    if(events.isEmpty)return;
-    final nowIds=events.map((e)=>'${e['id']??''}').where((id)=>id.isNotEmpty).toSet();
-    if(!_seeded){_seenEventIds.addAll(nowIds);_seeded=true;return;}
-    final newer=events.where((e)=>!_seenEventIds.contains('${e['id']??''}') && '${e['is_read']??0}'!='1' && e['is_read']!=true).take(3).toList();
-    _seenEventIds.addAll(nowIds);
-    if(_seenEventIds.length>350){_seenEventIds.clear();_seenEventIds.addAll(nowIds);}
+    final newer=eventTracker.takeNew(events);
     if(!_initialized)return;
     for(final e in newer){
       try{await local.show(int.tryParse('${e['id']}')??DateTime.now().millisecondsSinceEpoch%1000000,
