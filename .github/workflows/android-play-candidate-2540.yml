@@ -1,15 +1,15 @@
-name: Cikoko Android Play Candidate AAB 2541
+name: Cikoko Android Play Candidate AAB 2546 (main)
 on:
   push:
     branches: [main]
     paths:
       - 'flutter/**'
-      - '.github/workflows/android-play-candidate-2541.yml'
+      - '.github/workflows/android-play-candidate-2540.yml'
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: cikoko-2541-play-candidate-${{ github.ref }}
+  group: cikoko-2546-play-candidate-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   candidate-aab:
@@ -32,8 +32,8 @@ jobs:
         run: |
           set -euo pipefail
           flutter create --platforms=android --project-name=cikoko .
-          grep -q '^version: 2.5.41+2541$' pubspec.yaml
-          grep -q 'versionCode = 2541' android/app/build.gradle.kts
+          grep -q '^version: 2.5.46+2546$' pubspec.yaml
+          grep -q 'versionCode = 2546' android/app/build.gradle.kts
           grep -q 'targetSdk = 36' android/app/build.gradle.kts
       - name: Analyze and run all Flutter tests
         working-directory: flutter
@@ -78,12 +78,12 @@ jobs:
           expected="394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5"
           test "$actual" = "$expected"
           mkdir -p ../release-candidate
-          cp "$aab" ../release-candidate/Cikoko-2541-PLAY-CANDIDATE.aab
+          cp "$aab" ../release-candidate/Cikoko-2546-PLAY-CANDIDATE.aab
           (cd ../release-candidate && sha256sum *.aab > SHA256SUMS.txt)
       - name: Upload AAB candidate for internal review only
         uses: actions/upload-artifact@v4
         with:
-          name: cikoko-aab-2541-candidate-${{ github.run_number }}
+          name: cikoko-aab-2546-candidate-${{ github.run_number }}
           path: release-candidate/*
           if-no-files-found: error
           retention-days: 14
