@@ -54,9 +54,6 @@ jobs:
         run: |
           flutter analyze --no-fatal-infos --no-fatal-warnings
           flutter test
-      - name: Build debug install candidate
-        working-directory: flutter
-        run: flutter build apk --debug
       - name: Build signed Play candidate when protected certificate is available
         env:
           CIKOKO_KEYSTORE_B64: ${{ secrets.CIKOKO_KEYSTORE_B64 }}
@@ -92,7 +89,7 @@ jobs:
             --out "$signed_apk" "$apk"
           "$apksigner" verify --verbose --print-certs "$signed_apk" > /tmp/cikoko-apk-check.log
           grep -i 'certificate SHA-256 digest' /tmp/cikoko-apk-check.log || true
-          actual_apk=$(sed -n -E 's/^[[:space:]]*Signer #[0-9]+ certificate SHA-256 digest:[[:space:]]*([0-9a-fA-F:]+).*$/\1/p' /tmp/cikoko-apk-check.log | head -1 | tr -d ':' | tr '[:lower:]' '[:upper:]')
+          actual_apk=$(sed -n -E 's/^[[:space:]]*.*certificate SHA-256 digest:[[:space:]]*([0-9a-fA-F:]+).*$/\1/p' /tmp/cikoko-apk-check.log | head -1 | tr -d ':' | tr '[:lower:]' '[:upper:]')
           if [[ "$actual_apk" != '394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5' ]]; then
             echo "::error::APK signing certificate does not match the required Play upload certificate."
             exit 1
