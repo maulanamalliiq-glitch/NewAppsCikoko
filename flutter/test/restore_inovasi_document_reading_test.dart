@@ -36,8 +36,11 @@ class _RecordingApi extends CikokoApi {
 void main() {
   test('Tab fourth is Innovation, not Notifications', () {
     expect(cikokoBottomRoute(3),'Inovasi');
-    expect(cikokoBottomRoutes, ['Dashboard', 'Layanan Online',
-      'Menu Cikoko', 'Inovasi', 'Profil']);
+    expect(cikokoBottomRoutes, ['Tentang Kami', 'Menu Cikoko',
+      'Dashboard', 'Inovasi', 'Profil']);
+    expect(cikokoBottomRoute(0),'Tentang Kami');
+    expect(cikokoBottomRoute(2),'Dashboard');
+    expect(cikokoBottomIndexForRoute('Dashboard',0),2);
     expect(cikokoBottomIndexForRoute('Inovasi',0),3);
     expect(cikokoBottomIndexForRoute('Notifikasi',3),3);
     expect(cikokoBottomRoute(4),'Profil');
