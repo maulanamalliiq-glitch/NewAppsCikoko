@@ -4,16 +4,17 @@ import 'premium_ui.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'api.dart';
+import 'document_reading.dart';
 
 
 
 // Bottom sheet preview: only details returned by authenticated PHP endpoint.
-Future<void> showCikokoDocument(BuildContext context, CikokoApi api, {required int id, required String kind, String reference='', VoidCallback? onChanged}) {
+Future<void> showCikokoDocument(BuildContext context, CikokoApi api, {required int id, required String kind, String reference='', Map<String,dynamic>? preview, VoidCallback? onChanged}) {
   return showModalBottomSheet<void>(
     context:context,isScrollControlled:true,useSafeArea:true,backgroundColor:Theme.of(context).colorScheme.surface,
     shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(22))),
     builder:(ctx)=>SizedBox(height:MediaQuery.sizeOf(ctx).height*.90,
-      child:DocumentDetailSheet(api:api,id:id,kind:kind,reference:reference,onChanged:onChanged)),
+      child:DocumentDetailSheet(api:api,id:id,kind:kind,reference:reference,preview:preview,onChanged:onChanged)),
   );
 }
 class DocumentDetailSheet extends StatefulWidget {
@@ -21,8 +22,9 @@ class DocumentDetailSheet extends StatefulWidget {
   final int id;
   final String kind;
   final String reference;
+  final Map<String,dynamic>? preview;
   final VoidCallback? onChanged;
-  const DocumentDetailSheet({super.key,required this.api,required this.id,required this.kind,this.reference='',this.onChanged});
+  const DocumentDetailSheet({super.key,required this.api,required this.id,required this.kind,this.reference='',this.preview,this.onChanged});
   @override State<DocumentDetailSheet> createState()=>_DocumentDetailState();
 }
 class _DocumentDetailState extends State<DocumentDetailSheet> {
@@ -40,11 +42,8 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
     if(widget.id<=0 && widget.reference.trim().isEmpty){
       request=Future.error(ApiError('Nomor tidak tersedia pada data riwayat. Muat ulang daftar pengajuan.'));
     }else{
-      request=widget.api.callWithParams('document_detail',{
-        if(widget.id>0)'id':widget.id.toString(),
-        'kind':widget.kind,
-        if(widget.reference.trim().isNotEmpty)'reference':widget.reference.trim(),
-      }).then((result) {
+      request=cikokoReadDocumentDetail(widget.api,
+        id:widget.id,kind:widget.kind,reference:widget.reference).then((result) {
         final rawDetail=result['detail'];
         if(rawDetail is Map) {
           final rawId=rawDetail['id'];
@@ -112,7 +111,49 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
           icon:const Icon(Icons.close_rounded,color:Colors.white)))),
     const Divider(height:2),
     Expanded(child:FutureBuilder<Map<String,dynamic>>(future:request,builder:(ctx,s){
-      if(s.hasError)return Center(child:Padding(padding:const EdgeInsets.all(18),child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(Icons.cloud_off_outlined,size:36,color:Theme.of(ctx).colorScheme.primary),const SizedBox(height:12),Text('Detail pengajuan belum tersedia. ${cikokoFormalMessage(s.error)}',textAlign:TextAlign.center,style:TextStyle(color:Theme.of(ctx).colorScheme.onSurface)),const SizedBox(height:12),FilledButton.icon(onPressed:reload,icon:const Icon(Icons.refresh),label:const Text('Coba lagi'))])));
+      if(s.hasError) {
+        final summary=widget.preview;
+        return ListView(
+          padding:const EdgeInsets.fromLTRB(16,24,16,30),
+          children:[
+            CikokoPremiumSurface(child:Column(children:[
+              Icon(Icons.cloud_off_outlined,size:36,
+                color:Theme.of(ctx).colorScheme.primary),
+              const SizedBox(height:12),
+              Text('Detail belum dapat dimuat',
+                style:Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height:8),
+              Text(cikokoDocumentFailure(s.error),
+                textAlign:TextAlign.center,
+                style:Theme.of(ctx).textTheme.bodyMedium),
+              const SizedBox(height:14),
+              FilledButton.icon(
+                onPressed:reload,
+                icon:const Icon(Icons.refresh),
+                label:const Text('Coba lagi')),
+            ])),
+            if(summary!=null)...[
+              const SizedBox(height:16),
+              Text('Ringkasan dari daftar pengajuan',
+                style:Theme.of(ctx).textTheme.titleMedium),
+              const SizedBox(height:8),
+              CikokoPremiumSurface(child:Column(
+                crossAxisAlignment:CrossAxisAlignment.start,
+                children:[
+                  pair('Jenis','${summary['title']??widget.kind}'),
+                  pair('Nomor','${summary['reference']??summary['reference_no']??widget.reference}'),
+                  pair('Status','${summary['status']??'-'}'),
+                  pair('Tanggal','${summary['created_at']??'-'}'),
+                  const SizedBox(height:6),
+                  Text('Data di atas berasal dari daftar yang sebelumnya '
+                    'berhasil dibaca. Rincian belum dapat diverifikasi.',
+                    style:Theme.of(ctx).textTheme.bodySmall),
+                ],
+              )),
+            ],
+          ],
+        );
+      }
       if(!s.hasData)return const Center(child:CircularProgressIndicator());
       final data=s.data!, detail=Map<String,dynamic>.from(data['detail'] as Map);
       final timeline=List<dynamic>.from(data['timeline']??[]), docs=List<dynamic>.from(data['documents']??[]);
