@@ -18,6 +18,7 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
   List<Map<String,dynamic>> messages=[];
   AdaptivePoller? timer;
   bool sending=false,loading=true,fetching=false,hasOlder=false;
+  bool refreshAfterInFlight=false;
   String? error;
   bool get admin=>widget.residentId!=null;
   String get ownSender=>admin?'admin':'warga';
@@ -55,14 +56,20 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
       scroll.jumpTo(scroll.position.maxScrollExtent);
     });
   }
-  Future<void> refresh({bool older=false})async{
-    if(fetching)return;
+  Future<void> refresh({bool older=false,bool forceLatest=false})async{
+    if(fetching){
+      // Never discard the post-send refresh while an older GET is in flight.
+      if(!older)refreshAfterInFlight=true;
+      return;
+    }
     fetching=true;
     try{
       final serverRows=messages.where((r)=>int.tryParse('${r['id']}')!=null).toList();
+      // A successful send must request the newest page, rather than
+      // reusing the cursor from before the message was sent.
       final query=<String,String>{
         if(admin)'user_id':widget.residentId!,
-        if(serverRows.isNotEmpty)(older?'before_id':'after_id'):
+        if(!forceLatest && serverRows.isNotEmpty)(older?'before_id':'after_id'):
           '${older?serverRows.first['id']:serverRows.last['id']}',
       };
       final result=await widget.api.callWithParams(admin?'support_admin_thread':'chat',query);
@@ -78,17 +85,32 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
           for(final row in messages)'${row['id']}':row
         };
         for(final row in received){
-          // A server-confirmed copy supersedes the immediately displayed draft.
-          byId.removeWhere((id,old)=>id.startsWith('pending-') &&
-            old['message']==row['message'] && old['sender']==row['sender']);
-          byId['${row['id']}']=row;
+          // Reconcile messages confirmed by an older backend without a POST ID.
+          // Do not discard an unmatched outgoing local message.
+          final serverId=int.tryParse('${row['id']}')??0;
+          String? matchingLocal;
+          for(final entry in byId.entries){
+            final old=entry.value;
+            if(!entry.key.startsWith('pending-')||
+              old['sender']!=row['sender']||old['message']!=row['message'])continue;
+            if(serverId>(int.tryParse('${old['after_id']??0}')??0)){
+              matchingLocal=entry.key;
+              break;
+            }
+          }
+          if(matchingLocal!=null)byId.remove(matchingLocal);
+          final existing=byId['${row['id']}'];
+          byId['${row['id']}']={
+            if(existing!=null)...existing,
+            ...row,
+          };
         }
         for(final entry in updates.entries){
           final row=byId[entry.key];
           if(row!=null)row['delivery_status']=entry.value;
         }
         messages=byId.values.toList();_sort();
-        if(older||serverRows.isEmpty)hasOlder=result['has_more']==true;
+        if(older||forceLatest||serverRows.isEmpty)hasOlder=result['has_more']==true;
         error=null;
       });
       if(shouldScroll) _scrollToBottom();
@@ -97,17 +119,24 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
     }finally{
       fetching=false;
       if(mounted)setState(()=>loading=false);
+      if(refreshAfterInFlight && mounted){
+        refreshAfterInFlight=false;
+        await refresh(forceLatest:true);
+      }
     }
   }
   Future<void> send()async{
     final text=message.text.trim();
     if(sending||text.isEmpty)return;
     final key='pending-${DateTime.now().microsecondsSinceEpoch}';
+    final newestServerId=messages
+      .map((r)=>int.tryParse('${r['id']}')??0)
+      .fold<int>(0,(maxId,id)=>id>maxId?id:maxId);
     message.clear();
     setState((){
       sending=true;
       messages.add({'id':key,'sender':ownSender,'message':text,
-        'created_at':'Sekarang','delivery_status':'pending'});
+        'created_at':'Sekarang','delivery_status':'pending','after_id':newestServerId});
       _sort();
     });
     _scrollToBottom();
@@ -116,24 +145,24 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
         body:{'message':text,if(admin)'user_id':widget.residentId});
       if(!mounted)return;
       setState((){
-        messages.removeWhere((row)=>row['id']==key);
-        final id=(result['id'] as num?)?.toInt();
+        final id=int.tryParse('${result['id']??''}');
         if(id!=null&&id>0){
+          messages.removeWhere((row)=>row['id']==key);
           final fresh={'id':id,'sender':ownSender,'message':text,
             'created_at':result['created_at']??'', 'delivery_status':'sent'};
           final index=messages.indexWhere((r)=>r['id']==id||'${r['id']}'=='$id');
           if(index>=0)messages[index]={...messages[index],...fresh};
           else messages.add(fresh);
         }else{
-          // Older servers may not return IDs. Keep the optimistic message
-          // visible until a later refresh can reconcile it with the server.
-          messages.add({'id':key,'sender':ownSender,'message':text,
-            'created_at':'Sekarang','delivery_status':'sent'});
+          // Legacy backend confirms the POST without an ID.
+          // Keep the SAME local bubble instead of deleting/recreating it.
+          final index=messages.indexWhere((r)=>r['id']==key);
+          if(index>=0)messages[index]['delivery_status']='sent';
         }
         _sort();
       });
       _scrollToBottom();
-      await refresh();
+      await refresh(forceLatest:true);
     }catch(e){
       if(mounted){
         setState((){
@@ -211,8 +240,11 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
               hintText:admin?'Tulis balasan untuk warga...':'Tulis pesan untuk admin...',
               counterText:''))),
           const SizedBox(width:8),
-          IconButton.filled(tooltip:'Kirim Pesan',onPressed:sending?null:send,
-            icon:const Icon(Icons.send_rounded)),
+          IconButton.filled(
+            tooltip:'Kirim Pesan',onPressed:sending?null:send,
+            style:IconButton.styleFrom(
+              backgroundColor:scheme.primary,foregroundColor:Colors.white),
+            icon:const Icon(Icons.send_rounded,color:Colors.white)),
         ]))),
     ]);
   }
