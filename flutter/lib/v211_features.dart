@@ -1,3 +1,4 @@
+import 'account_support.dart';
 import 'profile_status.dart';
 import 'app_settings.dart';
 import 'dart:io';
@@ -451,7 +452,7 @@ class _CivicProfileState extends State<CivicProfilePage>{
        onTap:()=>showDialog<void>(context:context,builder:(dialogContext)=>AlertDialog(
         title:const Text('Cikoko Smart'),
         content:const Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Text('2.5.40',style:TextStyle(fontSize:13,color:Colors.blueGrey)),
+          Text('2.5.41',style:TextStyle(fontSize:13,color:Colors.blueGrey)),
           SizedBox(height:20),
           Text('Layanan digital Cikoko Smart app'),
         ]),
@@ -460,6 +461,8 @@ class _CivicProfileState extends State<CivicProfilePage>{
       profileRow(Icons.privacy_tip_outlined,'Kebijakan Privasi',
        subtitle:'Informasi penggunaan dan perlindungan data',
        onTap:showPrivacyPolicy),
+      if(widget.api.profile?['role']=='warga')profileRow(Icons.person_remove_outlined,'Penghapusan Akun',onTap:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>AccountSupportPage(api:widget.api,deletion:true)))),
+      if(widget.api.profile?['role']=='admin')profileRow(Icons.manage_accounts_outlined,'Bantuan Akun Warga',onTap:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>AccountRequestsPage(api:widget.api)))),
       profileRow(Icons.description_outlined,'Syarat dan Ketentuan',
        subtitle:'Ketentuan penggunaan Cikoko Smartapps',onTap:showTerms),
      ]),

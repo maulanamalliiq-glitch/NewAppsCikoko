@@ -7,6 +7,8 @@ void main() {
   testWidgets('Dua KTP saksi muncul setelah Surat Nikah tanpa bergantung pada scroll', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body: WarisForm())));
 
+    await tester.pumpAndSettle();
+
     // The form uses ListView(children: [...]). Inspect its complete child
     // delegate directly: a lazy viewport does not build every offscreen widget.
     final listFinder = find.descendant(

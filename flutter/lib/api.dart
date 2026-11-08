@@ -47,20 +47,65 @@ class ApiError implements Exception {
   ApiError(this.message, {this.statusCode});
   @override String toString() => cikokoFormalMessage(message);
 }
+/// A report is confirmed only by JSON success carrying an actual database ID.
+Map<String,dynamic> cikokoReportUploadResponse(int status,String body){
+  dynamic decoded;
+  try{decoded=jsonDecode(body);}
+  on FormatException{
+    if(status==403)throw ApiError('Server menolak akses ke layanan. Pengelola perlu memeriksa izin website.',statusCode:403);
+    if(status==413)throw ApiError('Ukuran foto melebihi batas unggah server. Gunakan foto lebih kecil.',statusCode:413);
+    if(status>=500)throw ApiError('Server layanan mengalami kendala. Periksa riwayat laporan sebelum mengirim ulang.',statusCode:status);
+    throw ApiError('Respons layanan belum valid. Periksa riwayat sebelum mencoba kembali.',statusCode:status);
+  }
+  if(decoded is! Map<String,dynamic>)throw ApiError('Respons layanan tidak sesuai. Periksa riwayat sebelum mencoba kembali.',statusCode:status);
+  if(status==401)throw ApiError('Sesi telah berakhir. Silakan masuk kembali.',statusCode:401);
+  if(status>=400||decoded['ok']!=true){
+    final message='${decoded['error']??'Laporan belum berhasil dikirim.'}';
+    throw ApiError(cikokoFormalMessage(message),statusCode:status);
+  }
+  final id=decoded['id'];
+  if(id is! num||id.toInt()<1)throw ApiError('Laporan belum memiliki nomor penyimpanan. Periksa riwayat sebelum mengirim ulang.',statusCode:status);
+  return decoded;
+}
+/// Preserve existing response contracts for uploads that are NOT reports,
+/// such as Home slides, logos, signatures and Ahli Waris documents.
+Map<String,dynamic> cikokoGenericUploadResponse(int status,String body){
+  dynamic parsed;
+  try{parsed=jsonDecode(body);}
+  on FormatException{
+    throw ApiError('Layanan unggah belum dapat diproses. Silakan coba kembali.',statusCode:status);
+  }
+  if(parsed is! Map<String,dynamic>||status>=400||parsed['ok']!=true){
+    final msg=parsed is Map?'${parsed['error']??'Unggah belum berhasil.'}':'Unggah belum berhasil.';
+    throw ApiError(cikokoFormalMessage(msg),statusCode:status);
+  }
+  return parsed;
+}
 class CikokoApi {
   static const root = 'https://datawebs.my.id/mobile-api/index.php';
   final _storage = const FlutterSecureStorage();
+  final sessionRevision=ValueNotifier<int>(0);
   String? token;
   Map<String,dynamic>? profile;
-  Future<void> restore() async { token = await _storage.read(key:'cikoko_token'); if(token!=null) {try {profile = (await call('me'))['user'] as Map<String,dynamic>?;}catch(_) {/* Saat server sementara tidak tersedia, jangan hapus sesi tersimpan. */}} }
+  Future<void> expireSession() async {
+    token=null;profile=null;sessionRevision.value++;
+    await _storage.delete(key:'cikoko_token');
+  }
+  Future<void> restore() async {
+    token=await _storage.read(key:'cikoko_token');
+    if(token!=null){try{profile=(await call('me'))['user'] as Map<String,dynamic>?;}
+    on ApiError catch(e){if(e.statusCode==401)await expireSession();}}
+  }
   Future<Map<String,dynamic>> call(String action, {Map<String,dynamic>? body, bool authorized = false}) async {
     final u=Uri.parse('${action.startsWith('v211_') ? root.replaceFirst('index.php','v211.php') : root}?action=$action');
     final progressId=body!=null?CikokoRequestProgress.begin():null;
     var successful=false;
     try {
+      final requestToken=token;
       final headers={'Accept':'application/json','Content-Type':'application/json'};
       if(token!=null)headers['Authorization']='Bearer $token';
       final http.Response r= body==null ? await http.get(u,headers:headers).timeout(const Duration(seconds:25)) : await http.post(u, headers:headers,body:jsonEncode(body)).timeout(const Duration(seconds:40));
+      if(r.statusCode==401&&action!='login'&&requestToken!=null&&requestToken==token)await expireSession();
       dynamic d;
       try {
         d = jsonDecode(utf8.decode(r.bodyBytes));
@@ -86,7 +131,7 @@ class CikokoApi {
     on FormatException {throw ApiError('Layanan Cikoko sedang mengalami kendala. Silakan mencoba kembali.');}
     finally {if(progressId!=null)CikokoRequestProgress.finish(progressId,success:successful);}
   }
-  Future<Map<String,dynamic>> callWithQuery(String action,Map<String,String> query) async => call('$action&${Uri(queryParameters:query).query}');
+  Future<Map<String,dynamic>> callWithQuery(String action,Map<String,String> query) async => query.isEmpty?call(action):call('$action&${Uri(queryParameters:query).query}');
   String photoUrl(String action,Map<String,String> params) => '${root.replaceFirst('index.php','v211.php')}?action=$action&${Uri(queryParameters:params).query}';
   Map<String,String> authHeaders() => token==null ? {} : {'Authorization':'Bearer $token'};
   Future<Map<String,dynamic>> callWithParams(String action,Map<String,String> params)=>callWithQuery(action,params);
@@ -97,7 +142,7 @@ class CikokoApi {
     await _storage.write(key:'cikoko_token',value:token);
   }
   Future<void> register(Map<String,dynamic> fields) async { await call('register',body:fields); }
-  Future<void> logout() async {if(token!=null){try{await call('logout',body:{});}catch(_){}}token=null;profile=null;await _storage.delete(key:'cikoko_token');}
+  Future<void> logout() async {if(token!=null){try{await call('logout',body:{});}catch(_){}}await expireSession();}
   String media(String? path) {
     final p=path??'';
     if(p.isEmpty)return '';
@@ -108,6 +153,7 @@ class CikokoApi {
   }
   Future<Map<String,dynamic>> upload(String action,Map<String,String> fields,
       Map<String,List<String>> files,{void Function(double)? progress}) async {
+    final uploadToken=token;
     final req=http.MultipartRequest('POST',Uri.parse(
       "${action.startsWith('v211_') ? root.replaceFirst('index.php','v211.php') : root}?action=$action"));
     req.headers['Accept']='application/json';
@@ -155,10 +201,8 @@ class CikokoApi {
         await streamed.sink.close();
         final response=await pending;
         final str=await response.stream.bytesToString();
-        final data=jsonDecode(str);
-        if(data is! Map<String,dynamic> || response.statusCode>=400 || data['ok']!=true){
-          throw ApiError(data is Map? "${data['error']??'Upload gagal'}":'Upload gagal');
-        }
+        if(response.statusCode==401&&token==uploadToken)await expireSession();
+        final data=action=='report' ? cikokoReportUploadResponse(response.statusCode,str) : cikokoGenericUploadResponse(response.statusCode,str);
         uploadSuccess=true;
         progress?.call(1);
         return data;
