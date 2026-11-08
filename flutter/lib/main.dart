@@ -1856,9 +1856,12 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
 
 class _PageCopyright extends StatelessWidget {
  const _PageCopyright();
- @override Widget build(BuildContext context)=>const Padding(
-  padding:EdgeInsets.symmetric(vertical:12,horizontal:12),
+ @override Widget build(BuildContext context)=>Padding(
+  padding:const EdgeInsets.symmetric(vertical:12,horizontal:12),
   child:Text('Copyright © Cikoko Smart',textAlign:TextAlign.center,
-   style:TextStyle(fontSize:10.5,color:Color(0xFF7B899D),fontWeight:FontWeight.w400)),
+   style:TextStyle(
+     fontSize:10.5,
+     color:Theme.of(context).colorScheme.onSurfaceVariant,
+     fontWeight:FontWeight.w400)),
  );
 }
