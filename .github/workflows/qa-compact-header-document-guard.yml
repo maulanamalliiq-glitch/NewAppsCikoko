@@ -1,0 +1,32 @@
+name: QA - Premium Compact Header and Document Guard
+on:
+  push:
+    branches:
+      - fix/premium-compact-header-and-document-guard-20261108
+    paths:
+      - 'flutter/**'
+      - '.github/workflows/qa-compact-header-document-guard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flutter-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Restore Android tooling only (no APK build)
+        working-directory: flutter
+        run: flutter create --platforms=android --project-name=cikoko .
+      - name: Resolve packages
+        working-directory: flutter
+        run: flutter pub get
+      - name: Flutter analyze
+        working-directory: flutter
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Full unit and widget regression tests
+        working-directory: flutter
+        run: flutter test --reporter expanded
