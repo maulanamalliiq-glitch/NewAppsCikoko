@@ -27,6 +27,7 @@ jobs:
         run: |
           python3 - <<'PYTHON'
           from pathlib import Path
+          import re
           p=Path('lib/v211_features.dart')
           s=p.read_text()
           a=s.index('   Widget profileRow(')
@@ -40,6 +41,10 @@ jobs:
           b=s.index('\nclass ',a+1)
           block=s[a:b].replace('child: child,','child: Material(type:MaterialType.transparency,child:child),',1)
           p.write_text(s[:a]+block+s[b:])
+          for p in Path('lib').glob('*.dart'):
+            s=p.read_text()
+            s=re.sub(r'(?<![\w])TextStyle\(', "TextStyle(fontFamily:'Roboto',",s)
+            p.write_text(s)
           PYTHON
           flutter test test_docs/resident_screens.dart --update-goldens
       - name: Upload screenshots

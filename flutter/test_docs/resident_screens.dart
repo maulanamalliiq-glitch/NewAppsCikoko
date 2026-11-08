@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cikoko/main.dart' as app;
@@ -85,17 +87,18 @@ void main(){
   });
   final icons=FontLoader('MaterialIcons')..addFont(Future.value(ByteData.sublistView(File('test_assets/MaterialIcons-Regular.otf').readAsBytesSync())));await icons.load();
   final theme=CikokoDesign.light.copyWith(textTheme:CikokoDesign.light.textTheme.apply(fontFamily:'Roboto'),primaryTextTheme:CikokoDesign.light.primaryTextTheme.apply(fontFamily:'Roboto'),appBarTheme:CikokoDesign.light.appBarTheme.copyWith(titleTextStyle:const TextStyle(fontFamily:'Roboto',fontSize:20,fontWeight:FontWeight.w700,color:Colors.white)));
-  await HttpOverrides.runZoned(()async {
+  await http.runWithClient(()async {
   final key=GlobalKey();
   final fake=DocsApi();
   app.api.profile=user;app.api.token='illustration-only';
   Future<void> mount(Widget child)async{
    await tester.pumpWidget(const SizedBox());await tester.pump();
    await tester.pumpWidget(RepaintBoundary(key:key,child:MaterialApp(debugShowCheckedModeBanner:false,theme:theme,home:child)));
+   await tester.runAsync(()async{await precacheImage(const AssetImage('assets/kantor-cikoko.jpg'),tester.element(find.byKey(key)));await precacheImage(const AssetImage('assets/logo.png'),tester.element(find.byKey(key)));});
    await tester.pumpAndSettle(const Duration(milliseconds:100));
   }
   Future<void> shot(String name)async{await expectLater(find.byKey(key),matchesGoldenFile('screens/$name.png'));}
-  Future<void> scrollTo(String text)async{await tester.scrollUntilVisible(find.text(text).first,600,maxScrolls:45,scrollable:find.byType(Scrollable).first);await Scrollable.ensureVisible(tester.element(find.text(text).first),alignment:0);await tester.pumpAndSettle();}
+  Future<void> scrollTo(String text)async{await tester.scrollUntilVisible(find.text(text),600,maxScrolls:45,scrollable:find.byType(Scrollable).first);await Scrollable.ensureVisible(tester.element(find.text(text).first),alignment:0);await tester.pumpAndSettle();}
   await mount(app.LoginPage(onLogin:(){}));await shot('01_masuk');
   await mount(app.LoginPage(onLogin:(){},startWithRegistration:true));await shot('02_daftar_atas');
   await tester.drag(find.byType(SingleChildScrollView).first,const Offset(0,-620));await tester.pumpAndSettle();await shot('03_daftar_bawah');
@@ -123,7 +126,7 @@ void main(){
   await mount(Scaffold(body:Builder(builder:(context)=>FilledButton(onPressed:()=>showCikokoWarisRequirements(context,onApply:(){}),child:const Text('Buka')))));
   await tester.tap(find.text('Buka'));await tester.pumpAndSettle();await shot('21_persyaratan');
   await tester.pumpWidget(const SizedBox());await tester.pump();
-  },createHttpClient:(_)=>DocsClient());
+  },()=>MockClient((request)async=>http.Response(jsonEncode(fixture(request.url.queryParameters['action']??'')),200,headers:{'content-type':'application/json'})));
   tester.view.resetPhysicalSize();tester.view.resetDevicePixelRatio();HttpOverrides.global=null;
  });
 }
