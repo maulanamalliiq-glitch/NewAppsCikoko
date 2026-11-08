@@ -80,6 +80,29 @@ void main(){
       await tester.pump(const Duration(seconds:1));
     },()=>MockClient((request)=>request.method=='POST'?pendingPost.future:pendingGet.future));
   });
+  testWidgets('Offline bot holding reply appears immediately next to citizen message',(tester)async{
+    final api=CikokoApi()..token='valid-session';
+    const botText='🤖 Asisten Otomatis Cikoko: Mohon menunggu tanggapan dari petugas.';
+    await http.runWithClient(()async{
+      await tester.pumpWidget(MaterialApp(home:Scaffold(body:SupportChatPage(api:api))));
+      await tester.pump(const Duration(milliseconds:150));
+      await tester.enterText(find.byType(TextField),'Saya membutuhkan bantuan');
+      await tester.tap(find.byTooltip('Kirim Pesan'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds:200));
+      expect(find.text('Saya membutuhkan bantuan'),findsOneWidget);
+      expect(find.text('Asisten Otomatis Cikoko'),findsOneWidget);
+      expect(find.text(botText),findsOneWidget);
+      await tester.pump(const Duration(seconds:1));
+    },()=>MockClient((request){
+      if(request.method=='POST')return Future.value(http.Response(
+        '{"ok":true,"id":17,"sender":"warga","auto_reply":{"id":18,"sender":"bot","message":"🤖 Asisten Otomatis Cikoko: Mohon menunggu tanggapan dari petugas.","name":"Asisten Otomatis Cikoko","created_at":"2026-11-08 21:00:00"}}',
+        200,headers:{'content-type':'application/json'}));
+      return Future.value(http.Response(
+        '{"ok":true,"messages":[],"receipt_updates":{},"has_more":false}',
+        200,headers:{'content-type':'application/json'}));
+    }));
+  });
   testWidgets('New outgoing chat is immediately visible during network delay',(tester)async{
     final pending=Completer<http.Response>();
     final api=CikokoApi()..token='valid-session';
