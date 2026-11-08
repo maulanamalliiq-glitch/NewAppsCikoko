@@ -34,6 +34,12 @@ jobs:
           block=s[a:b].replace('return ListTile(', 'return Material(type:MaterialType.transparency,child:ListTile(',1)
           block=block.replace('     onTap:onTap,\n    );','     onTap:onTap,\n    ));',1)
           p.write_text(s[:a]+block+s[b:])
+          p=Path('lib/premium_ui.dart')
+          s=p.read_text()
+          a=s.index('class CikokoPremiumSurface')
+          b=s.index('\nclass ',a+1)
+          block=s[a:b].replace('child: child,','child: Material(type:MaterialType.transparency,child:child),',1)
+          p.write_text(s[:a]+block+s[b:])
           PYTHON
           flutter test test_docs/resident_screens.dart --update-goldens
       - name: Upload screenshots
