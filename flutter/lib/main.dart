@@ -421,23 +421,51 @@ class _HomeState extends State<HomePage> {
           colors: [Color(0xFF07346E), Color(0xFF126BD7)],
         ),
       )),
-      title: Row(children: [
-        Image.asset('assets/logo.png', width: 31, height: 31, fit: BoxFit.contain),
-        const SizedBox(width: 9),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Cikoko SmartAPP', maxLines: 1, overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
-          Text(roleLabel, maxLines: 1, overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 10.5, color: Color(0xFFE1EDFF))),
-        ])),
-      ]),
+      title: CikokoAppBarIdentity(roleName:roleLabel),
       actions:[
+        if(MediaQuery.sizeOf(c).width>=430)
+          IconButton(
+            tooltip:CikokoSettings.tr('Ganti tema gelap/terang',
+              'Switch dark/light theme'),
+            onPressed:CikokoSettings.toggleTheme,
+            icon:Icon(CikokoSettings.themeMode.value==ThemeMode.dark
+              ?Icons.light_mode_outlined:Icons.dark_mode_outlined)),
         IconButton(
-          tooltip:CikokoSettings.tr('Ganti tema gelap/terang','Switch dark/light theme'),
-          onPressed:CikokoSettings.toggleTheme,
-          icon:Icon(CikokoSettings.themeMode.value==ThemeMode.dark
-            ?Icons.light_mode_outlined:Icons.dark_mode_outlined)),
-        IconButton(tooltip:CikokoSettings.tr('Notifikasi','Notifications'),onPressed:()=>switchTo('Notifikasi'),icon:Badge(isLabelVisible:unreadCount>0,label:Text('$unreadCount'),child:const Icon(Icons.notifications_none))),IconButton(tooltip:'Muat ulang',onPressed:load,icon:const Icon(Icons.refresh))],
+          tooltip:CikokoSettings.tr('Notifikasi','Notifications'),
+          onPressed:()=>switchTo('Notifikasi'),
+          icon:Badge(
+            isLabelVisible:unreadCount>0,
+            label:Text('$unreadCount'),
+            child:const Icon(Icons.notifications_none))),
+        if(MediaQuery.sizeOf(c).width>=430)
+          IconButton(tooltip:'Muat ulang',
+            onPressed:load,icon:const Icon(Icons.refresh))
+        else
+          PopupMenuButton<String>(
+            tooltip:'Pengaturan cepat',
+            key:const Key('compact_app_actions'),
+            onSelected:(value){
+              if(value=='theme')CikokoSettings.toggleTheme();
+              if(value=='refresh')load();
+            },
+            itemBuilder:(_)=>const [
+              PopupMenuItem<String>(
+                value:'theme',
+                child:Row(children:[
+                  Icon(Icons.brightness_6_outlined),
+                  SizedBox(width:10),
+                  Text('Ganti Tema'),
+                ])),
+              PopupMenuItem<String>(
+                value:'refresh',
+                child:Row(children:[
+                  Icon(Icons.refresh_rounded),
+                  SizedBox(width:10),
+                  Text('Muat Ulang'),
+                ])),
+            ],
+          ),
+      ],
     ),
     drawer:Drawer(child:CikokoStructuredDrawer(
       avatar:const Logo(size:52),
@@ -1828,9 +1856,12 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
 
 class _PageCopyright extends StatelessWidget {
  const _PageCopyright();
- @override Widget build(BuildContext context)=>const Padding(
-  padding:EdgeInsets.symmetric(vertical:12,horizontal:12),
+ @override Widget build(BuildContext context)=>Padding(
+  padding:const EdgeInsets.symmetric(vertical:12,horizontal:12),
   child:Text('Copyright © Cikoko Smart',textAlign:TextAlign.center,
-   style:TextStyle(fontSize:10.5,color:Color(0xFF7B899D),fontWeight:FontWeight.w400)),
+   style:TextStyle(
+     fontSize:10.5,
+     color:Theme.of(context).colorScheme.onSurfaceVariant,
+     fontWeight:FontWeight.w400)),
  );
 }

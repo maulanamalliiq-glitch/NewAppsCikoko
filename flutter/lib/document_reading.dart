@@ -33,12 +33,46 @@ Future<Map<String, dynamic>> cikokoReadDocumentDetail(
     }
   }
 
-  return api.callWithParams('document_detail', {
+  final response = await api.callWithParams('document_detail', {
     if (resolvedId > 0) 'id': '$resolvedId',
     'kind': kind,
     if (kind == 'waris' && exactReference.isNotEmpty)
       'reference': exactReference,
   });
+  return cikokoValidateDocumentPayload(response);
+}
+
+/// Validate the API shape before building widgets. HTTP 200 is not enough:
+/// an outdated backend can return a partial JSON object that would otherwise
+/// throw a TypeError inside the bottom-sheet FutureBuilder.
+Map<String,dynamic> cikokoValidateDocumentPayload(
+  Map<String,dynamic> response,
+) {
+  final detail = response['detail'];
+  if(detail is! Map || detail.isEmpty) {
+    throw ApiError('Respons detail pengajuan belum lengkap.',
+      statusCode:502);
+  }
+  for(final key in const ['timeline','documents','corrections']) {
+    final value=response[key];
+    if(value != null && (value is! List ||
+        value.any((entry)=>entry is! Map))) {
+      throw ApiError('Format data $key tidak sesuai.',
+        statusCode:502);
+    }
+  }
+  final labels=response['labels'];
+  if(labels != null && labels is! Map) {
+    throw ApiError('Format label detail pengajuan tidak sesuai.',
+      statusCode:502);
+  }
+  final children=detail['children'];
+  if(children != null && (children is! List ||
+      children.any((entry)=>entry is! Map))) {
+    throw ApiError('Format data keluarga belum sesuai.',
+      statusCode:502);
+  }
+  return response;
 }
 
 /// A readable, non-sensitive explanation for the actual HTTP failure.
