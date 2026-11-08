@@ -67,6 +67,20 @@ Map<String,dynamic> cikokoReportUploadResponse(int status,String body){
   if(id is! num||id.toInt()<1)throw ApiError('Laporan belum memiliki nomor penyimpanan. Periksa riwayat sebelum mengirim ulang.',statusCode:status);
   return decoded;
 }
+/// Preserve existing response contracts for uploads that are NOT reports,
+/// such as Home slides, logos, signatures and Ahli Waris documents.
+Map<String,dynamic> cikokoGenericUploadResponse(int status,String body){
+  dynamic parsed;
+  try{parsed=jsonDecode(body);}
+  on FormatException{
+    throw ApiError('Layanan unggah belum dapat diproses. Silakan coba kembali.',statusCode:status);
+  }
+  if(parsed is! Map<String,dynamic>||status>=400||parsed['ok']!=true){
+    final msg=parsed is Map?'${parsed['error']??'Unggah belum berhasil.'}':'Unggah belum berhasil.';
+    throw ApiError(cikokoFormalMessage(msg),statusCode:status);
+  }
+  return parsed;
+}
 class CikokoApi {
   static const root = 'https://datawebs.my.id/mobile-api/index.php';
   final _storage = const FlutterSecureStorage();
@@ -188,7 +202,7 @@ class CikokoApi {
         final response=await pending;
         final str=await response.stream.bytesToString();
         if(response.statusCode==401&&token==uploadToken)await expireSession();
-        final data=cikokoReportUploadResponse(response.statusCode,str);
+        final data=action=='report' ? cikokoReportUploadResponse(response.statusCode,str) : cikokoGenericUploadResponse(response.statusCode,str);
         uploadSuccess=true;
         progress?.call(1);
         return data;
