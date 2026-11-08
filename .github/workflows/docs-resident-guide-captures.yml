@@ -1,0 +1,34 @@
+name: Documentation - Resident Guide Actual Widget Captures
+on:
+  push:
+    branches: [docs/resident-guide-20261108]
+permissions:
+  contents: read
+jobs:
+  screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Use real Roboto fonts and install dependencies
+        working-directory: flutter
+        run: |
+          mkdir -p test_assets
+          cp "$FLUTTER_ROOT/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf" test_assets/
+          cp "$FLUTTER_ROOT/bin/cache/artifacts/material_fonts/Roboto-Bold.ttf" test_assets/ || true
+          flutter pub get
+      - name: Render actual application widgets with illustrative data
+        working-directory: flutter
+        run: flutter test test_docs/resident_screens.dart --update-goldens
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resident-guide-actual-screens
+          path: flutter/test_docs/screens/*.png
+          if-no-files-found: error
+          retention-days: 7
