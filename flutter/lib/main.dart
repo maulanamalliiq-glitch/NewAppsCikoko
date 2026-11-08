@@ -2,6 +2,7 @@ import 'event_scope.dart';
 import 'app_settings.dart';
 import 'design_system.dart';
 import 'premium_ui.dart';
+import 'bottom_navigation_catalog.dart';
 import 'premium_flow_ui.dart';
 import 'profile_editor.dart';
 import 'dart:async';
@@ -354,28 +355,10 @@ class _HomeState extends State<HomePage> {
     if(guest&&_needsLogin(s)){openLogin();return;}
     setState(() {
       section=s;
-      if (s == 'Dashboard') {
-        nav = 0;
-      } else if (s == 'Layanan Online') {
-        nav = 1;
-      } else if (s == 'Notifikasi') {
-        nav = 3;
-      } else if (s == 'Profil') {
-        nav = 4;
-      } else {
-        nav = 2;
-      }
+      nav = cikokoBottomIndexForRoute(s, nav);
     });
   }
-  void selectNav(int value) {
-    switch (value) {
-      case 0: switchTo('Dashboard'); return;
-      case 1: switchTo('Layanan Online'); return;
-      case 2: switchTo('Menu Cikoko'); return;
-      case 3: switchTo('Notifikasi'); return;
-      case 4: switchTo('Profil'); return;
-    }
-  }
+  void selectNav(int value) => switchTo(cikokoBottomRoute(value));
   IconData iconFor(String s)=>switch(s){
     'Dashboard'=>Icons.home_outlined,'Menu Cikoko'=>Icons.grid_view_rounded,
     'Berita & Kegiatan'=>Icons.newspaper_outlined,'Pengumuman'=>Icons.campaign_outlined,
@@ -480,11 +463,9 @@ class _HomeState extends State<HomePage> {
           selectedIcon: const CikokoMenuOrb(selected: true),
           label: CikokoSettings.tr('Menu', 'Menu')),
         NavigationDestination(
-          icon: Badge(isLabelVisible: unreadCount > 0,
-            label: Text('$unreadCount'),
-            child: const Icon(Icons.notifications_none_rounded)),
-          selectedIcon: const Icon(Icons.notifications_rounded),
-          label: CikokoSettings.tr('Notifikasi', 'Notifications')),
+          icon: const Icon(Icons.auto_awesome_outlined),
+          selectedIcon: const Icon(Icons.auto_awesome_rounded),
+          label: CikokoSettings.tr('Inovasi', 'Innovation')),
         NavigationDestination(
           icon: const Icon(Icons.person_outline_rounded),
           selectedIcon: const Icon(Icons.person_rounded),
