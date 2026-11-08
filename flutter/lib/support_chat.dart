@@ -4,6 +4,17 @@ import 'api.dart';
 import 'premium_ui.dart';
 import 'chat_receipt_indicator.dart';
 
+// Older PHP hosts may emit [] for empty receipt_updates, while the canonical
+// JSON response is {}. Tolerate both without hiding the entire conversation.
+List<Map<String,dynamic>> cikokoChatMessageRows(dynamic raw){
+  if(raw is! List)return <Map<String,dynamic>>[];
+  return raw.whereType<Map>().map((row)=>Map<String,dynamic>.from(row)).toList();
+}
+Map<String,dynamic> cikokoChatReceiptUpdates(dynamic raw){
+  if(raw is! Map)return <String,dynamic>{};
+  return Map<String,dynamic>.from(raw);
+}
+
 class SupportChatPage extends StatefulWidget {
   final CikokoApi api;
   final String? residentId;
@@ -74,9 +85,8 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
       };
       final result=await widget.api.callWithParams(admin?'support_admin_thread':'chat',query);
       if(!mounted)return;
-      final received=List<Map<String,dynamic>>.from(
-        (result['messages'] as List? ?? const []).map((e)=>Map<String,dynamic>.from(e as Map)));
-      final updates=Map<String,dynamic>.from(result['receipt_updates'] as Map? ?? {});
+      final received=cikokoChatMessageRows(result['messages']);
+      final updates=cikokoChatReceiptUpdates(result['receipt_updates']);
       final wasEmpty=messages.isEmpty;
       final shouldScroll=!older&&(wasEmpty||
         (scroll.hasClients && scroll.position.pixels>=scroll.position.maxScrollExtent-90));
