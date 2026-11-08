@@ -30,6 +30,24 @@ void main(){
       expect(find.byTooltip(item.$3),findsOneWidget);
     });
   }
+  testWidgets('Outgoing message is visible even while initial history request is pending',(tester)async{
+    final pendingGet=Completer<http.Response>();
+    final pendingPost=Completer<http.Response>();
+    final api=CikokoApi()..token='valid-session';
+    await http.runWithClient(()async{
+      await tester.pumpWidget(MaterialApp(home:Scaffold(body:SupportChatPage(api:api))));
+      await tester.pump();
+      await tester.enterText(find.byType(TextField),'Pesan saat jaringan lambat');
+      await tester.tap(find.byTooltip('Kirim Pesan'));
+      await tester.pump();
+      expect(find.text('Pesan saat jaringan lambat'),findsOneWidget);
+      expect(find.byTooltip('Sedang mengirim'),findsOneWidget);
+      pendingGet.complete(http.Response('{"ok":true,"messages":[],"receipt_updates":{}}',200));
+      pendingPost.complete(http.Response('{"ok":true,"id":11,"sender":"warga"}',200));
+      await tester.pump();
+      await tester.pump(const Duration(seconds:1));
+    },()=>MockClient((request)=>request.method=='POST'?pendingPost.future:pendingGet.future));
+  });
   testWidgets('New outgoing chat is immediately visible during network delay',(tester)async{
     final pending=Completer<http.Response>();
     final api=CikokoApi()..token='valid-session';
