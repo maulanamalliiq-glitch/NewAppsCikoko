@@ -2,6 +2,7 @@ import 'event_scope.dart';
 import 'app_settings.dart';
 import 'design_system.dart';
 import 'premium_ui.dart';
+import 'bottom_navigation_catalog.dart';
 import 'premium_flow_ui.dart';
 import 'profile_editor.dart';
 import 'dart:async';
@@ -271,6 +272,8 @@ class _HomeState extends State<HomePage> {
   String menuQuery='';
   int nav=0;
   List<dynamic> items=[],events=[];
+  String? notificationSyncError;
+  bool notificationSyncLoading=true;
   List<Map<String,dynamic>> activeServices=cikokoDefaultIntegratedServices();
   int get unreadCount=>events.where((e)=>e['is_read']!=true && '${e['is_read']??0}'!='1').length;
   Map<String,int>? letterCounts;
@@ -294,8 +297,23 @@ class _HomeState extends State<HomePage> {
     });timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());}}
   @override void dispose(){CikokoSettings.language.removeListener(_refreshSettings);timer?.cancel();push?.dispose();super.dispose();}
   Future<void> refresh() async {
-    try {if(api.token==null)return;final v=await api.call('events');final incoming=cikokoEventsForAccount(List<dynamic>.from(v['events']??[]),api.profile?['id']);await push?.onEvents(incoming);if(mounted)setState(()=>events=incoming);}
-    catch(_) {}
+    if(api.token==null)return;
+    try {
+      final response=await api.call('events');
+      final incoming=cikokoEventsForAccount(
+        List<dynamic>.from(response['events']??[]),api.profile?['id']);
+      await push?.onEvents(incoming);
+      if(mounted)setState(() {
+        events=incoming;
+        notificationSyncError=null;
+        notificationSyncLoading=false;
+      });
+    } catch (_) {
+      if(mounted)setState(() {
+        notificationSyncLoading=false;
+        notificationSyncError='Notifikasi belum dapat disinkronkan dari server.';
+      });
+    }
   }
   Future<void> load() async {
     if(mounted)setState(()=>loading=true);
@@ -354,28 +372,10 @@ class _HomeState extends State<HomePage> {
     if(guest&&_needsLogin(s)){openLogin();return;}
     setState(() {
       section=s;
-      if (s == 'Dashboard') {
-        nav = 0;
-      } else if (s == 'Layanan Online') {
-        nav = 1;
-      } else if (s == 'Notifikasi') {
-        nav = 3;
-      } else if (s == 'Profil') {
-        nav = 4;
-      } else {
-        nav = 2;
-      }
+      nav = cikokoBottomIndexForRoute(s, nav);
     });
   }
-  void selectNav(int value) {
-    switch (value) {
-      case 0: switchTo('Dashboard'); return;
-      case 1: switchTo('Layanan Online'); return;
-      case 2: switchTo('Menu Cikoko'); return;
-      case 3: switchTo('Notifikasi'); return;
-      case 4: switchTo('Profil'); return;
-    }
-  }
+  void selectNav(int value) => switchTo(cikokoBottomRoute(value));
   IconData iconFor(String s)=>switch(s){
     'Dashboard'=>Icons.home_outlined,'Menu Cikoko'=>Icons.grid_view_rounded,
     'Berita & Kegiatan'=>Icons.newspaper_outlined,'Pengumuman'=>Icons.campaign_outlined,
@@ -480,11 +480,9 @@ class _HomeState extends State<HomePage> {
           selectedIcon: const CikokoMenuOrb(selected: true),
           label: CikokoSettings.tr('Menu', 'Menu')),
         NavigationDestination(
-          icon: Badge(isLabelVisible: unreadCount > 0,
-            label: Text('$unreadCount'),
-            child: const Icon(Icons.notifications_none_rounded)),
-          selectedIcon: const Icon(Icons.notifications_rounded),
-          label: CikokoSettings.tr('Notifikasi', 'Notifications')),
+          icon: const Icon(Icons.auto_awesome_outlined),
+          selectedIcon: const Icon(Icons.auto_awesome_rounded),
+          label: CikokoSettings.tr('Inovasi', 'Innovation')),
         NavigationDestination(
           icon: const Icon(Icons.person_outline_rounded),
           selectedIcon: const Icon(Icons.person_rounded),
@@ -926,6 +924,9 @@ class _HomeState extends State<HomePage> {
         // by cikokoEventsForAccount() in refresh().
         events: events.whereType<Map>()
           .map((event) => Map<String, dynamic>.from(event)).toList(),
+        loadError:notificationSyncError,
+        loading:notificationSyncLoading,
+        onRetry:()=>refresh(),
         onOpen: (event) { openNotification(event); },
       );
  Widget profilePage()=>guest?Center(child:Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.person_outline,size:42,color:blue),const Text('Silakan masuk untuk mengelola profil.'),FilledButton(onPressed:openLogin,child:const Text('Masuk'))])))):CikokoProfileEditor(api:api);
@@ -1514,7 +1515,7 @@ class _HistoryState extends State<HistoryPage>{Future<Map<String,dynamic>>? futu
          reload();return;
         }
         showCikokoDocument(context,api,id:id??0,reference:ref??'',
-         kind:cikokoDocumentKind(row),onChanged:reload);
+         preview:row,kind:cikokoDocumentKind(row),onChanged:reload);
        },
       ),
      const CikokoPageSignature(),
@@ -1792,7 +1793,8 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
         load();return;
        }
        showCikokoDocument(context,api,id:id??0,
-        reference:ref??'',kind:cikokoDocumentKind(row),onChanged:load);
+        reference:ref??'',preview:row,
+        kind:cikokoDocumentKind(row),onChanged:load);
       },
       footer:Align(
        alignment:Alignment.centerRight,

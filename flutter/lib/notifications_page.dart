@@ -17,10 +17,16 @@ bool cikokoNotificationIsRequest(Map<String, dynamic> event) {
 class CikokoNotificationsPage extends StatefulWidget {
   final List<Map<String, dynamic>> events;
   final ValueChanged<Map<String, dynamic>> onOpen;
+  final String? loadError;
+  final bool loading;
+  final VoidCallback? onRetry;
   const CikokoNotificationsPage({
     super.key,
     required this.events,
     required this.onOpen,
+    this.loadError,
+    this.loading=false,
+    this.onRetry,
   });
 
   @override
@@ -51,14 +57,42 @@ class _CikokoNotificationsPageState extends State<CikokoNotificationsPage> {
       children: [
         CikokoPremiumHeader(
           title: 'Notifikasi',
-          subtitle: unread == 0
-            ? 'Tidak ada notifikasi baru saat ini.'
-            : '$unread notifikasi belum dibaca.',
+          subtitle: widget.loadError!=null
+            ? 'Sinkronisasi notifikasi belum berhasil.'
+            : widget.loading ? 'Memuat notifikasi akun...'
+            : unread == 0
+              ? 'Tidak ada notifikasi baru saat ini.'
+              : '$unread notifikasi belum dibaca.',
           icon: Icons.notifications_active_outlined,
           start: const Color(0xFF07346E),
           end: const Color(0xFF267FDF),
         ),
         const SizedBox(height: 13),
+        if(widget.loadError!=null)...[
+          Card(
+            child:Padding(
+              padding:const EdgeInsets.all(15),
+              child:Column(children:[
+                Icon(Icons.cloud_off_rounded,
+                  color:scheme.primary,size:30),
+                const SizedBox(height:7),
+                Text(widget.loadError!,
+                  style:TextStyle(color:scheme.onSurface,fontSize:12.5),
+                  textAlign:TextAlign.center),
+                const SizedBox(height:10),
+                FilledButton.icon(
+                  key:const Key('notification_retry'),
+                  onPressed:widget.onRetry,
+                  icon:const Icon(Icons.refresh_rounded),
+                  label:const Text('Coba Sinkronkan Lagi')),
+              ]),
+            ),
+          ),
+          const SizedBox(height:12),
+        ],
+        if(widget.loading)
+          const Padding(padding:EdgeInsets.symmetric(vertical:8),
+            child:LinearProgressIndicator()),
         Wrap(spacing: 8, runSpacing: 7, children: [
           ChoiceChip(
             key: const Key('notification_all'),
@@ -80,7 +114,7 @@ class _CikokoNotificationsPageState extends State<CikokoNotificationsPage> {
           ),
         ]),
         const SizedBox(height: 13),
-        if (visible.isEmpty)
+        if (visible.isEmpty && !widget.loading && widget.loadError==null)
           Card(child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 30),
             child: Column(children: [

@@ -41,7 +41,10 @@ class CikokoRequestProgress {
 }
 class ApiError implements Exception {
   final String message;
-  ApiError(this.message);
+  /// HTTP status only. This is safe to show; server stack traces and SQL
+  /// details must never be surfaced to the app UI.
+  final int? statusCode;
+  ApiError(this.message, {this.statusCode});
   @override String toString() => cikokoFormalMessage(message);
 }
 class CikokoApi {
@@ -58,9 +61,24 @@ class CikokoApi {
       final headers={'Accept':'application/json','Content-Type':'application/json'};
       if(token!=null)headers['Authorization']='Bearer $token';
       final http.Response r= body==null ? await http.get(u,headers:headers).timeout(const Duration(seconds:25)) : await http.post(u, headers:headers,body:jsonEncode(body)).timeout(const Duration(seconds:40));
-      final d=jsonDecode(utf8.decode(r.bodyBytes));
-      if(d is! Map<String,dynamic>)throw ApiError('Balasan server tidak valid');
-      if(r.statusCode>=400 || d['ok']==false){final msg='${d['error']??'Layanan belum tersedia.'}';throw ApiError(RegExp(r'SQLSTATE|database|INSERT INTO|PDO|Fatal error',caseSensitive:false).hasMatch(msg)?'Layanan Cikoko sedang mengalami kendala. Silakan mencoba kembali.':msg);}
+      dynamic d;
+      try {
+        d = jsonDecode(utf8.decode(r.bodyBytes));
+      } on FormatException {
+        throw ApiError('Balasan server tidak valid.',statusCode:r.statusCode);
+      }
+      if(d is! Map<String,dynamic>) {
+        throw ApiError('Balasan server tidak valid.',statusCode:r.statusCode);
+      }
+      if(r.statusCode>=400 || d['ok']==false){
+        final msg='${d['error']??'Layanan belum tersedia.'}';
+        throw ApiError(
+          RegExp(r'SQLSTATE|database|INSERT INTO|PDO|Fatal error',caseSensitive:false).hasMatch(msg)
+            ?'Layanan Cikoko sedang mengalami kendala. Silakan mencoba kembali.'
+            :msg,
+          statusCode:r.statusCode,
+        );
+      }
       successful=true;
       return d;
     } on SocketException {throw ApiError('Tidak ada koneksi internet');}
