@@ -2,6 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:cikoko/api.dart';
 
 void main(){
+  test('Existing non-report photo and document uploads do not require an ID',(){
+    final slide=cikokoGenericUploadResponse(200,'{"ok":true,"name":"photo.jpg"}');
+    expect(slide['name'],'photo.jpg');
+    final waris=cikokoGenericUploadResponse(200,'{"ok":true,"reference":"AW-123"}');
+    expect(waris['reference'],'AW-123');
+    expect(()=>cikokoGenericUploadResponse(500,'<html>Failure</html>'),throwsA(isA<ApiError>()));
+  });
   group('Cikoko photo report upload 2546',(){
     test('real JSON confirmed database ID is the only success',(){
       final r=cikokoReportUploadResponse(200,'{"ok":true,"id":320,"stored":true}');
