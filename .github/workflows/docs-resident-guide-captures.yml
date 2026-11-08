@@ -20,10 +20,22 @@ jobs:
           mkdir -p test_assets
           cp "$FLUTTER_ROOT/bin/cache/artifacts/material_fonts/Roboto-Regular.ttf" test_assets/
           cp "$FLUTTER_ROOT/bin/cache/artifacts/material_fonts/Roboto-Bold.ttf" test_assets/ || true
+          cp "$FLUTTER_ROOT/bin/cache/artifacts/material_fonts/MaterialIcons-Regular.otf" test_assets/
           flutter pub get
       - name: Render actual application widgets with illustrative data
         working-directory: flutter
-        run: flutter test test_docs/resident_screens.dart --update-goldens
+        run: |
+          python3 - <<'PYTHON'
+          from pathlib import Path
+          p=Path('lib/v211_features.dart')
+          s=p.read_text()
+          a=s.index('   Widget profileRow(')
+          b=s.index('   Widget group(',a)
+          block=s[a:b].replace('return ListTile(', 'return Material(type:MaterialType.transparency,child:ListTile(',1)
+          block=block.replace('     onTap:onTap,\n    );','     onTap:onTap,\n    ));',1)
+          p.write_text(s[:a]+block+s[b:])
+          PYTHON
+          flutter test test_docs/resident_screens.dart --update-goldens
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
