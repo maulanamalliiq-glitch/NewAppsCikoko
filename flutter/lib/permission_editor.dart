@@ -55,10 +55,10 @@ class _RolePermissionPageState extends State<RolePermissionPage> {
  Future<void> change(String key,bool enable)async {
   if(busy)return;setState(()=>busy=true);
   try{await widget.api.call('role_permissions',body:{'role':role,'capability':key,'allowed':enable});await load();}
-  catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Gagal menyimpan hak akses: $e')));}
+  catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(cikokoFormalMessage('Gagal menyimpan hak akses: $e'))));}
   finally{if(mounted)setState(()=>busy=false);}
  }
- @override Widget build(BuildContext c){if(error!=null)return Center(child:Text('Gagal memuat hak akses: $error'));if(data==null)return const Center(child:CircularProgressIndicator());
+ @override Widget build(BuildContext c){if(error!=null)return Center(child:Text(cikokoFormalMessage('Gagal memuat hak akses: $error')));if(data==null)return const Center(child:CircularProgressIndicator());
   final roles=Map<String,dynamic>.from(data!['roles'] as Map);
   final keys=(data!['keys'] as List<dynamic>).cast<String>().where((e)=>e!='role:manage').toList();
   return ListView(padding:const EdgeInsets.all(14),children:[

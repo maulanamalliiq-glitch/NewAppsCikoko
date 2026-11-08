@@ -133,7 +133,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal membuat akun: $e')));
+          SnackBar(content: Text(cikokoFormalMessage('Gagal membuat akun: $e'))));
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -183,7 +183,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
         await load();
       } catch (e) {
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menghapus akun: $e')));
+          SnackBar(content: Text(cikokoFormalMessage('Gagal menghapus akun: $e'))));
       } finally {
         if (mounted) setState(() => busy = false);
       }
@@ -222,7 +222,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
       return Center(child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('Gagal membuka Kelola Akun: $error', textAlign: TextAlign.center),
+          Text(cikokoFormalMessage('Gagal membuka Kelola Akun: $error'), textAlign: TextAlign.center),
           const SizedBox(height: 12),
           FilledButton.icon(
             onPressed: load,
