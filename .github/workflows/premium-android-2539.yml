@@ -1,18 +1,18 @@
-name: Cikoko Premium - Android Release Candidate QA Only
+name: Cikoko Premium - Android ARM64 QA 2546 (main)
 on:
   push:
     branches:
       - main
     paths:
       - 'flutter/**'
-      - '.github/workflows/premium-android-2540.yml'
+      - '.github/workflows/premium-android-2539.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: premium-android-2540-${{ github.ref }}
+  group: premium-android-2546-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -37,9 +37,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -q '^version: 2.5.40+2540$' flutter/pubspec.yaml
-          grep -q 'versionCode = 2540' flutter/android/app/build.gradle.kts
-          grep -q 'versionName = "2.5.40"' flutter/android/app/build.gradle.kts
+          grep -q '^version: 2.5.46+2546$' flutter/pubspec.yaml
+          grep -q 'versionCode = 2546' flutter/android/app/build.gradle.kts
+          grep -q 'versionName = "2.5.46"' flutter/android/app/build.gradle.kts
           grep -q 'applicationId = "com.KelurahanCikoko.malik"' flutter/android/app/build.gradle.kts
       - name: Install, analyze and test
         working-directory: flutter
@@ -92,7 +92,7 @@ jobs:
           apk=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           test -s "$apk"
           mkdir -p ../premium-outputs
-          output="../premium-outputs/Cikoko-Premium-2540-RELEASE-arm64.apk"
+          output="../premium-outputs/Cikoko-Premium-2546-RELEASE-arm64.apk"
           apksigner="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
           "$apksigner" sign \
             --ks "$CIKOKO_KEYSTORE_PATH" \
@@ -109,7 +109,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cikoko-apk-qa-2540-${{ github.run_number }}
+          name: cikoko-apk-qa-2546-${{ github.run_number }}
           path: premium-outputs/*
           if-no-files-found: warn
           retention-days: 14
