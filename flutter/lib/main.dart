@@ -299,8 +299,22 @@ class _HomeState extends State<HomePage> with WidgetsBindingObserver {
       });
     });startEventPolling();}}
   void startEventPolling(){timer?.cancel();if(api.token!=null)timer=AdaptivePoller(()async{final before=events.map((e)=>'${e['id']}:${e['is_read']}').join(',');await refresh();if(notificationSyncError!=null)throw StateError('offline');return before!=events.map((e)=>'${e['id']}:${e['is_read']}').join(',');})..start(immediate:false);}
+  void syncStaffChatPresence(bool online){
+    if(api.token==null ||
+      !const ['admin','admin_kelurahan','asn'].contains(role))return;
+    // Backend uses a 90-second TTL if Android suspends the offline request.
+    api.call('chat_presence',body:{'online':online})
+      .then((_){}).catchError((_){});
+  }
   @override void didChangeAppLifecycleState(AppLifecycleState state){
-    if(state==AppLifecycleState.resumed){startEventPolling();refresh();}else{timer?.cancel();}
+    if(state==AppLifecycleState.resumed){
+      startEventPolling();refresh();syncStaffChatPresence(true);
+    }else{
+      timer?.cancel();
+      if(state==AppLifecycleState.paused||
+         state==AppLifecycleState.hidden||
+         state==AppLifecycleState.detached)syncStaffChatPresence(false);
+    }
   }
   @override void dispose(){WidgetsBinding.instance.removeObserver(this);CikokoSettings.language.removeListener(_refreshSettings);timer?.cancel();push?.dispose();super.dispose();}
   Future<void>? eventRefresh;
@@ -339,7 +353,9 @@ class _HomeState extends State<HomePage> with WidgetsBindingObserver {
       if(api.token==null){if(mounted)setState(()=>permissionsOk=true);}else{
       final permissionResult=await api.call('permissions');
       final raw=Map<String,dynamic>.from(permissionResult['capabilities'] as Map);
-      if(mounted)setState((){capabilities=raw.map((key,value)=>MapEntry(key,value==true));permissionsOk=true;});}
+      if(mounted)setState((){capabilities=raw.map((key,value)=>MapEntry(key,value==true));permissionsOk=true;});
+       if(capabilities['chat:reply']==true)syncStaffChatPresence(true);
+       }
     } catch(e){if(mounted){setState(()=>permissionsOk=false);notify(context,'Hak akses belum tersambung: $e',error:true);}}
     try {
       await refresh();
