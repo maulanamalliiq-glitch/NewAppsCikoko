@@ -90,7 +90,7 @@ void main() {
     expect(cikokoDocumentFailure(ApiError('Not found',statusCode:404)),
       contains('tidak ditemukan'));
     expect(cikokoDocumentFailure(ApiError(
-      'SQLSTATE[HY000] invalid column',statusCode:503)),contains('HTTP 503'));
+      'SQLSTATE[HY000] invalid column',statusCode:503)),contains('Silakan coba kembali'));
     expect(cikokoDocumentFailure(ApiError(
       'SQLSTATE[HY000] invalid column',statusCode:503)),
       isNot(contains('SQLSTATE')));
@@ -102,12 +102,12 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home:Scaffold(body:CikokoNotificationsPage(
         events:const [],
-        loadError:'Notifikasi belum dapat disinkronkan dari server.',
+        loadError:'Notifikasi belum dapat dimuat. Silakan coba kembali.',
         onRetry:()=>retries++,
         onOpen:(_){},
       )),
     ));
-    expect(find.textContaining('belum dapat disinkronkan'),findsOneWidget);
+    expect(find.textContaining('belum dapat dimuat. Silakan'),findsOneWidget);
     expect(find.text('Belum ada notifikasi untuk akun ini.'),findsNothing);
     await tester.tap(find.byKey(const Key('notification_retry')));
     expect(retries,1);

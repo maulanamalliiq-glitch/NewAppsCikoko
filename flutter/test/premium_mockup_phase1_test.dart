@@ -25,9 +25,9 @@ void main() {
       ),
     ));
     expect(find.text('Cikoko SmartAPP'), findsOneWidget);
-    expect(find.text('Premium'), findsOneWidget);
+    expect(find.text('Premium'), findsNothing);
     expect(find.text('AP'), findsOneWidget);
-    expect(find.text('Hai, Andi Pratama'), findsOneWidget);
+    expect(find.text('Selamat datang, Andi Pratama'), findsOneWidget);
     expect(find.text('Admin Utama'), findsOneWidget);
     expect(tester.takeException(), isNull);
     await tester.binding.setSurfaceSize(null);

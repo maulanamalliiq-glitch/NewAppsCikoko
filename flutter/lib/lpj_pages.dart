@@ -87,7 +87,7 @@ class _LpjPageState extends State<LpjPage> {
  }
  bool get canCreate=>scope?['duty']==lpjDuties[widget.kind];
  String get region {
-  if(scope==null)return 'Jabatan LPJ belum terdaftar di server';
+  if(scope==null)return 'Jabatan pengelola LPJ belum terdaftar';
   if(scope?['duty']=='admin')return 'Pemantauan semua wilayah RT/RW • Admin Utama';
   final rw=(scope?['rw']??'-').toString();
   final rt=(scope?['rt']??'').toString();
@@ -192,7 +192,7 @@ class _LpjPageState extends State<LpjPage> {
   }catch(e){showError(e.toString());}
   finally{if(mounted)setState(()=>sending=false);}
  }
- void showError(String message){if(!mounted)return;ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(message),backgroundColor:Colors.red.shade700));}
+ void showError(String message){if(!mounted)return;ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(cikokoFormalMessage(message)),backgroundColor:Colors.red.shade700));}
  Widget moneyInput(String label,TextEditingController controller)=>Padding(padding:const EdgeInsets.only(bottom:12),child:TextField(
   controller:controller,keyboardType:TextInputType.number,
   inputFormatters:[FilteringTextInputFormatter.digitsOnly],
@@ -266,8 +266,8 @@ class _LpjPageState extends State<LpjPage> {
   if(loading)return const Center(child:CircularProgressIndicator());
   if(error!=null)return Center(child:Padding(padding:const EdgeInsets.all(22),child:Column(mainAxisSize:MainAxisSize.min,children:[
    const Icon(Icons.warning_amber_outlined,size:42,color:Colors.orange),
-   const SizedBox(height:12),Text('Layanan LPJ belum tersambung:\n'+error!,textAlign:TextAlign.center),
-   const SizedBox(height:15),FilledButton(onPressed:reload,child:const Text('Coba lagi')),
+   const SizedBox(height:12),Text(cikokoFormalMessage(error),textAlign:TextAlign.center),
+   const SizedBox(height:15),FilledButton(onPressed:reload,child:const Text('Coba Kembali')),
   ])));
   if(creating)return form();
   return RefreshIndicator(onRefresh:reload,child:ListView(padding:const EdgeInsets.all(14),children:[
@@ -337,7 +337,7 @@ class _LpjDetailPageState extends State<LpjDetailPage>{
   final ok=await showDialog<bool>(context:context,builder:(ctx)=>AlertDialog(
    title:const Text('Atur PIN persetujuan LPJ'),
    content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
-    const Text('PIN 6 angka disimpan sebagai hash di server. Konfirmasi password akun untuk mengaktifkan atau mengganti PIN.'),
+    const Text('Gunakan PIN yang terdiri atas 6 angka. Konfirmasikan kata sandi akun untuk mengaktifkan atau mengganti PIN.'),
     const SizedBox(height:12),
     TextField(controller:password,obscureText:true,decoration:const InputDecoration(labelText:'Password akun')),
     TextField(controller:pin,obscureText:true,keyboardType:TextInputType.number,maxLength:6,inputFormatters:[FilteringTextInputFormatter.digitsOnly],decoration:const InputDecoration(labelText:'PIN baru (6 angka)')),
@@ -380,7 +380,7 @@ class _LpjDetailPageState extends State<LpjDetailPage>{
   }catch(e){showMessage(e.toString());}
   finally{if(mounted)setState(()=>busy=false);}
  }
- void showMessage(String message){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(message)));}
+ void showMessage(String message){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(cikokoFormalMessage(message))));}
  Future<void> printPdf()async{
   setState(()=>busy=true);
   try{
@@ -395,7 +395,7 @@ class _LpjDetailPageState extends State<LpjDetailPage>{
   final payload=doc?['payload'] is Map?Map<String,dynamic>.from(doc!['payload'] as Map):<String,dynamic>{};
   final approvals=doc?['approvals'] is List?List<dynamic>.from(doc!['approvals'] as List):<dynamic>[];
   final canReview=expectedSigner.isNotEmpty&&scope?['duty']==expectedSigner;
-  return Scaffold(appBar:AppBar(title:const Text('Detail LPJ')),body:loading?const Center(child:CircularProgressIndicator()):error!=null?Center(child:Text(error!)):ListView(padding:const EdgeInsets.all(16),children:[
+  return Scaffold(appBar:AppBar(title:const Text('Detail LPJ')),body:loading?const Center(child:CircularProgressIndicator()):error!=null?Center(child:Text(cikokoFormalMessage(error))):ListView(padding:const EdgeInsets.all(16),children:[
    CikokoPremiumHeader(title:lpjLabels[widget.kind]??'Laporan LPJ',
      subtitle:'Rincian laporan dan riwayat persetujuan wilayah',
      icon:Icons.account_balance_wallet_outlined),

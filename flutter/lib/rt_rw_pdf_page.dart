@@ -40,7 +40,7 @@ class _RtRwPdfPageState extends State<RtRwPdfPage> {
       final output=File('${directory.path}/$fileName');
       await output.writeAsBytes(bytes,flush:true);
       if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content:Text('PDF disimpan: ${output.path}')));
+        SnackBar(content:const Text('Dokumen PDF berhasil disimpan.')));
     }catch(_) {
       if(!context.mounted)return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

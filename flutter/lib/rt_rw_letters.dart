@@ -83,7 +83,7 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
   void refresh() { requests = widget.api.call('rt_rw_list'); }
   void flash(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(cikokoFormalMessage(message))));
   }
   String statusLabel(String status) {
     const labels = {
@@ -343,7 +343,7 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
           }
           if (result.hasError) {
             return TextButton.icon(onPressed: () => setState(refresh),
-              icon: const Icon(Icons.refresh), label: Text('Gagal memuat: ${result.error}. Coba lagi'));
+              icon: const Icon(Icons.refresh), label: const Text('Data belum dapat dimuat. Coba Kembali'));
           }
           final rows = List<Map<String, dynamic>>.from(
             (result.data?['items'] as List<dynamic>? ?? []).map((e) => Map<String, dynamic>.from(e as Map)));
@@ -408,7 +408,7 @@ class _RtRwLettersState extends State<RtRwLettersPage> {
                              final output=File('${directory.path}/$name');
                              await output.writeAsBytes(response.bodyBytes,flush:true);
                              if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(
-                               SnackBar(content:Text('PDF disimpan: ${output.path}')));
+                               SnackBar(content:const Text('Dokumen PDF berhasil disimpan.')));
                            }catch(_){
                              await Printing.sharePdf(bytes:response.bodyBytes,filename:name);
                            }
@@ -474,7 +474,7 @@ class _RtRwOfficerManagerState extends State<RtRwOfficerManager> {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Wilayah Ketua RT/RW tersimpan.')));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(cikokoFormalMessage(e))));
     } finally { rt.dispose(); rw.dispose(); }
   }
   @override Widget build(BuildContext context) => FutureBuilder<Map<String, dynamic>>(

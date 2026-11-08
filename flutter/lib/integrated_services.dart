@@ -50,7 +50,7 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
       if(mounted)setState((){
         entries=cikokoDefaultIntegratedServices();
         notice=widget.admin
-          ?'Pengaturan layanan belum terhubung ke server. Perubahan belum dapat disimpan.'
+          ?'Pengaturan layanan belum dapat dimuat. Perubahan belum dapat disimpan.'
           :'Daftar layanan dasar ditampilkan. Beberapa tautan dapat diperbarui oleh pengelola.';
       });
     }finally{if(mounted)setState(()=>loading=false);}
@@ -95,7 +95,7 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
       _message('Koneksi terputus saat mengunggah logo. Coba kembali.');
       return null;
     }on FormatException{
-      _message('Server mengirim balasan tidak valid. Periksa versi API pada hosting.');
+      _message('Logo belum dapat disimpan. Silakan coba kembali atau hubungi petugas.');
       return null;
     }catch(e){
       _message('Unggah logo gagal: ${cikokoFormalMessage(e)}');
@@ -134,8 +134,8 @@ class _CikokoIntegratedServicesState extends State<CikokoIntegratedServices> {
             child:Image.network(logo.text,height:64,width:64,fit:BoxFit.contain,
               errorBuilder:(_,__,___)=>const Icon(Icons.image_not_supported_outlined)),
           ),
-          TextFormField(controller:link,decoration:const InputDecoration(labelText:'Link Lihat Selengkapnya (HTTPS)'),keyboardType:TextInputType.url,
-              validator:(v){final x=(v??'').trim();return x.isNotEmpty&&(Uri.tryParse(x)?.scheme!='https')?'Gunakan alamat HTTPS':null;}),
+          TextFormField(controller:link,decoration:const InputDecoration(labelText:'Link Lihat Selengkapnya'),keyboardType:TextInputType.url,
+              validator:(v){final x=(v??'').trim();return x.isNotEmpty&&(Uri.tryParse(x)?.scheme!='https')?'Gunakan tautan yang aman (diawali https://)':null;}),
           SwitchListTile(contentPadding:EdgeInsets.zero,title:const Text('Tampilkan kepada warga'),value:active,onChanged:(v)=>change(()=>active=v)),
         ]))),
         actions:[

@@ -76,7 +76,7 @@ void main() {
       fail('An incomplete response must fail closed');
     }on ApiError catch (error) {
       expect(error.statusCode,502);
-      expect(cikokoDocumentFailure(error),contains('HTTP 502'));
+      expect(cikokoDocumentFailure(error),contains('Silakan coba kembali'));
       expect(cikokoDocumentFailure(error),isNot(contains('SQLSTATE')));
     }
   });

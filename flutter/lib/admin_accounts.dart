@@ -273,7 +273,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
             if (showForm && roles.isEmpty)
               const Padding(
                 padding: EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: Text('Peran akun belum tersedia dari server. '
+                child: Text('Pilihan jabatan belum tersedia. '
                   'Silakan muat ulang sebelum membuat akun.'),
               ),
             if (showForm && roles.isNotEmpty)
@@ -283,8 +283,8 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     field(name, 'Nama lengkap'),
-                    field(username, 'Username', hint: 'Minimal 4 karakter'),
-                    field(password, 'Password awal',
+                    field(username, 'Nama Pengguna', hint: 'Minimal 4 karakter'),
+                    field(password, 'Kata Sandi Awal',
                       secret: true, hint: 'Minimal 8 karakter'),
                     DropdownButtonFormField<String>(
                       key: ValueKey('new_account_role_$selectedRole'),
@@ -414,7 +414,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage> {
           ),
         const SizedBox(height: 12),
         Text(
-          'Pengubahan data akun hanya tersedia apabila didukung API dan izin server.',
+          'Perubahan data akun dilakukan sesuai kewenangan pengelola.',
           style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 11),
         ),
         const SizedBox(height: 18),

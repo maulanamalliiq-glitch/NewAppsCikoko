@@ -1,3 +1,4 @@
+import 'api.dart';
 import 'package:flutter/material.dart';
 import 'premium_ui.dart';
 
@@ -58,7 +59,7 @@ class _CikokoNotificationsPageState extends State<CikokoNotificationsPage> {
         CikokoPremiumHeader(
           title: 'Notifikasi',
           subtitle: widget.loadError!=null
-            ? 'Sinkronisasi notifikasi belum berhasil.'
+            ? 'Notifikasi belum dapat dimuat.'
             : widget.loading ? 'Memuat notifikasi akun...'
             : unread == 0
               ? 'Tidak ada notifikasi baru saat ini.'
@@ -76,7 +77,7 @@ class _CikokoNotificationsPageState extends State<CikokoNotificationsPage> {
                 Icon(Icons.cloud_off_rounded,
                   color:scheme.primary,size:30),
                 const SizedBox(height:7),
-                Text(widget.loadError!,
+                Text(cikokoFormalMessage(widget.loadError),
                   style:TextStyle(color:scheme.onSurface,fontSize:12.5),
                   textAlign:TextAlign.center),
                 const SizedBox(height:10),
@@ -84,7 +85,7 @@ class _CikokoNotificationsPageState extends State<CikokoNotificationsPage> {
                   key:const Key('notification_retry'),
                   onPressed:widget.onRetry,
                   icon:const Icon(Icons.refresh_rounded),
-                  label:const Text('Coba Sinkronkan Lagi')),
+                  label:const Text('Coba Kembali')),
               ]),
             ),
           ),

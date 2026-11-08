@@ -9,8 +9,8 @@ import 'package:http/http.dart' as http;
 
 String cikokoFormalMessage(Object? error){
   final msg='${error??''}'.trim();
-  if(msg.isEmpty||msg.length>240||RegExp(r'(SQLSTATE|PDO|database|fatal error|exception|stacktrace|unknown column|localhost|/var/|/home/|\\.php|config|server API|backend)',caseSensitive:false).hasMatch(msg)){
-    return 'Layanan sedang mengalami kendala. Silakan mencoba kembali atau hubungi petugas.';
+  if(msg.isEmpty||msg.length>240||RegExp(r'(SQLSTATE|PDO|database|fatal error|exception|stacktrace|unknown column|localhost|/var/|/home/|\\.php|config|server|backend|\bAPI\b|endpoint|hosting|cpanel|migrasi|\bHTTP\b|stack trace|format exception|typeerror|socketexception|<html|<!doctype)',caseSensitive:false).hasMatch(msg)){
+    return 'Layanan sedang mengalami kendala. Silakan coba kembali atau hubungi petugas kelurahan.';
   }
   return msg;
 }
@@ -65,10 +65,10 @@ class CikokoApi {
       try {
         d = jsonDecode(utf8.decode(r.bodyBytes));
       } on FormatException {
-        throw ApiError('Balasan server tidak valid.',statusCode:r.statusCode);
+        throw ApiError('Informasi belum dapat dimuat. Silakan coba kembali.',statusCode:r.statusCode);
       }
       if(d is! Map<String,dynamic>) {
-        throw ApiError('Balasan server tidak valid.',statusCode:r.statusCode);
+        throw ApiError('Informasi belum dapat dimuat. Silakan coba kembali.',statusCode:r.statusCode);
       }
       if(r.statusCode>=400 || d['ok']==false){
         final msg='${d['error']??'Layanan belum tersedia.'}';

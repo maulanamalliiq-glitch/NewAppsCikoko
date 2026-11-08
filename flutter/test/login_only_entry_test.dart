@@ -18,7 +18,7 @@ void main() {
     expect(find.byType(HomePage), findsNothing);
     expect(find.byType(NavigationBar), findsNothing);
     expect(find.text('Masuk ke Cikoko SmartAPP'), findsOneWidget);
-    expect(find.text('Username'), findsOneWidget);
+    expect(find.text('Nama Pengguna'), findsOneWidget);
     expect(find.text('Kata sandi'), findsOneWidget);
     expect(find.byTooltip('Kembali'), findsNothing);
     expect(tester.takeException(), isNull);

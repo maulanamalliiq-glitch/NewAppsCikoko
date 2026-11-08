@@ -83,12 +83,12 @@ String cikokoDocumentFailure(Object? error) {
       400 || 422 => 'Identitas pengajuan tidak valid. Muat ulang daftar pengajuan.',
       401 => 'Sesi masuk kedaluwarsa. Silakan masuk kembali.',
       403 => 'Akun ini tidak memiliki izin untuk membaca detail pengajuan.',
-      404 => 'Detail pengajuan tidak ditemukan pada server. Periksa nomor dokumen.',
+      404 => 'Pengajuan tidak ditemukan. Silakan periksa nomor pengajuan.',
       500 || 502 || 503 || 504 =>
-        'Server detail pengajuan sedang bermasalah (HTTP ${error.statusCode}). '
-        'Daftar pengajuan belum tentu ikut bermasalah.',
-      final int status =>
-        'Server tidak dapat membuka detail pengajuan (HTTP $status).',
+        'Rincian pengajuan belum dapat dimuat. Silakan coba kembali beberapa saat lagi.',
+      429 => 'Permintaan sedang dibatasi. Silakan coba kembali beberapa saat lagi.',
+      final int _ =>
+        'Rincian pengajuan belum dapat dimuat. Silakan coba kembali atau hubungi petugas.',
       null => cikokoFormalMessage(error),
     };
   }

@@ -99,12 +99,12 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
       replacementPhotos.clear();widget.onChanged?.call();reload();message('Dokumen berhasil dikirim. Petugas akan memeriksa ulang.');
     }catch(e){message('$e',error:true);}finally{if(mounted)setState(()=>submitting=false);}
   }
-  void message(String s,{bool error=false}){if(!mounted)return;ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(s),backgroundColor:error?Colors.red.shade700:const Color(0xff165a8a)));}
+  void message(String s,{bool error=false}){if(!mounted)return;ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(cikokoFormalMessage(s)),backgroundColor:error?Colors.red.shade700:const Color(0xff165a8a)));}
   Widget pair(String label,dynamic val)=>Padding(padding:const EdgeInsets.symmetric(vertical:5),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:TextStyle(fontSize:11,color:Theme.of(context).colorScheme.onSurfaceVariant)),Text(v(val),style:TextStyle(color:Theme.of(context).colorScheme.onSurface,fontWeight:FontWeight.w500,fontSize:13))]));
   Widget section(String text)=>Padding(padding:const EdgeInsets.fromLTRB(0,16,0,8),child:Text(text,style:TextStyle(fontSize:16,fontWeight:FontWeight.bold,color:Theme.of(context).colorScheme.onSurface)));
   @override Widget build(BuildContext context)=>Column(children:[
     Padding(padding:const EdgeInsets.fromLTRB(12,12,12,7),
-      child:CikokoPremiumHeader(title:'Detail & Progres Pengajuan',
+      child:CikokoPremiumHeader(title:'Rincian dan Progres Pengajuan',
         subtitle:'Pantau status dan kelengkapan dokumen.',
         icon:Icons.description_outlined,
         trailing:IconButton(tooltip:'Tutup',onPressed:()=>Navigator.pop(context),
@@ -120,7 +120,7 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
               Icon(Icons.cloud_off_outlined,size:36,
                 color:Theme.of(ctx).colorScheme.primary),
               const SizedBox(height:12),
-              Text('Detail belum dapat dimuat',
+              Text('Rincian pengajuan belum dapat dimuat',
                 style:Theme.of(ctx).textTheme.titleMedium),
               const SizedBox(height:8),
               Text(cikokoDocumentFailure(s.error),
@@ -130,11 +130,11 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
               FilledButton.icon(
                 onPressed:reload,
                 icon:const Icon(Icons.refresh),
-                label:const Text('Coba lagi')),
+                label:const Text('Coba Kembali')),
             ])),
             if(summary!=null)...[
               const SizedBox(height:16),
-              Text('Ringkasan dari daftar pengajuan',
+              Text('Ringkasan Pengajuan',
                 style:Theme.of(ctx).textTheme.titleMedium),
               const SizedBox(height:8),
               CikokoPremiumSurface(child:Column(
@@ -145,8 +145,8 @@ class _DocumentDetailState extends State<DocumentDetailSheet> {
                   pair('Status','${summary['status']??'-'}'),
                   pair('Tanggal','${summary['created_at']??'-'}'),
                   const SizedBox(height:6),
-                  Text('Data di atas berasal dari daftar yang sebelumnya '
-                    'berhasil dibaca. Rincian belum dapat diverifikasi.',
+                  Text('Ringkasan ini menampilkan informasi terakhir yang '
+                    'tersedia. Silakan muat ulang untuk melihat rincian terbaru.',
                     style:Theme.of(ctx).textTheme.bodySmall),
                 ],
               )),
@@ -260,7 +260,7 @@ class _CorrectionPhotoPickerState extends State<CorrectionPhotoPicker>{String? p
        }
      }
      if(mounted){setState(()=>path=finalPath);widget.onSelected(finalPath);}
-   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Foto gagal dipilih: $e')));}
+   }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:const Text('Foto belum dapat dipilih. Silakan coba kembali.')));}
    finally{if(mounted)setState(()=>busy=false);}
  }
  @override
