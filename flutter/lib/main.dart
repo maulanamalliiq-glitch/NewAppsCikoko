@@ -3,6 +3,8 @@ import 'app_settings.dart';
 import 'design_system.dart';
 import 'premium_ui.dart';
 import 'bottom_navigation_catalog.dart';
+import 'about_cikoko_page.dart';
+import 'cikoko_startup_splash.dart';
 import 'premium_flow_ui.dart';
 import 'profile_editor.dart';
 import 'dart:async';
@@ -120,19 +122,7 @@ class _EntryState extends State<Entry> {
 
   @override
   Widget build(BuildContext context) {
-    if (loading) {
-      return const Scaffold(
-        body: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Logo(size: 110),
-          SizedBox(height: 18),
-          Text('Kelurahan Cikoko',
-            style: TextStyle(fontSize: 19, color: navy,
-              fontWeight: FontWeight.w800)),
-          SizedBox(height: 20),
-          CircularProgressIndicator(),
-        ])),
-      );
-    }
+    if(loading)return const CikokoStartupSplash();
     return CikokoAuthGate(
       authenticated: api.token != null,
       onAuthenticated: refreshSession,
@@ -270,7 +260,7 @@ class HomePage extends StatefulWidget{final VoidCallback onLogout,onAuthenticate
 class _HomeState extends State<HomePage> {
   String section='Dashboard';
   String menuQuery='';
-  int nav=0;
+  int nav=2;
   List<dynamic> items=[],events=[];
   String? notificationSyncError;
   bool notificationSyncLoading=true;
@@ -379,7 +369,8 @@ class _HomeState extends State<HomePage> {
   IconData iconFor(String s)=>switch(s){
     'Dashboard'=>Icons.home_outlined,'Menu Cikoko'=>Icons.grid_view_rounded,
     'Berita & Kegiatan'=>Icons.newspaper_outlined,'Pengumuman'=>Icons.campaign_outlined,
-    'Layanan Online'=>Icons.widgets_outlined,'Galeri'=>Icons.photo_library_outlined,
+    'Layanan Online'=>Icons.widgets_outlined,
+    'Tentang Kami'=>Icons.map_outlined,'Galeri'=>Icons.photo_library_outlined,
     'Surat Ahli Waris'=>Icons.description_outlined,'Persyaratan Ahli Waris'=>Icons.fact_check_outlined,'Surat Pengantar RT/RW'=>Icons.markunread_mailbox_outlined,
     'Surat Wilayah'=>Icons.fact_check_outlined,'Wilayah Ketua RT/RW'=>Icons.location_city_outlined,'Laporan Jumantik'=>Icons.bug_report_outlined,
     'Jumantik Warga'=>Icons.bug_report_outlined,'Laporan Kegiatan'=>Icons.assignment_outlined,'Laporan Kegiatan Admin'=>Icons.assignment_turned_in_outlined,'Verifikasi Ahli Waris'=>Icons.verified_user_outlined,
@@ -421,6 +412,11 @@ class _HomeState extends State<HomePage> {
           colors: [Color(0xFF07346E), Color(0xFF126BD7)],
         ),
       )),
+      leading:Builder(builder:(drawerContext)=>IconButton(
+        key:const Key('cikoko_drawer_button'),
+        tooltip:'Buka Menu',
+        onPressed:()=>Scaffold.of(drawerContext).openDrawer(),
+        icon:const Icon(Icons.menu_rounded,color:Colors.white))),
       title: CikokoAppBarIdentity(roleName:roleLabel),
       actions:[
         if(MediaQuery.sizeOf(c).width>=430)
@@ -429,20 +425,22 @@ class _HomeState extends State<HomePage> {
               'Switch dark/light theme'),
             onPressed:CikokoSettings.toggleTheme,
             icon:Icon(CikokoSettings.themeMode.value==ThemeMode.dark
-              ?Icons.light_mode_outlined:Icons.dark_mode_outlined)),
+              ?Icons.light_mode_outlined:Icons.dark_mode_outlined,
+              color:Colors.white)),
         IconButton(
           tooltip:CikokoSettings.tr('Notifikasi','Notifications'),
           onPressed:()=>switchTo('Notifikasi'),
           icon:Badge(
             isLabelVisible:unreadCount>0,
             label:Text('$unreadCount'),
-            child:const Icon(Icons.notifications_none))),
+            child:const Icon(Icons.notifications_none,color:Colors.white))),
         if(MediaQuery.sizeOf(c).width>=430)
           IconButton(tooltip:'Muat ulang',
-            onPressed:load,icon:const Icon(Icons.refresh))
+            onPressed:load,icon:const Icon(Icons.refresh,color:Colors.white))
         else
           PopupMenuButton<String>(
             tooltip:'Pengaturan cepat',
+            icon:const Icon(Icons.more_vert_rounded,color:Colors.white),
             key:const Key('compact_app_actions'),
             onSelected:(value){
               if(value=='theme')CikokoSettings.toggleTheme();
@@ -496,25 +494,25 @@ class _HomeState extends State<HomePage> {
       onDestinationSelected: selectNav,
       destinations: [
         NavigationDestination(
-          icon: const Icon(Icons.home_outlined),
-          selectedIcon: const Icon(Icons.home_rounded),
-          label: CikokoSettings.tr('Beranda', 'Home')),
+          icon:const Icon(Icons.map_outlined),
+          selectedIcon:const Icon(Icons.map_rounded),
+          label:CikokoSettings.tr('Tentang Kami','About Us')),
         NavigationDestination(
-          icon: const Icon(Icons.grid_view_outlined),
-          selectedIcon: const Icon(Icons.grid_view_rounded),
-          label: CikokoSettings.tr('Layanan', 'Services')),
+          icon:const Icon(Icons.grid_view_outlined),
+          selectedIcon:const Icon(Icons.grid_view_rounded),
+          label:CikokoSettings.tr('Menu','Menu')),
         NavigationDestination(
-          icon: const CikokoMenuOrb(),
-          selectedIcon: const CikokoMenuOrb(selected: true),
-          label: CikokoSettings.tr('Menu', 'Menu')),
+          icon:const CikokoHomeOrb(),
+          selectedIcon:const CikokoHomeOrb(selected:true),
+          label:CikokoSettings.tr('Beranda','Home')),
         NavigationDestination(
-          icon: const Icon(Icons.auto_awesome_outlined),
-          selectedIcon: const Icon(Icons.auto_awesome_rounded),
-          label: CikokoSettings.tr('Inovasi', 'Innovation')),
+          icon:const Icon(Icons.auto_awesome_outlined),
+          selectedIcon:const Icon(Icons.auto_awesome_rounded),
+          label:CikokoSettings.tr('Inovasi','Innovation')),
         NavigationDestination(
-          icon: const Icon(Icons.person_outline_rounded),
-          selectedIcon: const Icon(Icons.person_rounded),
-          label: CikokoSettings.tr('Akun', 'Account')),
+          icon:const Icon(Icons.person_outline_rounded),
+          selectedIcon:const Icon(Icons.person_rounded),
+          label:CikokoSettings.tr('Akun','Account')),
       ],
     ),
     // Messaging stays in the authorized Menu/Drawer; no floating button
@@ -523,6 +521,7 @@ class _HomeState extends State<HomePage> {
   }
   Widget _page(){switch(section){
     case 'Dashboard':return home();
+    case 'Tentang Kami':return const CikokoAboutPage();
     case 'Menu Cikoko':return menuPage();
     case 'Pusat Laporan':return reportHub();
     case 'Berita & Kegiatan':return feed('berita');
