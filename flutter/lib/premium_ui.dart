@@ -16,6 +16,43 @@ abstract final class CikokoPalette {
   static const rose = Color(0xFFD9538A);
 }
 
+/// Always shows the full app name. On compact Android phones it stacks
+/// "Cikoko" and "SmartAPP" instead of silently truncating the brand.
+class CikokoAppBarIdentity extends StatelessWidget {
+  final String roleName;
+  const CikokoAppBarIdentity({super.key,required this.roleName});
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder:(context,constraints) {
+      final compact=constraints.maxWidth<178;
+      const titleStyle=TextStyle(
+        fontSize:15,fontWeight:FontWeight.w800,
+        color:Colors.white,height:1.04);
+      return Row(mainAxisSize:MainAxisSize.min,children:[
+        Image.asset('assets/logo.png',width:30,height:30,fit:BoxFit.contain),
+        const SizedBox(width:8),
+        Expanded(child:Column(
+          mainAxisSize:MainAxisSize.min,
+          crossAxisAlignment:CrossAxisAlignment.start,
+          children:[
+            if(compact)...[
+              const Text('Cikoko',maxLines:1,style:titleStyle),
+              const Text('SmartAPP',maxLines:1,style:titleStyle),
+            ] else
+              const Text('Cikoko SmartAPP',maxLines:1,
+                overflow:TextOverflow.ellipsis,style:titleStyle),
+            const SizedBox(height:2),
+            Text(roleName,maxLines:1,overflow:TextOverflow.ellipsis,
+              style:const TextStyle(
+                fontSize:9.4,color:Color(0xFFE1EDFF),height:1.1)),
+          ],
+        )),
+      ]);
+    },
+  );
+}
+
 class CikokoBrandMark extends StatelessWidget {
   final double size;
   const CikokoBrandMark({super.key,this.size=54});
