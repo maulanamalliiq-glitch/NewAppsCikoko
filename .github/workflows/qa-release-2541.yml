@@ -79,6 +79,18 @@ jobs:
           grep -q 'jar verified' /tmp/cikoko-aab-check.log
           actual=$(keytool -printcert -jarfile "$aab" | sed -n 's/^[[:space:]]*SHA256: //p' | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
           test "$actual" = '394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5'
+          # Distribute a signed release APK, never the debug QA APK.
+          flutter build apk --release
+          apk=build/app/outputs/flutter-apk/app-release.apk
+          test -s "$apk"
+          apksigner="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
+          "$apksigner" verify --verbose --print-certs "$apk" > /tmp/cikoko-apk-check.log
+          actual_apk=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/cikoko-apk-check.log | head -1 | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
+          test "$actual_apk" = '394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5'
+          mkdir -p ../release-candidate
+          cp "$aab" ../release-candidate/Cikoko-SmartAPP-2.5.41-2541-Play-Upload.aab
+          cp "$apk" ../release-candidate/Cikoko-SmartAPP-2.5.41-2541-Android-Release.apk
+          (cd ../release-candidate && sha256sum *.apk *.aab > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
         if: always()
         with:
