@@ -1,0 +1,47 @@
+name: Downloadable Cikoko 2.5.41 signed test release
+on:
+  push:
+    branches: [release/2.5.41-readiness-20261108]
+    paths: ['.github/workflows/publish-2541-test-downloads.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  publish-verified-binaries:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Download verified signed APK and AAB from release build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p signed-files
+          gh run download 42449210955 --repo "$GITHUB_REPOSITORY" --name cikoko-2541-signed-release-candidate --dir signed-files
+      - name: Validate both assets against approved SHA-256 checksums
+        working-directory: signed-files
+        run: |
+          set -euo pipefail
+          test -s Cikoko-SmartAPP-2.5.41-2541-Android-Release.apk
+          test -s Cikoko-SmartAPP-2.5.41-2541-Play-Upload.aab
+          echo "d5bfb0a30787f04820cd44f476c24c3f222d5aed68a93c437442a7719c928b0b  Cikoko-SmartAPP-2.5.41-2541-Android-Release.apk" > SHA256-CHECK.txt
+          echo "4afedc3032f06ec67662267436f0b6c08d9fe9be671263fbd54842345042572e  Cikoko-SmartAPP-2.5.41-2541-Play-Upload.aab" >> SHA256-CHECK.txt
+          sha256sum -c SHA256-CHECK.txt
+          unzip -t Cikoko-SmartAPP-2.5.41-2541-Android-Release.apk >/dev/null
+          unzip -t Cikoko-SmartAPP-2.5.41-2541-Play-Upload.aab >/dev/null
+      - name: Upload browser-downloadable GitHub prerelease assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="v2.5.41-2541-internal-20261108"
+          if ! gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
+            gh release create "$tag" --repo "$GH_REPO" \
+              --target "$GITHUB_SHA" --prerelease \
+              --title "Cikoko SmartAPP 2.5.41 — Internal Testing APK & AAB" \
+              --notes "Signed APK/AAB from verified GitHub Actions run 42449210955. Internal testing only. Production backend may still be on 205.1 until the 2.5.41 cPanel overlay is deployed and verified. Do not publish in Play Store before end-to-end device tests."
+          fi
+          gh release upload "$tag" signed-files/Cikoko-SmartAPP-2.5.41-2541-Android-Release.apk signed-files/Cikoko-SmartAPP-2.5.41-2541-Play-Upload.aab signed-files/SHA256-CHECK.txt --repo "$GH_REPO" --clobber
+          gh release view "$tag" --repo "$GH_REPO" --json url,assets --jq '{url:.url,assets:[.assets[].name]}'
