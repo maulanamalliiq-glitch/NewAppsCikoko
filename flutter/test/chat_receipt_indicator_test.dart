@@ -8,6 +8,14 @@ import 'package:cikoko/support_chat.dart';
 import 'package:cikoko/chat_receipt_indicator.dart';
 
 void main(){
+  test('Legacy PHP empty List receipt payload does not crash chat UI',(){
+    expect(cikokoChatReceiptUpdates([]),isEmpty);
+    expect(cikokoChatReceiptUpdates(null),isEmpty);
+    expect(cikokoChatReceiptUpdates({'17':'read'})['17'],'read');
+    expect(cikokoChatMessageRows([]),isEmpty);
+    expect(cikokoChatMessageRows([{'id':5,'sender':'warga'},'bad',null]).length,1);
+  });
+
   test('Only server-confirmed read receipts render green and labels are explicit',(){
     expect(cikokoChatDelivery('sent'),CikokoChatDelivery.sent);
     expect(cikokoChatDelivery('delivered'),CikokoChatDelivery.delivered);
