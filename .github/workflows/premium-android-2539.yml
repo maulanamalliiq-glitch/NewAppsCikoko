@@ -104,14 +104,21 @@ jobs:
           actual=$(grep -iE 'certificate.*SHA.?256' /tmp/cikoko-premium-apk-signature.log | grep -oiE '[0-9a-f]{64}|([0-9a-f]{2}:){31}[0-9a-f]{2}' | head -1 | tr -d ':' | tr '[:lower:]' '[:upper:]')
           expected="394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5"
           test "$actual" = "$expected"
+          flutter build appbundle --release
+          bundle=build/app/outputs/bundle/release/app-release.aab
+          test -s "$bundle"
+          jarsigner -verify "$bundle"
+          bundle_cert=$(keytool -printcert -jarfile "$bundle" | sed -n 's/.*SHA256: //p' | head -1 | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
+          test "$bundle_cert" = "$expected"
+          cp "$bundle" ../premium-outputs/Cikoko-2546-release.aab
           ls -lh "$output"
-      - name: Upload APK for phone testing (no AAB)
-        if: always()
+      - name: Upload verified APK and AAB
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: cikoko-apk-qa-2546-${{ github.run_number }}
           path: premium-outputs/*
-          if-no-files-found: warn
+          if-no-files-found: error
           retention-days: 14
       - name: Remove signing key
         if: always()
