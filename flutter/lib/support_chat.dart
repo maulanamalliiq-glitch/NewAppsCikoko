@@ -170,6 +170,16 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
           final index=messages.indexWhere((r)=>r['id']==key);
           if(index>=0)messages[index]['delivery_status']='sent';
         }
+        // A backend 2545 offline holding response is already persisted.
+        // Show it immediately; the following refresh reconciles by server ID.
+        final auto=result['auto_reply'];
+        if(auto is Map){
+          final bot=Map<String,dynamic>.from(auto);
+          if(bot['sender']=='bot'&&bot['id']!=null){
+            messages.removeWhere((row)=>'${row['id']}'=='${bot['id']}');
+            messages.add(bot);
+          }
+        }
         _sort();
       });
       _scrollToBottom();
@@ -221,6 +231,21 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
                       scheme.surfaceContainerHighest,
                     borderRadius:BorderRadius.circular(16)),
                   child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+                    if(row['sender']=='bot')...[
+                      Row(mainAxisSize:MainAxisSize.min,children:[
+                        Icon(Icons.smart_toy_outlined,size:15,color:scheme.primary),
+                        const SizedBox(width:6),
+                        Text('Asisten Otomatis Cikoko',
+                          style:Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color:scheme.primary,fontWeight:FontWeight.w700)),
+                      ]),
+                      const SizedBox(height:6),
+                    ],
+                    if(row['sender']=='admin'&&ownSender!='admin' &&
+                      '${row['name']??''}'.trim().isNotEmpty)...[
+                      Text('${row['name']}',style:Theme.of(context).textTheme.labelMedium),
+                      const SizedBox(height:5),
+                    ],
                     Text('${row['message']??''}',style:TextStyle(color:scheme.onSurface)),
                     const SizedBox(height:5),
                     Row(mainAxisSize:MainAxisSize.min,children:[
