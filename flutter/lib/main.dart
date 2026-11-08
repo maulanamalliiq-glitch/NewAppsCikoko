@@ -312,6 +312,13 @@ class _HomeState extends State<HomePage> with WidgetsBindingObserver {
       final incoming=cikokoEventsForAccount(
         List<dynamic>.from(response['events']??[]),api.profile?['id']);
       await push?.onEvents(incoming);
+      // Acknowledge delivery only while the authenticated resident is online.
+      // Viewing notifications is not the same as reading a chat thread.
+      if(api.profile?['role']=='warga'){
+        try{await api.call('chat_inbox');}catch(_){
+          // Legacy hosting may not yet have this optional endpoint.
+        }
+      }
       if(mounted)setState(() {
         events=incoming;
         notificationSyncError=null;
