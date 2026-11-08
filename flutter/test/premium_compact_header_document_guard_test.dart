@@ -9,8 +9,9 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   test('Approved bottom navigation remains unchanged', () {
     expect(cikokoBottomRoutes, <String>[
-      'Dashboard','Layanan Online','Menu Cikoko','Inovasi','Profil',
+      'Tentang Kami','Menu Cikoko','Dashboard','Inovasi','Profil',
     ]);
+    expect(cikokoBottomRoute(2),'Dashboard');
   });
 
   for (final width in [320.0, 360.0, 420.0]) {
