@@ -47,7 +47,9 @@ jobs:
       - name: Prepare Android
         working-directory: flutter
         run: |
-          grep -q '^version: 2.5.42+2542
+          grep -Fq 'version: 2.5.42+2542' pubspec.yaml
+          grep -Fq 'versionCode = 2542' android/app/build.gradle.kts
+          flutter create --platforms=android --project-name=cikoko .
           flutter pub get
       - name: Analyze and test
         working-directory: flutter
@@ -120,69 +122,8 @@ jobs:
             gh release create "$tag" "$apk" "$aab" "$checks" --repo "$GH_REPO" \
               --target "$GITHUB_SHA" --prerelease \
               --title "Cikoko SmartAPP 2.5.42 — Chat Delivery and Read Receipts" \
-              --notes "APK and AAB for INTERNAL TESTING, signed with the existing upload certificate. Adds immediate chat display and private delivered/read receipts. Production backend must deploy the matching 2542 chat receipts patch and pass device testing before public release."
+              --notes "INTERNAL TESTING only. Signed APK and AAB with chat visibility and private delivered/read receipts. Production cPanel must deploy the matching backend patch before read receipts work."
           fi
-      - name: Remove certificate
-        if: always()
-        run: rm -f flutter/android/cikoko_upload.jks
- pubspec.yaml
-          grep -q 'versionCode = 2542' android/app/build.gradle.kts
-          flutter create --platforms=android --project-name=cikoko .
-          flutter pub get
-      - name: Analyze and test
-        working-directory: flutter
-        run: |
-          flutter analyze --no-fatal-infos --no-fatal-warnings
-          flutter test
-      - name: Build signed Play candidate when protected certificate is available
-        env:
-          CIKOKO_KEYSTORE_B64: ${{ secrets.CIKOKO_KEYSTORE_B64 }}
-          CIKOKO_STORE_PASSWORD: ${{ secrets.CIKOKO_STORE_PASSWORD }}
-          CIKOKO_KEY_PASSWORD: ${{ secrets.CIKOKO_KEY_PASSWORD }}
-          CIKOKO_KEY_ALIAS: androidkey
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -n "$CIKOKO_KEYSTORE_B64"
-          test -n "$CIKOKO_STORE_PASSWORD"
-          test -n "$CIKOKO_KEY_PASSWORD"
-          printf '%s' "$CIKOKO_KEYSTORE_B64" | base64 --decode > flutter/android/cikoko_upload.jks
-          chmod 600 flutter/android/cikoko_upload.jks
-          export CIKOKO_KEYSTORE_PATH="$GITHUB_WORKSPACE/flutter/android/cikoko_upload.jks"
-          cd flutter
-          flutter build appbundle --release
-          aab=build/app/outputs/bundle/release/app-release.aab
-          jarsigner -verify "$aab" > /tmp/cikoko-aab-check.log
-          grep -q 'jar verified' /tmp/cikoko-aab-check.log
-          actual=$(keytool -printcert -jarfile "$aab" | sed -n 's/^[[:space:]]*SHA256: //p' | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
-          test "$actual" = '394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5'
-          # Distribute a signed release APK, never the debug QA APK.
-          flutter build apk --release
-          apk=build/app/outputs/flutter-apk/app-release.apk
-          test -s "$apk"
-          apksigner="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
-          mkdir -p ../release-candidate
-          signed_apk=../release-candidate/Cikoko-SmartAPP-2.5.42-2542-Android-Release.apk
-          # Explicitly sign APK with the protected Play upload keystore.
-          "$apksigner" sign --ks "$CIKOKO_KEYSTORE_PATH" --ks-key-alias "$CIKOKO_KEY_ALIAS" \
-            --ks-pass env:CIKOKO_STORE_PASSWORD --key-pass env:CIKOKO_KEY_PASSWORD \
-            --out "$signed_apk" "$apk"
-          "$apksigner" verify --verbose --print-certs "$signed_apk" > /tmp/cikoko-apk-check.log
-          grep -i 'certificate SHA-256 digest' /tmp/cikoko-apk-check.log || true
-          actual_apk=$(sed -n -E 's/^[[:space:]]*.*certificate SHA-256 digest:[[:space:]]*([0-9a-fA-F:]+).*$/\1/p' /tmp/cikoko-apk-check.log | head -1 | tr -d ':' | tr '[:lower:]' '[:upper:]')
-          if [[ "$actual_apk" != '394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5' ]]; then
-            echo "::error::APK signing certificate does not match the required Play upload certificate."
-            exit 1
-          fi
-          cp "$aab" ../release-candidate/Cikoko-SmartAPP-2.5.42-2542-Play-Upload.aab
-          (cd ../release-candidate && sha256sum *.apk *.aab > SHA256SUMS.txt)
-      - uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: cikoko-2542-signed-release-candidate
-          path: release-candidate/*
-          if-no-files-found: error
-          retention-days: 14
       - name: Remove certificate
         if: always()
         run: rm -f flutter/android/cikoko_upload.jks
