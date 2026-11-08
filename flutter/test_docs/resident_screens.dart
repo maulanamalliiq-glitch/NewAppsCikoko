@@ -87,20 +87,21 @@ void main(){
   final fake=DocsApi();
   app.api.profile=user;app.api.token='illustration-only';
   Future<void> mount(Widget child)async{
-   await tester.pumpWidget(RepaintBoundary(key:key,child:MaterialApp(debugShowCheckedModeBanner:false,theme:CikokoDesign.light.copyWith(fontFamily:'Roboto'),home:child)));
+   await tester.pumpWidget(const SizedBox());await tester.pump();
+   await tester.pumpWidget(RepaintBoundary(key:key,child:MaterialApp(debugShowCheckedModeBanner:false,theme:CikokoDesign.light,home:child)));
    await tester.pumpAndSettle(const Duration(milliseconds:100));
   }
   Future<void> shot(String name)async{await expectLater(find.byKey(key),matchesGoldenFile('screens/$name.png'));}
-  Future<void> scrollTo(String text)async{await tester.ensureVisible(find.text(text).first);await tester.pumpAndSettle();}
+  Future<void> scrollTo(String text)async{await tester.scrollUntilVisible(find.text(text).first,600,maxScrolls:45);await Scrollable.ensureVisible(tester.element(find.text(text).first),alignment:0);await tester.pumpAndSettle();}
   await mount(app.LoginPage(onLogin:(){}));await shot('01_masuk');
   await mount(app.LoginPage(onLogin:(){},startWithRegistration:true));await shot('02_daftar_atas');
-  await tester.drag(find.byType(ListView).first,const Offset(0,-620));await tester.pumpAndSettle();await shot('03_daftar_bawah');
+  await tester.drag(find.byType(SingleChildScrollView).first,const Offset(0,-620));await tester.pumpAndSettle();await shot('03_daftar_bawah');
   await mount(app.HomePage(onLogout:(){},onAuthenticated:(){}));await shot('04_beranda');
   await tester.tap(find.byType(NavigationDestination).at(1));await tester.pumpAndSettle();await shot('05_menu');
   await tester.tap(find.byType(NavigationDestination).at(4));await tester.pumpAndSettle();await shot('06_profil');
   await mount(Scaffold(appBar:AppBar(title:const Text('Profil')),body:CivicProfilePage(api:fake)));
   // Open the actual edit form through its own button.
-  final edit=find.textContaining('Ubah Profil');
+  final edit=find.text('Pengaturan profil');
   if(edit.evaluate().isNotEmpty){await tester.ensureVisible(edit.first);await tester.tap(edit.first);await tester.pumpAndSettle();}
   await shot('07_profil_data');
   await mount(Scaffold(appBar:AppBar(title:const Text('Surat Pengantar RT/RW')),body:RtRwLettersPage(api:fake)));await shot('08_surat_rt_rw');
