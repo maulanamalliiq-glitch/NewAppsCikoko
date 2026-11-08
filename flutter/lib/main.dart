@@ -272,6 +272,8 @@ class _HomeState extends State<HomePage> {
   String menuQuery='';
   int nav=0;
   List<dynamic> items=[],events=[];
+  String? notificationSyncError;
+  bool notificationSyncLoading=true;
   List<Map<String,dynamic>> activeServices=cikokoDefaultIntegratedServices();
   int get unreadCount=>events.where((e)=>e['is_read']!=true && '${e['is_read']??0}'!='1').length;
   Map<String,int>? letterCounts;
@@ -295,8 +297,23 @@ class _HomeState extends State<HomePage> {
     });timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());}}
   @override void dispose(){CikokoSettings.language.removeListener(_refreshSettings);timer?.cancel();push?.dispose();super.dispose();}
   Future<void> refresh() async {
-    try {if(api.token==null)return;final v=await api.call('events');final incoming=cikokoEventsForAccount(List<dynamic>.from(v['events']??[]),api.profile?['id']);await push?.onEvents(incoming);if(mounted)setState(()=>events=incoming);}
-    catch(_) {}
+    if(api.token==null)return;
+    try {
+      final response=await api.call('events');
+      final incoming=cikokoEventsForAccount(
+        List<dynamic>.from(response['events']??[]),api.profile?['id']);
+      await push?.onEvents(incoming);
+      if(mounted)setState(() {
+        events=incoming;
+        notificationSyncError=null;
+        notificationSyncLoading=false;
+      });
+    } catch (_) {
+      if(mounted)setState(() {
+        notificationSyncLoading=false;
+        notificationSyncError='Notifikasi belum dapat disinkronkan dari server.';
+      });
+    }
   }
   Future<void> load() async {
     if(mounted)setState(()=>loading=true);
@@ -907,6 +924,9 @@ class _HomeState extends State<HomePage> {
         // by cikokoEventsForAccount() in refresh().
         events: events.whereType<Map>()
           .map((event) => Map<String, dynamic>.from(event)).toList(),
+        loadError:notificationSyncError,
+        loading:notificationSyncLoading,
+        onRetry:()=>refresh(),
         onOpen: (event) { openNotification(event); },
       );
  Widget profilePage()=>guest?Center(child:Card(child:Padding(padding:const EdgeInsets.all(20),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.person_outline,size:42,color:blue),const Text('Silakan masuk untuk mengelola profil.'),FilledButton(onPressed:openLogin,child:const Text('Masuk'))])))):CikokoProfileEditor(api:api);
@@ -1495,7 +1515,7 @@ class _HistoryState extends State<HistoryPage>{Future<Map<String,dynamic>>? futu
          reload();return;
         }
         showCikokoDocument(context,api,id:id??0,reference:ref??'',
-         kind:cikokoDocumentKind(row),onChanged:reload);
+         preview:row,kind:cikokoDocumentKind(row),onChanged:reload);
        },
       ),
      const CikokoPageSignature(),
@@ -1773,7 +1793,8 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
         load();return;
        }
        showCikokoDocument(context,api,id:id??0,
-        reference:ref??'',kind:cikokoDocumentKind(row),onChanged:load);
+        reference:ref??'',preview:row,
+        kind:cikokoDocumentKind(row),onChanged:load);
       },
       footer:Align(
        alignment:Alignment.centerRight,
