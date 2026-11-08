@@ -10,15 +10,17 @@ class SupportChatPage extends StatefulWidget {
   const SupportChatPage({super.key,required this.api,this.residentId,this.residentName='Warga'});
   @override State<SupportChatPage> createState()=>_SupportChatState();
 }
-class _SupportChatState extends State<SupportChatPage> {
+class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserver {
   final message=TextEditingController();
   List<dynamic> messages=[];
   Timer? timer;
   bool sending=false,loading=true,fetching=false;
   String? error;
   bool get admin=>widget.residentId!=null;
-  @override void initState(){super.initState();refresh();timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());}
-  @override void dispose(){timer?.cancel();message.dispose();super.dispose();}
+  @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);refresh();startPolling();}
+  void startPolling(){timer?.cancel();timer=Timer.periodic(const Duration(seconds:3),(_)=>refresh());}
+  @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed){startPolling();refresh();}else{timer?.cancel();}}
+  @override void dispose(){WidgetsBinding.instance.removeObserver(this);timer?.cancel();message.dispose();super.dispose();}
   Future<void> refresh()async{
     if(fetching)return;fetching=true;
     try{

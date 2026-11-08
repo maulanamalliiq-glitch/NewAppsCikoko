@@ -1,4 +1,5 @@
 import 'support_chat.dart';
+import 'chat_launcher.dart';
 import 'home_slides.dart';
 import 'officer_review.dart';
 import 'event_scope.dart';
@@ -260,7 +261,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
 }
 void notify(BuildContext c,String text,{bool error=false}){ScaffoldMessenger.of(c).hideCurrentSnackBar();ScaffoldMessenger.of(c).showSnackBar(SnackBar(content:Text(error?cikokoFormalMessage(text):text),backgroundColor:error?Colors.red.shade700:navy));}
 class HomePage extends StatefulWidget{final VoidCallback onLogout,onAuthenticated;const HomePage({super.key,required this.onLogout,required this.onAuthenticated});@override State<HomePage> createState()=>_HomeState();}
-class _HomeState extends State<HomePage> {
+class _HomeState extends State<HomePage> with WidgetsBindingObserver {
   String section='Dashboard';
   String menuQuery='';
   int nav=2;
@@ -280,16 +281,22 @@ class _HomeState extends State<HomePage> {
   bool get isAdmin=>capabilities['reports:view']==true;
   List<RoleFeature> get modules=>role=='guest'?[roleFeatures['services']!,roleFeatures['waris']!,roleFeatures['waris_requirements']!,roleFeatures['jumantik']!,roleFeatures['news']!,roleFeatures['announcements']!,roleFeatures['gallery']!,roleFeatures['help']!]:modulesForRole(role,capabilities);
   void _refreshSettings(){if(mounted)setState((){});}
-  @override void initState(){super.initState();CikokoSettings.language.addListener(_refreshSettings);load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
+  @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);CikokoSettings.language.addListener(_refreshSettings);load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
       WidgetsBinding.instance.addPostFrameCallback((_){
         if(!mounted || !cikokoPushBelongsToAccount(message.data,api.profile?['id']))return;
         final pushId=int.tryParse('${message.data['event_id']??''}')??0;
         if(pushId>0)api.call('event_read',body:{'id':pushId}).then((_)=>refresh()).catchError((_){});
-        switchTo(destinationForPushCategory('${message.data['category']??''}',isStaff:isStaff));
+        switchTo(destinationForPushCategory('${message.data['category']??''}',isStaff:isStaff,canReply:capabilities['chat:reply']==true));
       });
-    });timer=Timer.periodic(const Duration(seconds:15),(_)=>refresh());}}
-  @override void dispose(){CikokoSettings.language.removeListener(_refreshSettings);timer?.cancel();push?.dispose();super.dispose();}
-  Future<void> refresh() async {
+    });startEventPolling();}}
+  void startEventPolling(){timer?.cancel();if(api.token!=null)timer=Timer.periodic(const Duration(seconds:3),(_)=>refresh());}
+  @override void didChangeAppLifecycleState(AppLifecycleState state){
+    if(state==AppLifecycleState.resumed){startEventPolling();refresh();}else{timer?.cancel();}
+  }
+  @override void dispose(){WidgetsBinding.instance.removeObserver(this);CikokoSettings.language.removeListener(_refreshSettings);timer?.cancel();push?.dispose();super.dispose();}
+  Future<void>? eventRefresh;
+  Future<void> refresh()=>eventRefresh??=_refreshEvents().whenComplete(()=>eventRefresh=null);
+  Future<void> _refreshEvents() async {
     if(api.token==null)return;
     try {
       final response=await api.call('events');
@@ -493,6 +500,10 @@ class _HomeState extends State<HomePage> {
     body:loading?const Center(child:CircularProgressIndicator()):
       SafeArea(top:guest && section=='Dashboard',
        child:CikokoPremiumCanvas(child:_page())),
+    floatingActionButton:section=='Hubungi Kami'||section=='Pesan Masuk'||MediaQuery.viewInsetsOf(c).bottom>0?null:CikokoChatLauncher(
+      administrative:capabilities['chat:reply']==true,
+      unreadCount:events.where((e)=>e['category']=='chat'&&e['is_read']!=true&&'${e['is_read']??0}'!='1').length,
+      onPressed:()=>switchTo(capabilities['chat:reply']==true?'Pesan Masuk':'Hubungi Kami')),
     bottomNavigationBar: NavigationBar(
       height: 76,
       selectedIndex: nav,
@@ -922,7 +933,7 @@ class _HomeState extends State<HomePage> {
     }
     if(!mounted)return;
     final category='${event['category']??''}';
-    if(category=='chat'){switchTo(isStaff?'Pesan Masuk':'Hubungi Kami');return;}
+    if(category=='chat'){switchTo(capabilities['chat:reply']==true?'Pesan Masuk':'Hubungi Kami');return;}
     if(category=='rt_rw_surat'||category=='rt_rw_status'){switchTo(isStaff?'Surat Wilayah':'Surat Pengantar RT/RW');return;}
     if(category=='surat'||category=='progres_surat'||category=='laporan_masuk'){
       switchTo(isStaff?'Verifikasi Laporan':'Riwayat');return;
@@ -1619,8 +1630,18 @@ class _ChatState extends State<ChatPage>{final ctrl=TextEditingController();List
 
 }
 class AdminChatPage extends StatefulWidget{const AdminChatPage({super.key});@override State<AdminChatPage> createState()=>_AdminChatState();}
-class _AdminChatState extends State<AdminChatPage>{List<dynamic> threads=[];@override void initState(){super.initState();load();}
- Future<void> load()async{try{final d=await api.call('chat_threads');if(mounted)setState(()=>threads=List<dynamic>.from(d['threads']??[]));}catch(e){if(mounted)notify(context,'$e',error:true);}}
+class _AdminChatState extends State<AdminChatPage> with WidgetsBindingObserver {
+ List<dynamic> threads=[];Timer? timer;bool fetching=false,loading=true;String? error;
+ @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);load();startPolling();}
+ void startPolling(){timer?.cancel();timer=Timer.periodic(const Duration(seconds:3),(_)=>load());}
+ @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed){startPolling();load();}else{timer?.cancel();}}
+ @override void dispose(){WidgetsBinding.instance.removeObserver(this);timer?.cancel();super.dispose();}
+ Future<void> load()async{
+  if(fetching)return;fetching=true;
+  try{final d=await api.call('chat_threads');if(mounted)setState((){threads=List<dynamic>.from(d['threads']??[]);error=null;});}
+  catch(e){if(mounted)setState(()=>error=cikokoFormalMessage(e));}
+  finally{fetching=false;if(mounted)setState(()=>loading=false);}
+ }
  Future<void> reply(Map<String,dynamic> thread)async{
    await Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>Scaffold(
      appBar:AppBar(title:const Text('Chat Warga')),
@@ -1636,7 +1657,9 @@ class _AdminChatState extends State<AdminChatPage>{List<dynamic> threads=[];@ove
     subtitle:'Percakapan warga yang tersedia untuk akun petugas ini.',
     icon:Icons.mark_chat_unread_outlined),
    const SizedBox(height:12),
-   if(threads.isEmpty)
+   if(loading)const Center(child:CircularProgressIndicator()),
+   if(error!=null)Padding(padding:const EdgeInsets.all(12),child:Column(children:[Text(error!),TextButton(onPressed:load,child:const Text('Coba Kembali'))])),
+   if(!loading&&error==null&&threads.isEmpty)
     const CikokoEmptyState(icon:Icons.mark_chat_read_outlined,
      title:'Belum ada pesan masuk',
      subtitle:'Pesan warga akan tampil saat diterima oleh layanan.'),
