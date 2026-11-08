@@ -42,7 +42,7 @@ if(in_array($action,['integrated_services','integrated_services_save','integrate
 
 if(in_array($action,['account_help','account_request','account_requests','account_request_resolve'],true)){require_once __DIR__.'/account_support.php';cikoko_account_dispatch($action,$method);}
 if($action==='login'&&$method==='POST'){
- $limitDb=mobile_db();cikoko_rate_limit($limitDb,'login_ip',(string)($_SERVER['REMOTE_ADDR']??''),40,900);
+ $limitDb=mobile_db();cikoko_rate_limit($limitDb,'login_ip',(string)($_SERVER['REMOTE_ADDR']??''),200,900);
  $body=mobile_body();$username=mobile_text($body['username']??'',100);$pass=(string)($body['password']??'');$found=null;cikoko_rate_limit($limitDb,'login_account',strtolower($username),10,900);
  $a=db_read('admin');if($username!==''&&hash_equals((string)($a['username']??''),$username) && password_verify($pass,(string)($a['password_hash']??''))){$found=['id'=>'admin','name'=>'Administrator','username'=>$username,'role'=>'admin'];}
  if(!$found)foreach(db_read('portal_users') as $u){if(hash_equals((string)($u['username']??''),$username)&&($u['active']??false)&&password_verify($pass,(string)($u['password_hash']??''))){$found=['id'=>$u['id'],'name'=>$u['name'],'username'=>$u['username'],'role'=>$u['role'],'department'=>$u['department']??''];break;}}

@@ -8,7 +8,8 @@ import 'package:path_provider/path_provider.dart';
 class WarisDraftStore {
   final String accountId;
   final FlutterSecureStorage storage;
-  WarisDraftStore(this.accountId,{this.storage=const FlutterSecureStorage()});
+  final Future<Directory> Function() directory;
+  WarisDraftStore(this.accountId,{this.storage=const FlutterSecureStorage(),this.directory=getApplicationSupportDirectory});
   String get key=>'waris_draft_${base64Url.encode(utf8.encode(accountId))}';
   Future<Map<String,dynamic>?> read() async {
     if(accountId.isEmpty)return null;
@@ -18,7 +19,7 @@ class WarisDraftStore {
   }
   Future<void> save(Map<String,dynamic> values,Map<String,List<String>> files) async {
     if(accountId.isEmpty)return;
-    final folder=Directory('${(await getApplicationSupportDirectory()).path}/$key');
+    final folder=Directory('${(await directory()).path}/$key');
     await folder.create(recursive:true);
     final copied=<String,List<String>>{};
     for(final entry in files.entries){
@@ -39,7 +40,7 @@ class WarisDraftStore {
   }
   Future<void> clear() async {
     await storage.delete(key:key);
-    final folder=Directory('${(await getApplicationSupportDirectory()).path}/$key');
+    final folder=Directory('${(await directory()).path}/$key');
     if(await folder.exists())await folder.delete(recursive:true);
   }
 }

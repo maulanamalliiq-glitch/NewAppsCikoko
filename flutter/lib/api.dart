@@ -71,6 +71,7 @@ class CikokoApi {
       final headers={'Accept':'application/json','Content-Type':'application/json'};
       if(token!=null)headers['Authorization']='Bearer $token';
       final http.Response r= body==null ? await http.get(u,headers:headers).timeout(const Duration(seconds:25)) : await http.post(u, headers:headers,body:jsonEncode(body)).timeout(const Duration(seconds:40));
+      if(r.statusCode==401&&action!='login'&&requestToken!=null&&requestToken==token)await expireSession();
       dynamic d;
       try {
         d = jsonDecode(utf8.decode(r.bodyBytes));
@@ -80,7 +81,6 @@ class CikokoApi {
       if(d is! Map<String,dynamic>) {
         throw ApiError('Informasi belum dapat dimuat. Silakan coba kembali.',statusCode:r.statusCode);
       }
-      if(r.statusCode==401&&action!='login'&&requestToken!=null&&requestToken==token)await expireSession();
       if(r.statusCode>=400 || d['ok']==false){
         final msg='${d['error']??'Layanan belum tersedia.'}';
         throw ApiError(
@@ -97,7 +97,7 @@ class CikokoApi {
     on FormatException {throw ApiError('Layanan Cikoko sedang mengalami kendala. Silakan mencoba kembali.');}
     finally {if(progressId!=null)CikokoRequestProgress.finish(progressId,success:successful);}
   }
-  Future<Map<String,dynamic>> callWithQuery(String action,Map<String,String> query) async => call('$action&${Uri(queryParameters:query).query}');
+  Future<Map<String,dynamic>> callWithQuery(String action,Map<String,String> query) async => query.isEmpty?call(action):call('$action&${Uri(queryParameters:query).query}');
   String photoUrl(String action,Map<String,String> params) => '${root.replaceFirst('index.php','v211.php')}?action=$action&${Uri(queryParameters:params).query}';
   Map<String,String> authHeaders() => token==null ? {} : {'Authorization':'Bearer $token'};
   Future<Map<String,dynamic>> callWithParams(String action,Map<String,String> params)=>callWithQuery(action,params);

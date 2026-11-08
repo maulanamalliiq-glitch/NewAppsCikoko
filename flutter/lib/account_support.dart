@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'api.dart';
+import 'waris_draft.dart';
 
 class AccountSupportPage extends StatefulWidget {
  final CikokoApi api;final bool deletion;
@@ -10,7 +11,7 @@ class _AccountSupportState extends State<AccountSupportPage>{
  final username=TextEditingController(),contact=TextEditingController(),password=TextEditingController();bool busy=false;String? result;
  @override void dispose(){username.dispose();contact.dispose();password.dispose();super.dispose();}
  Future<void> send()async{if(busy)return;setState(()=>busy=true);
-  try{final r=await widget.api.call(widget.deletion?'account_request':'account_help',body:widget.deletion?{'password':password.text}:{'username':username.text.trim(),'contact':contact.text.trim()});if(mounted)setState(()=>result='${r['message']}');password.clear();}
+  try{final r=await widget.api.call(widget.deletion?'account_request':'account_help',body:widget.deletion?{'password':password.text}:{'username':username.text.trim(),'contact':contact.text.trim()});if(widget.deletion)await WarisDraftStore('${widget.api.profile?['id']??''}').clear();if(mounted)setState(()=>result='${r['message']}');password.clear();}
   catch(e){if(mounted)setState(()=>result=cikokoFormalMessage(e));}finally{if(mounted)setState(()=>busy=false);}
  }
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text(widget.deletion?'Penghapusan Akun':'Pemulihan Akun')),body:ListView(padding:const EdgeInsets.all(20),children:[
@@ -44,7 +45,7 @@ class _AccountRequestsState extends State<AccountRequestsPage>{
  }
  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Bantuan Akun Warga')),body:RefreshIndicator(onRefresh:load,child:ListView(padding:const EdgeInsets.all(16),children:[
   if(loading)const LinearProgressIndicator(),if(error!=null)Text(error!),if(!loading&&rows.isEmpty)const Text('Belum ada permintaan bantuan akun.'),
-  for(final r in rows)Card(child:ListTile(title:Text(r['kind']=='deletion'?'Penghapusan Akun':'Pemulihan Akun'),subtitle:Text('ID akun: ${r['user_id']}\nKontak permintaan: ${r['contact']}\n${r['created_at']}'),isThreeLine:true,trailing:const Icon(Icons.chevron_right),onTap:()=>resolve(Map<String,dynamic>.from(r)))),
+  for(final r in rows)Card(child:ListTile(title:Text(r['kind']=='deletion'?'Penghapusan Akun':'Pemulihan Akun'),subtitle:Text('Akun: ${r['username']} (${r['user_id']})\nKontak terdaftar: ${r['registered_contact']}\nKontak permintaan: ${r['contact']}\n${r['created_at']}'),trailing:const Icon(Icons.chevron_right),onTap:()=>resolve(Map<String,dynamic>.from(r)))),
   if(more)TextButton(onPressed:()=>load(older:true),child:const Text('Muat Permintaan Sebelumnya')),
  ])));
 }

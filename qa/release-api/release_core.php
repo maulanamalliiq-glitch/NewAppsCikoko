@@ -34,7 +34,7 @@ function cikoko_chat_page(PDO $db,string $owner):array {
 function cikoko_capture_area(array &$response):void {
  global $action,$method,$uid,$u;
  if($method!=='POST'||empty($response['ok'])||empty($uid))return;
- $sources=['report'=>'report','waris'=>'waris','ppsu_report'=>'ppsu','fkdm_report'=>'fkdm'];
+ $sources=['report'=>'report','waris'=>'waris','ppsu_report'=>'ppsu','fkdm_report'=>'fkdm','v211_ppsu_submit'=>'ppsu','v211_fkdm_submit'=>'fkdm'];
  if(!isset($sources[$action]))return;
  $source=$sources[$action];$id=(int)($response['id']??0);$db=mobile_db();
  if($source==='waris'&&$id<1&&!empty($response['reference'])){

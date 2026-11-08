@@ -115,7 +115,7 @@ function cikoko_governance_dispatch(string $action,string $method,PDO $db,array 
    elseif($r['status']!=='ditolak')$areas[$key]['pending']++;
   }
   $areas=array_values($areas);usort($areas,static fn($a,$b)=>strcmp($a['rw'].':'.$a['rt'],$b['rw'].':'.$b['rt']));
-  mobile_json(['ok'=>true,'total'=>$total,'statuses'=>(object)$statuses,'categories'=>(object)$categories,'areas'=>$areas,'sources'=>$all['sources'],'area_basis'=>'Wilayah laporan dan Ahli Waris mengikuti profil pelapor saat ini. Wilayah LPJ mengikuti dokumen. Data tanpa wilayah dikelompokkan terpisah.']);
+  mobile_json(['ok'=>true,'total'=>$total,'statuses'=>(object)$statuses,'categories'=>(object)$categories,'areas'=>$areas,'sources'=>$all['sources'],'area_basis'=>'Wilayah pengajuan baru dicatat saat dikirim. Data lama tanpa catatan wilayah dikelompokkan sebagai belum diketahui. Wilayah LPJ mengikuti dokumen.']);
  }
  if($action==='officer_waris'){
   mobile_need($u,'waris:view');
