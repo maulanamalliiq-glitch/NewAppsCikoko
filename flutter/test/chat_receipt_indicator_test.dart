@@ -46,6 +46,8 @@ void main(){
       await tester.pump();
       await tester.pump(const Duration(milliseconds:100));
       expect(find.text('Pesan status uji warga'),findsOneWidget);
+      // Flush the API progress indicator's 900ms hide timer.
+      await tester.pump(const Duration(seconds:1));
     },()=>MockClient((request){
       if(request.method=='POST')return pending.future;
       return Future.value(http.Response('{"ok":true,"messages":[],"receipt_updates":{},"has_more":false}',200,
