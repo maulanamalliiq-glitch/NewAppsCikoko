@@ -38,9 +38,9 @@ const roleFeatures = <String,RoleFeature>{
   'ppsu': RoleFeature('Laporan PPSU','Foto kegiatan kebersihan dan pekerjaan','Laporan PPSU',capability:'report:ppsu'),
   'bakti': RoleFeature('Kerja Bakti','Dokumentasi kerja bakti wilayah','Laporan Kerja Bakti',capability:'report:kerja_bakti'),
   'verify': RoleFeature('Verifikasi Laporan','Tinjau dan ubah status permohonan','Verifikasi Laporan',capability:'reports:view'),
-  'verify_waris': RoleFeature('Verifikasi Ahli Waris','Verifikasi khusus dokumen Surat Ahli Waris','Verifikasi Ahli Waris',capability:'reports:view'),
+  'verify_waris': RoleFeature('Verifikasi Ahli Waris','Verifikasi khusus dokumen Surat Ahli Waris','Verifikasi Ahli Waris',capability:'waris:view'),
   'verify_kegiatan': RoleFeature('Laporan Kegiatan','Pantau dan verifikasi laporan kegiatan selain Ahli Waris','Laporan Kegiatan Admin',capability:'reports:view'),
-  'chat_admin': RoleFeature('Pesan Masuk','Balas percakapan warga','Pesan Masuk',capability:'chat:reply'),
+  'chat_admin': RoleFeature('Chat Warga','Balas percakapan warga','Pesan Masuk',capability:'chat:reply'),
   'news_add': RoleFeature('Tambah Berita','Publikasikan berita dari aplikasi','Tambah Berita',capability:'content:create'),
   'announce_add': RoleFeature('Tambah Pengumuman','Publikasikan pengumuman baru','Tambah Pengumuman',capability:'content:create'),
   'archive_add': RoleFeature('Tambah Arsip Ahli Waris','Catat nomor dan tahun surat lama','Tambah Arsip Ahli Waris',capability:'archive:create'),
@@ -48,7 +48,7 @@ const roleFeatures = <String,RoleFeature>{
   'role_manage': RoleFeature('Hak Akses Role','Izinkan atau batasi akses petugas','Hak Akses Role',capability:'role:manage'),
   'accounts_manage': RoleFeature('Kelola Akun Petugas','Tambah akun Ketua/Bendahara RT/RW dan petugas lainnya','Kelola Akun Petugas',capability:'role:manage'),
   'services_manage': RoleFeature('Kelola Layanan Terpadu','Atur logo, judul, keterangan dan tautan layanan warga','Kelola Layanan Terpadu',capability:'role:manage'),
-  'monitor': RoleFeature('Monitoring Wilayah','Ringkasan seluruh laporan wilayah','Monitoring Wilayah',connected:false),
+  'monitor': RoleFeature('Monitoring Wilayah','Ringkasan seluruh laporan wilayah','Monitoring Wilayah',capability:'monitoring:view'),
   'approval': RoleFeature('Persetujuan Lurah','Persetujuan dokumen resmi','Persetujuan Lurah',connected:false),
   'attendance': RoleFeature('Kehadiran','Absensi pegawai dan jadwal','Kehadiran',connected:false),
   'roster': RoleFeature('Jadwal Piket & Dinas','Jadwal tugas harian pegawai','Jadwal Piket',connected:false),
@@ -57,13 +57,15 @@ const roleFeatures = <String,RoleFeature>{
   'protap': RoleFeature('PROTAP','Verifikasi pengaturan lampu piket','PROTAP',connected:false),
   'civil': RoleFeature('KTP & Kartu Keluarga','Layanan adminduk melalui petugas','Kependudukan',connected:false),
   'family': RoleFeature('Pendataan Keluarga','Pendataan Dasawisma wilayah','Pendataan Keluarga',connected:false),
+  'home_photos': RoleFeature('Foto Beranda','Atur lima foto yang tampil bergantian','Foto Beranda',capability:'role:manage'),
+  'help': RoleFeature('Bantuan / Hubungi Admin','Percakapan dengan petugas kelurahan','Hubungi Kami'),
   'profile': RoleFeature('Profil Akun','Identitas dan data akun','Profil'),
 };
 const roleMenus = <String,List<String>>{
- 'admin':['accounts_manage','services_manage','lpj_rt','lpj_rw','wilayah_ketua','surat_wilayah','verify_waris','verify_kegiatan','chat_admin','news_add','announce_add','archive_add','archive_list','role_manage','news','announcements','gallery','services'],
+ 'admin':['verify','monitor','home_photos','accounts_manage','services_manage','lpj_rt','lpj_rw','wilayah_ketua','surat_wilayah','verify_waris','verify_kegiatan','chat_admin','news_add','announce_add','archive_add','archive_list','role_manage','news','announcements','gallery','services'],
  'admin_kelurahan':['surat_wilayah','verify','archive_add','archive_list','news_add','announce_add','chat_admin','news','announcements','services'],
  'lurah':['verify','archive_list','approval','monitor','protap','performance','news','announcements'],
- 'asn':['verify','archive_list','monitor','kegiatan','news','announcements'],
+ 'asn':['verify','verify_waris','archive_list','monitor','kegiatan','news','announcements'],
  'pppk':['kegiatan','attendance','roster','performance','leave','history','news'],
  'pjlp':['kegiatan','attendance','roster','performance','protap','leave','history'],
  'ptsp':['verify','archive_list','civil','kegiatan','history','services'],
@@ -83,5 +85,5 @@ const roleMenus = <String,List<String>>{
  'warga':['surat_pengantar','services','waris','waris_requirements','jumantik','history','news','announcements','gallery'],
 };
 List<RoleFeature> modulesForRole(String role, Map<String,bool> caps) {
- return (roleMenus[role]??roleMenus['warga']!).map((key)=>roleFeatures[key]!).where((feature)=>feature.capability==null || caps[feature.capability]==true).toList();
+ return [...(roleMenus[role]??roleMenus['warga']!),if(role!='admin'&&role!='admin_kelurahan')'help'].map((key)=>roleFeatures[key]!).where((feature)=>feature.capability==null || caps[feature.capability]==true).toList();
 }

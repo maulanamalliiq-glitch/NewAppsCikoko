@@ -1,3 +1,6 @@
+import 'support_chat.dart';
+import 'home_slides.dart';
+import 'officer_review.dart';
 import 'event_scope.dart';
 import 'app_settings.dart';
 import 'design_system.dart';
@@ -275,7 +278,7 @@ class _HomeState extends State<HomePage> {
   String get roleLabel=>role=='guest'?'Portal Publik':(roleNames[role]??role.toUpperCase());
   bool get isStaff=>role!='warga'&&role!='guest';
   bool get isAdmin=>capabilities['reports:view']==true;
-  List<RoleFeature> get modules=>role=='guest'?[roleFeatures['services']!,roleFeatures['waris']!,roleFeatures['waris_requirements']!,roleFeatures['jumantik']!,roleFeatures['news']!,roleFeatures['announcements']!,roleFeatures['gallery']!]:modulesForRole(role,capabilities);
+  List<RoleFeature> get modules=>role=='guest'?[roleFeatures['services']!,roleFeatures['waris']!,roleFeatures['waris_requirements']!,roleFeatures['jumantik']!,roleFeatures['news']!,roleFeatures['announcements']!,roleFeatures['gallery']!,roleFeatures['help']!]:modulesForRole(role,capabilities);
   void _refreshSettings(){if(mounted)setState((){});}
   @override void initState(){super.initState();CikokoSettings.language.addListener(_refreshSettings);load();if(api.token!=null){push=PushService(api);push!.start(refresh,onOpen:(message){
       WidgetsBinding.instance.addPostFrameCallback((_){
@@ -305,7 +308,9 @@ class _HomeState extends State<HomePage> {
       });
     }
   }
+  int homeSlidesRevision=0;
   Future<void> load() async {
+    if(mounted)setState(()=>homeSlidesRevision++);
     if(mounted)setState(()=>loading=true);
     try {
       if(api.token==null){if(mounted)setState(()=>permissionsOk=true);}else{
@@ -354,6 +359,7 @@ class _HomeState extends State<HomePage> {
     if(loggedIn==true&&mounted)widget.onAuthenticated();
   }
   void switchTo(String s) {
+    if(s=='Bantuan')s='Hubungi Kami';
     if(s=='Persyaratan Ahli Waris'){
       showCikokoWarisRequirements(context,
         onApply:(){if(mounted)switchTo('Surat Ahli Waris');});
@@ -548,13 +554,16 @@ class _HomeState extends State<HomePage> {
     case 'Laporan Kerja Bakti':return const ReportForm(kind:'kerja_bakti');
     case 'Laporan PPSU':return PpsuReportPage(api:api);
     case 'Riwayat':return const HistoryPage();
-    case 'Hubungi Kami':return const ChatPage();
+    case 'Bantuan':
+    case 'Hubungi Kami':return SupportChatPage(api:api);
+    case 'Foto Beranda':return role=='admin' ? HomeSlidesEditor(api:api) : const Center(child:Text('Pengaturan foto beranda hanya tersedia untuk Admin Utama.'));
     case 'Pesan Masuk':return const AdminChatPage();
     case 'Notifikasi':return eventList();
     case 'Inovasi':return InnovationPage(api:api);
     case 'Profil':return guest?profilePage():CivicProfilePage(api:api);
-    case 'Verifikasi Laporan':return const AdminReports();
-    case 'Verifikasi Ahli Waris':return role=='admin' ? const AdminReports(onlyKind:'waris',allowWarisDate:true) : const Center(child:Text('Khusus Admin Utama.'));
+    case 'Verifikasi Laporan':return capabilities['reports:view']==true ? OfficerReportsPage(api:api) : const Center(child:Text('Akun ini tidak memiliki izin untuk melihat laporan.'));
+    case 'Monitoring Wilayah':return capabilities['monitoring:view']==true ? TerritoryMonitoringPage(api:api) : const Center(child:Text('Akun ini tidak memiliki izin untuk monitoring wilayah.'));
+    case 'Verifikasi Ahli Waris':return capabilities['waris:view']==true ? AdminReports(onlyKind:'waris',allowWarisDate:role=='admin') : const Center(child:Text('Akun ini tidak memiliki izin untuk melihat pengajuan Ahli Waris.'));
     case 'Laporan Kegiatan Admin':return role=='admin' ? const AdminReports(onlyKind:'report') : const Center(child:Text('Khusus Admin Utama.'));
     case 'Tambah Berita':return MobileEditor(api:api,mode:'berita');
     case 'Tambah Pengumuman':return MobileEditor(api:api,mode:'pengumuman');
@@ -690,24 +699,11 @@ class _HomeState extends State<HomePage> {
     ]);
   }
   Widget home()=>ListView(padding:EdgeInsets.zero,children:[
-    if(isStaff) Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoStaffHero(
-      roleName:roleLabel,
-      publicCounts:letterCounts,
-      accountName:'${api.profile?['name']??'Petugas Cikoko'}',
-      onManagement: () => switchTo(
-        role == 'admin' && capabilities['role:manage'] == true
-          ? 'Kelola Akun Petugas' : 'Menu Cikoko'),
-      onServices: () => switchTo('Layanan Online'),
-    ))
-    else if(role=='warga') Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoResidentHero(
-      name:'${api.profile?['name']??'Warga Cikoko'}',
-      onService:()=>switchTo('Layanan Online'),
-      onStatus:()=>showPublicLetterStatus(context,api,category:'all'),
-      onAgenda:()=>switchTo('Berita & Kegiatan'),
-      onAspirations:()=>switchTo('Pusat Laporan'),
-      onInnovations:()=>switchTo('Inovasi'),
-    ))
-    else const SizedBox.shrink(), // authenticated roles handled above
+    Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:CikokoHomeSlideshow(api:api,refreshToken:homeSlidesRevision)),
+    Padding(padding:const EdgeInsets.fromLTRB(12,10,12,0),child:OutlinedButton.icon(
+      onPressed:()=>switchTo(capabilities['chat:reply']==true?'Pesan Masuk':'Hubungi Kami'),
+      icon:const Icon(Icons.support_agent_outlined),
+      label:Text(capabilities['chat:reply']==true?'Chat Warga':'Hubungi Admin'))),
 
     Padding(padding:const EdgeInsets.symmetric(horizontal:12),child:Column(
       crossAxisAlignment:CrossAxisAlignment.stretch,children:[
@@ -1626,9 +1622,10 @@ class AdminChatPage extends StatefulWidget{const AdminChatPage({super.key});@ove
 class _AdminChatState extends State<AdminChatPage>{List<dynamic> threads=[];@override void initState(){super.initState();load();}
  Future<void> load()async{try{final d=await api.call('chat_threads');if(mounted)setState(()=>threads=List<dynamic>.from(d['threads']??[]));}catch(e){if(mounted)notify(context,'$e',error:true);}}
  Future<void> reply(Map<String,dynamic> thread)async{
-   final sent=await showModalBottomSheet<bool>(context:context,isScrollControlled:true,useSafeArea:true,
-     builder:(_)=>AdminReplySheet(thread:thread));
-   if(sent==true&&mounted)await load();
+   await Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>Scaffold(
+     appBar:AppBar(title:const Text('Chat Warga')),
+     body:SupportChatPage(api:api,residentId:'${thread['user_id']}',residentName:'${thread['name']??'Warga'}'))));
+   if(mounted)await load();
  }
  @override
  Widget build(BuildContext context) => ListView(
@@ -1691,9 +1688,13 @@ class AdminReports extends StatefulWidget{
  @override State<AdminReports> createState()=>_AdminReportsState();
 }
 class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool busy=false;
+ Map<String,bool> capabilitiesForReview={};
  @override void initState(){super.initState();load();}
  Future<void> load()async{try{
- final d=await api.call('admin_reports');
+ final permissionResult=await api.call('permissions');
+ final grants=Map<String,dynamic>.from(permissionResult['capabilities'] as Map? ?? {});
+ capabilitiesForReview=grants.map((key,value)=>MapEntry(key,value==true));
+ final d=await api.call(widget.onlyKind=='waris'?'officer_waris':'admin_reports');
  final list=List<dynamic>.from(d['items']??[]);
  if(mounted)setState(()=>rows=list.where((item)=>widget.onlyKind==null||
   cikokoDocumentKind(Map<String,dynamic>.from(item as Map))==widget.onlyKind).toList());
@@ -1789,8 +1790,7 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
     const SizedBox(height:12),
     if(widget.onlyKind=='waris')
      CikokoPremiumSurface(
-      child:Text('Admin Utama dapat memeriksa dokumen dan tanggal '
-       'pengajuan Ahli Waris.',
+      child:Text(widget.allowWarisDate?'Periksa dokumen, status, dan tanggal pengajuan Ahli Waris.':'Periksa kelengkapan dokumen dan tindak lanjuti pengajuan Ahli Waris.',
        style:Theme.of(context).textTheme.bodySmall)),
     if(widget.onlyKind=='report')
      CikokoPremiumSurface(
@@ -1825,7 +1825,9 @@ class _AdminReportsState extends State<AdminReports>{List<dynamic> rows=[];bool 
        alignment:Alignment.centerRight,
        child:PopupMenuButton<String>(
         tooltip:'Tindakan Petugas',
-        enabled:!busy,
+        enabled:!busy && (cikokoDocumentKind(Map<String,dynamic>.from(raw as Map))=='waris'
+          ? (api.profile?['role']=='admin'||(capabilitiesForReview['waris:verify']??false))
+          : (api.profile?['role']=='admin'||(capabilitiesForReview['reports:verify']??false))),
         icon:Icon(Icons.more_horiz_rounded,
          color:Theme.of(context).colorScheme.primary),
         onSelected:(value)=>value=='edit_date'

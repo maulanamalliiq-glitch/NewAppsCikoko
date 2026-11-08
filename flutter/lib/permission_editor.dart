@@ -4,6 +4,7 @@ import 'api.dart';
 
 /// User-facing labels for the exact capability keys returned by the API.
 const cikokoPermissionNames = <String, String>{
+  'monitoring:view': 'Melihat Monitoring Wilayah',
   'report:jumantik': 'Kirim Laporan Jumantik',
   'report:kegiatan': 'Kirim Laporan Kegiatan',
   'report:fkdm': 'Kirim Laporan FKDM',
@@ -29,7 +30,7 @@ String cikokoPermissionLabel(String key) =>
 
 String cikokoPermissionGroup(String key) {
   if (key.startsWith('report:')) return 'Pelaporan Wilayah';
-  if (key.startsWith('reports:')) return 'Pemantauan & Verifikasi';
+  if (key.startsWith('reports:') || key.startsWith('monitoring:')) return 'Pemantauan & Verifikasi';
   if (key.startsWith('waris:')) return 'Pelayanan Ahli Waris';
   if (key.startsWith('content:') || key.startsWith('archive:')) {
     return 'Publikasi & Arsip';
