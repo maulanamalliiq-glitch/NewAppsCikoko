@@ -159,7 +159,7 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
           Expanded(child:Text(error!)),
           TextButton(onPressed:()=>refresh(),child:const Text('Coba Kembali'))
         ])),
-      Expanded(child:loading?const Center(child:CircularProgressIndicator()):
+      Expanded(child:loading&&messages.isEmpty?const Center(child:CircularProgressIndicator()):
         RefreshIndicator(onRefresh:()=>refresh(),child:ListView(
           controller:scroll,padding:const EdgeInsets.all(14),
           physics:const AlwaysScrollableScrollPhysics(),
