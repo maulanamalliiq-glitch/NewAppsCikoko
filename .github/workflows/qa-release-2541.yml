@@ -84,21 +84,27 @@ jobs:
           apk=build/app/outputs/flutter-apk/app-release.apk
           test -s "$apk"
           apksigner="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)/apksigner"
-          "$apksigner" verify --verbose --print-certs "$apk" > /tmp/cikoko-apk-check.log
-          actual_apk=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' /tmp/cikoko-apk-check.log | head -1 | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
-          test "$actual_apk" = '394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5'
           mkdir -p ../release-candidate
+          signed_apk=../release-candidate/Cikoko-SmartAPP-2.5.41-2541-Android-Release.apk
+          # Explicitly sign APK with the protected Play upload keystore.
+          "$apksigner" sign --ks "$CIKOKO_KEYSTORE_PATH" --ks-key-alias "$CIKOKO_KEY_ALIAS" \
+            --ks-pass env:CIKOKO_STORE_PASSWORD --key-pass env:CIKOKO_KEY_PASSWORD \
+            --out "$signed_apk" "$apk"
+          "$apksigner" verify --verbose --print-certs "$signed_apk" > /tmp/cikoko-apk-check.log
+          grep -i 'certificate SHA-256 digest' /tmp/cikoko-apk-check.log || true
+          actual_apk=$(sed -n -E 's/^[[:space:]]*Signer #[0-9]+ certificate SHA-256 digest:[[:space:]]*([0-9a-fA-F:]+).*$/\1/p' /tmp/cikoko-apk-check.log | head -1 | tr -d ':' | tr '[:lower:]' '[:upper:]')
+          if [[ "$actual_apk" != '394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5' ]]; then
+            echo "::error::APK signing certificate does not match the required Play upload certificate."
+            exit 1
+          fi
           cp "$aab" ../release-candidate/Cikoko-SmartAPP-2.5.41-2541-Play-Upload.aab
-          cp "$apk" ../release-candidate/Cikoko-SmartAPP-2.5.41-2541-Android-Release.apk
           (cd ../release-candidate && sha256sum *.apk *.aab > SHA256SUMS.txt)
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
-          name: cikoko-2541-candidate
-          path: |
-            flutter/build/app/outputs/flutter-apk/app-debug.apk
-            flutter/build/app/outputs/bundle/release/app-release.aab
-          if-no-files-found: warn
+          name: cikoko-2541-signed-release-candidate
+          path: release-candidate/*
+          if-no-files-found: error
           retention-days: 14
       - name: Remove certificate
         if: always()
