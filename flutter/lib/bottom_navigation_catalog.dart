@@ -2,9 +2,9 @@
 /// Notifications are available from the app-bar bell, not as a replacement
 /// for the dedicated Innovation bottom tab.
 const cikokoBottomRoutes = <String>[
-  'Dashboard',
-  'Layanan Online',
+  'Tentang Kami',
   'Menu Cikoko',
+  'Dashboard',
   'Inovasi',
   'Profil',
 ];

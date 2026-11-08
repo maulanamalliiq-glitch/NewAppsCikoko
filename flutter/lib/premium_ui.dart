@@ -53,31 +53,16 @@ class CikokoAppBarIdentity extends StatelessWidget {
   );
 }
 
+/// The approved Kelurahan Cikoko logo. Never substitute a generated C icon.
 class CikokoBrandMark extends StatelessWidget {
   final double size;
   const CikokoBrandMark({super.key,this.size=54});
   @override
-  Widget build(BuildContext context) => SizedBox.square(
-    dimension:size,child:CustomPaint(painter:const _CikokoMarkPainter()));
+  Widget build(BuildContext context)=>ClipOval(
+    child:Image.asset('assets/logo.png',width:size,height:size,
+      fit:BoxFit.contain),
+  );
 }
-class _CikokoMarkPainter extends CustomPainter {
-  const _CikokoMarkPainter();
-  @override
-  void paint(Canvas canvas,Size size) {
-    final rect=Rect.fromLTWH(size.width*.18,size.height*.16,size.width*.65,size.height*.68);
-    final paint=Paint()..style=PaintingStyle.stroke..strokeWidth=size.width*.19
-      ..strokeCap=StrokeCap.round
-      ..shader=const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,
-        colors:[Color(0xFF07469C),Color(0xFF1B7CEC),Color(0xFF06468F)])
-        .createShader(Offset.zero & size);
-    canvas.drawArc(rect,math.pi*.25,math.pi*1.50,false,paint);
-    final accent=Paint()..style=PaintingStyle.stroke..strokeWidth=size.width*.125
-      ..strokeCap=StrokeCap.round..color=CikokoPalette.gold;
-    canvas.drawArc(rect.deflate(size.width*.04),math.pi*.95,math.pi*.53,false,accent);
-  }
-  @override bool shouldRepaint(covariant CustomPainter oldDelegate)=>false;
-}
-
 
 /// Full-bleed photo banner. The in-app illustration remains available offline.
 class CikokoMonasBackdrop extends StatelessWidget {
@@ -273,6 +258,30 @@ class CikokoSearchLauncher extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Primary center destination requested by the Kelurahan: Beranda.
+class CikokoHomeOrb extends StatelessWidget {
+  final bool selected;
+  const CikokoHomeOrb({super.key,this.selected=false});
+  @override
+  Widget build(BuildContext context)=>Container(
+    key:const Key('cikoko_center_beranda'),
+    width:45,height:45,
+    decoration:BoxDecoration(
+      shape:BoxShape.circle,
+      gradient:const LinearGradient(
+        begin:Alignment.topLeft,
+        end:Alignment.bottomRight,
+        colors:[Color(0xFF2689F6),Color(0xFF0453BA),Color(0xFF06316F)]),
+      border:Border.all(
+        color:Colors.white.withValues(alpha:.9),width:2),
+      boxShadow:const [
+        BoxShadow(color:Color(0x3A1159BC),blurRadius:12,
+          offset:Offset(0,3)),
+      ]),
+    child:const Icon(Icons.home_rounded,color:Colors.white,size:24),
+  );
 }
 
 class CikokoMenuOrb extends StatelessWidget {

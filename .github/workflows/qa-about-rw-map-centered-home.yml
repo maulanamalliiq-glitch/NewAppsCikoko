@@ -1,0 +1,32 @@
+name: QA - Centered Home and Interactive RW About Map
+on:
+  push:
+    branches:
+      - feat/about-cikoko-rw-map-centered-home-20261108
+    paths:
+      - 'flutter/**'
+      - '.github/workflows/qa-about-rw-map-centered-home.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flutter-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - name: Restore tooling only (no APK build)
+        working-directory: flutter
+        run: flutter create --platforms=android --project-name=cikoko .
+      - name: Dependencies
+        working-directory: flutter
+        run: flutter pub get
+      - name: Static analysis
+        working-directory: flutter
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+      - name: Full unit and widget tests
+        working-directory: flutter
+        run: flutter test --reporter expanded
