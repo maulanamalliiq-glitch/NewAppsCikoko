@@ -7,6 +7,7 @@ void main() {
   test('Laporan wilayah hanya memuat laporan yang diizinkan akun', () {
     final allowed = modulesForRole('admin', {
       'reports:view': true,
+      'waris:view': true,
       'chat:reply': true,
       'content:create': true,
       'archive:create': true,
