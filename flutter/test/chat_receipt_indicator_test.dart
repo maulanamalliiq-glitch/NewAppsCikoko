@@ -30,6 +30,38 @@ void main(){
       expect(find.byTooltip(item.$3),findsOneWidget);
     });
   }
+  testWidgets('Old backend and stale GET cannot erase new message with identical text',(tester)async{
+    final firstHistory=Completer<http.Response>();
+    var getCount=0;
+    final api=CikokoApi()..token='valid-session';
+    final oldHistory=http.Response(
+      '{"ok":true,"messages":[{"id":3,"sender":"warga","message":"admin","created_at":"2026-11-05 08:12:04"}],"has_more":false}',
+      200,headers:{'content-type':'application/json'});
+    await http.runWithClient(()async{
+      await tester.pumpWidget(MaterialApp(home:Scaffold(body:SupportChatPage(api:api))));
+      await tester.pump();
+      expect(find.byIcon(Icons.send_rounded),findsOneWidget);
+      await tester.enterText(find.byType(TextField),'admin');
+      await tester.tap(find.byTooltip('Kirim Pesan'));
+      await tester.pump();
+      expect(find.text('admin'),findsOneWidget);
+      // Legacy backend sends {ok:true} with no message ID.
+      await tester.pump(const Duration(milliseconds:20));
+      firstHistory.complete(oldHistory);
+      await tester.pump(const Duration(milliseconds:100));
+      await tester.pump(const Duration(milliseconds:100));
+      // The stale history remains, but the new outgoing bubble must survive.
+      expect(find.text('admin'),findsNWidgets(2));
+      expect(getCount,greaterThanOrEqualTo(2),
+        reason:'Send must trigger a fresh GET even when the first GET is in flight');
+      await tester.pump(const Duration(seconds:1));
+    },()=>MockClient((request){
+      if(request.method=='POST')return Future.value(
+        http.Response('{"ok":true}',200,headers:{'content-type':'application/json'}));
+      getCount++;
+      return getCount==1?firstHistory.future:Future.value(oldHistory);
+    }));
+  });
   testWidgets('Outgoing message is visible even while initial history request is pending',(tester)async{
     final pendingGet=Completer<http.Response>();
     final pendingPost=Completer<http.Response>();
