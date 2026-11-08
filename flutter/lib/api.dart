@@ -47,6 +47,26 @@ class ApiError implements Exception {
   ApiError(this.message, {this.statusCode});
   @override String toString() => cikokoFormalMessage(message);
 }
+/// A report is confirmed only by JSON success carrying an actual database ID.
+Map<String,dynamic> cikokoReportUploadResponse(int status,String body){
+  dynamic decoded;
+  try{decoded=jsonDecode(body);}
+  on FormatException{
+    if(status==403)throw ApiError('Server menolak akses ke layanan. Pengelola perlu memeriksa izin website.',statusCode:403);
+    if(status==413)throw ApiError('Ukuran foto melebihi batas unggah server. Gunakan foto lebih kecil.',statusCode:413);
+    if(status>=500)throw ApiError('Server layanan mengalami kendala. Periksa riwayat laporan sebelum mengirim ulang.',statusCode:status);
+    throw ApiError('Respons layanan belum valid. Periksa riwayat sebelum mencoba kembali.',statusCode:status);
+  }
+  if(decoded is! Map<String,dynamic>)throw ApiError('Respons layanan tidak sesuai. Periksa riwayat sebelum mencoba kembali.',statusCode:status);
+  if(status==401)throw ApiError('Sesi telah berakhir. Silakan masuk kembali.',statusCode:401);
+  if(status>=400||decoded['ok']!=true){
+    final message='${decoded['error']??'Laporan belum berhasil dikirim.'}';
+    throw ApiError(cikokoFormalMessage(message),statusCode:status);
+  }
+  final id=decoded['id'];
+  if(id is! num||id.toInt()<1)throw ApiError('Laporan belum memiliki nomor penyimpanan. Periksa riwayat sebelum mengirim ulang.',statusCode:status);
+  return decoded;
+}
 class CikokoApi {
   static const root = 'https://datawebs.my.id/mobile-api/index.php';
   final _storage = const FlutterSecureStorage();
@@ -167,11 +187,8 @@ class CikokoApi {
         await streamed.sink.close();
         final response=await pending;
         final str=await response.stream.bytesToString();
-        final data=jsonDecode(str);
         if(response.statusCode==401&&token==uploadToken)await expireSession();
-        if(data is! Map<String,dynamic> || response.statusCode>=400 || data['ok']!=true){
-          throw ApiError(data is Map? "${data['error']??'Upload gagal'}":'Upload gagal');
-        }
+        final data=cikokoReportUploadResponse(response.statusCode,str);
         uploadSuccess=true;
         progress?.call(1);
         return data;
