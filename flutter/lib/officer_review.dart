@@ -21,6 +21,7 @@ class _OfficerReportsState extends State<OfficerReportsPage> {
   final List<Map<String,dynamic>> items=[];
   bool loading=true,moreLoading=false,canVerify=false;
   String? error;
+  bool partialSources=false;
   String category='',status='';
   int? next;
   int total=0,revision=0;
@@ -41,6 +42,7 @@ class _OfficerReportsState extends State<OfficerReportsPage> {
         total=(result['total'] as num?)?.toInt()??items.length;
         next=(result['next_offset'] as num?)?.toInt();
         canVerify=result['can_verify']==true;
+        partialSources=result['sources'] is Map && (result['sources'] as Map).values.any((value)=>value==false);
       });
     }catch(e){if(mounted&&current==revision)setState(()=>error=cikokoFormalMessage(e));}
     finally{if(mounted&&current==revision)setState((){loading=false;moreLoading=false;});}
@@ -74,6 +76,7 @@ class _OfficerReportsState extends State<OfficerReportsPage> {
       if(loading)const Center(child:CircularProgressIndicator())
       else ...[
         Text('$total laporan',style:Theme.of(context).textTheme.titleMedium),
+        if(partialSources)const Padding(padding:EdgeInsets.symmetric(vertical:8),child:Text('Sebagian jenis laporan belum tersedia. Daftar ini menampilkan laporan yang telah terhubung.')),
         if(error!=null)Padding(padding:const EdgeInsets.symmetric(vertical:12),child:Column(children:[
           Text(error!,textAlign:TextAlign.center),
           TextButton(onPressed:()=>load(more:items.isNotEmpty),child:const Text('Coba Kembali')),
@@ -195,6 +198,8 @@ class _TerritoryMonitoringState extends State<TerritoryMonitoringPage> {
         ]else if(!snapshot.hasData)const Center(child:CircularProgressIndicator())
         else ...[
           CikokoPremiumSurface(child:Text('Total Laporan dan Pengajuan: ${snapshot.data!['total']}',style:Theme.of(context).textTheme.titleMedium)),
+          if(snapshot.data!['sources'] is Map && (snapshot.data!['sources'] as Map).values.any((value)=>value==false))
+            const Padding(padding:EdgeInsets.symmetric(vertical:8),child:Text('Sebagian jenis laporan belum tersedia. Rekap mencakup layanan yang telah terhubung.')),
           const SizedBox(height:12),
           Wrap(spacing:8,runSpacing:6,children:[
             for(final entry in Map<String,dynamic>.from(snapshot.data!['statuses'] as Map).entries)
