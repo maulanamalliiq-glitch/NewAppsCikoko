@@ -44,6 +44,7 @@ jobs:
           for p in Path('lib').glob('*.dart'):
             s=p.read_text()
             s=re.sub(r'(?<![\w])TextStyle\(', "TextStyle(fontFamily:'Roboto',",s)
+            s=s.replace("TextStyle(fontFamily:'Roboto',fontSize:13,height:1.5,fontFamily:","TextStyle(fontSize:13,height:1.5,fontFamily:")
             p.write_text(s)
           PYTHON
           flutter test test_docs/resident_screens.dart --update-goldens
