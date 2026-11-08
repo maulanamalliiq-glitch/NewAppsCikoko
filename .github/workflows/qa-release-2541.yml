@@ -1,0 +1,93 @@
+name: Release 2.5.41 verification and signed candidate
+on:
+  push:
+    branches: [release/2.5.41-readiness-20261108]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-2541-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: test-only-password
+          MYSQL_DATABASE: cikoko_test
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -ptest-only-password"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_mysql
+      - name: API syntax and isolated regression checks
+        env:
+          TEST_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=cikoko_test;charset=utf8mb4
+          TEST_MYSQL_USER: root
+          TEST_MYSQL_PASSWORD: test-only-password
+        run: |
+          find qa/release-api -name '*.php' -print0 | xargs -0 -n1 php -l
+          php qa/release-api/release_regression_test.php
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: Prepare Android
+        working-directory: flutter
+        run: |
+          flutter create --platforms=android --project-name=cikoko .
+          flutter pub get
+      - name: Analyze and test
+        working-directory: flutter
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings
+          flutter test
+      - name: Build debug install candidate
+        working-directory: flutter
+        run: flutter build apk --debug
+      - name: Build signed Play candidate when protected certificate is available
+        env:
+          CIKOKO_KEYSTORE_B64: ${{ secrets.CIKOKO_KEYSTORE_B64 }}
+          CIKOKO_STORE_PASSWORD: ${{ secrets.CIKOKO_STORE_PASSWORD }}
+          CIKOKO_KEY_PASSWORD: ${{ secrets.CIKOKO_KEY_PASSWORD }}
+          CIKOKO_KEY_ALIAS: androidkey
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CIKOKO_KEYSTORE_B64"
+          test -n "$CIKOKO_STORE_PASSWORD"
+          test -n "$CIKOKO_KEY_PASSWORD"
+          printf '%s' "$CIKOKO_KEYSTORE_B64" | base64 --decode > flutter/android/cikoko_upload.jks
+          chmod 600 flutter/android/cikoko_upload.jks
+          export CIKOKO_KEYSTORE_PATH="$GITHUB_WORKSPACE/flutter/android/cikoko_upload.jks"
+          cd flutter
+          flutter build appbundle --release
+          aab=build/app/outputs/bundle/release/app-release.aab
+          jarsigner -verify "$aab" > /tmp/cikoko-aab-check.log
+          grep -q 'jar verified' /tmp/cikoko-aab-check.log
+          actual=$(keytool -printcert -jarfile "$aab" | sed -n 's/^[[:space:]]*SHA256: //p' | tr -d ':[:space:]' | tr '[:lower:]' '[:upper:]')
+          test "$actual" = '394633E6A2F4C91C150D81B228908562D230D763031A0A0C205618B9D669D4E5'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cikoko-2541-candidate
+          path: |
+            flutter/build/app/outputs/flutter-apk/app-debug.apk
+            flutter/build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Remove certificate
+        if: always()
+        run: rm -f flutter/android/cikoko_upload.jks

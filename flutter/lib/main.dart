@@ -1,3 +1,7 @@
+import 'adaptive_poll.dart';
+import 'waris_form.dart';
+export 'waris_form.dart' show WarisForm;
+import 'account_support.dart';
 import 'support_chat.dart';
 import 'chat_launcher.dart';
 import 'home_slides.dart';
@@ -115,10 +119,14 @@ class _EntryState extends State<Entry> {
   @override
   void initState() {
     super.initState();
+    api.sessionRevision.addListener(refreshSession);
     api.restore().whenComplete(() {
       if (mounted) setState(() => loading = false);
     });
   }
+
+  @override
+  void dispose(){api.sessionRevision.removeListener(refreshSession);super.dispose();}
 
   void refreshSession() {
     if (mounted) setState(() {});
@@ -140,7 +148,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
  @override void initState(){super.initState();signup=widget.startWithRegistration;}
  @override void dispose(){user.dispose();pass.dispose();for(final c in fields.values){c.dispose();}super.dispose();}
  TextEditingController ctrl(String key)=>fields.putIfAbsent(key,()=>TextEditingController());
- Future<void> submit() async{setState(()=>busy=true);try{if(signup){if(ctrl('password').text!=ctrl('confirm').text)throw ApiError('Konfirmasi kata sandi tidak sesuai.');await api.register({for(final k in ['name','username','password','confirm','address','rt','rw','phone','email']) k:ctrl(k).text.trim()});if(mounted){setState(()=>signup=false);notify(context,'Pendaftaran berhasil. Silakan masuk menggunakan akun Anda.');}}else{await api.login(user.text.trim(),pass.text);widget.onLogin();}}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>busy=false);}}
+ Future<void> submit() async{setState(()=>busy=true);try{if(signup){if(ctrl('password').text!=ctrl('confirm').text)throw ApiError('Konfirmasi kata sandi tidak sesuai.');await api.register({for(final k in ['name','username','password','confirm','address','rt','rw','phone','email']) k:(k=='password'||k=='confirm')?ctrl(k).text:ctrl(k).text.trim()});if(mounted){setState(()=>signup=false);notify(context,'Pendaftaran berhasil. Silakan masuk menggunakan akun Anda.');}}else{await api.login(user.text.trim(),pass.text);widget.onLogin();}}catch(e){if(mounted)notify(context,'$e',error:true);}finally{if(mounted)setState(()=>busy=false);}}
  @override
  Widget build(BuildContext context) {
   final title=signup?'Daftar Akun Warga':'Masuk ke Cikoko SmartAPP';
@@ -245,6 +253,7 @@ class _LoginState extends State<LoginPage>{final user=TextEditingController(),pa
         SizedBox(width:double.infinity,height:46,child:OutlinedButton(
          onPressed:busy?null:()=>setState(()=>signup=!signup),
          child:Text(signup?'Sudah punya akun? Masuk':'Daftar Akun Baru'))),
+        TextButton(onPressed:()=>Navigator.of(context).push(MaterialPageRoute<void>(builder:(_)=>AccountSupportPage(api:api))),child:const Text('Lupa Kata Sandi / Bantuan Akun')),
         const SizedBox(height:10),
         Center(child:Text('Data digunakan untuk pelayanan Kelurahan Cikoko.',
          textAlign:TextAlign.center,style:TextStyle(
@@ -273,7 +282,7 @@ class _HomeState extends State<HomePage> with WidgetsBindingObserver {
   Map<String,int>? letterCounts;
   Map<String,bool> capabilities={};
   bool loading=true,permissionsOk=false;
-  Timer? timer;
+  AdaptivePoller? timer;
   PushService? push;
   String get role => api.token==null?'guest':'${api.profile?['role']??'warga'}';
   String get roleLabel=>role=='guest'?'Portal Publik':(roleNames[role]??role.toUpperCase());
@@ -289,7 +298,7 @@ class _HomeState extends State<HomePage> with WidgetsBindingObserver {
         switchTo(destinationForPushCategory('${message.data['category']??''}',isStaff:isStaff,canReply:capabilities['chat:reply']==true));
       });
     });startEventPolling();}}
-  void startEventPolling(){timer?.cancel();if(api.token!=null)timer=Timer.periodic(const Duration(seconds:3),(_)=>refresh());}
+  void startEventPolling(){timer?.cancel();if(api.token!=null)timer=AdaptivePoller(()async{final before=events.map((e)=>'${e['id']}:${e['is_read']}').join(',');await refresh();if(notificationSyncError!=null)throw StateError('offline');return before!=events.map((e)=>'${e['id']}:${e['is_read']}').join(',');})..start(immediate:false);}
   @override void didChangeAppLifecycleState(AppLifecycleState state){
     if(state==AppLifecycleState.resumed){startEventPolling();refresh();}else{timer?.cancel();}
   }
@@ -1137,296 +1146,6 @@ class _PhotoState extends State<PhotoInput> {
     ])));
 
 }
-class WarisForm extends StatefulWidget{const WarisForm({super.key});@override State<WarisForm> createState()=>_WarisState();}
-class _WarisState extends State<WarisForm>{final inputs=<String,TextEditingController>{};final files=<String,List<String>>{};int children=0;bool sending=false;double progress=0;bool agree=false;String? savedReference;bool completed=false;
- TextEditingController v(String id)=>inputs.putIfAbsent(id,()=>TextEditingController());
- String? photoFor(String id)=>files[id]?.isNotEmpty==true?files[id]!.first:null;
- @override void dispose(){for(final x in inputs.values){x.dispose();}super.dispose();}
- static const names=<String,String>{'name':'Nama pemohon','nik':'NIK pemohon (16 digit)','phone':'Nomor HP','address':'Alamat lengkap','relation':'Hubungan dengan pewaris','deceased_name':'Nama almarhum / almarhumah','birthplace':'Tempat lahir pewaris','birthdate':'Tanggal lahir (YYYY-MM-DD)','marriage_date':'Tanggal menikah (YYYY-MM-DD)','deathdate':'Tanggal meninggal (YYYY-MM-DD)','marital_status':'Status perkawinan','heirs':'Daftar ahli waris'};
- static const requiredPhotos=<String,String>{'r1':'Surat pengantar RT/RW','r2':'Surat permohonan','r3':'Surat pernyataan keabsahan','r4_ktp':'KTP Ahli Waris','r4_kk':'KK Ahli Waris','r4_akta':'Akta Lahir Ahli Waris','r5':'Surat kematian','r6':'Surat nikah'};
- static const witnessPhotos=<String,String>{'saksi_1':'KTP Saksi Pertama','saksi_2':'KTP Saksi Kedua'};
- static const optionalPhotos=<String,String>{'r7':'Akta cerai (jika bercerai)','r8':'Surat kematian ahli waris (jika ada)'};
- static const childPhotos=<String,String>{'ktp':'KTP','kk':'KK','akta':'Akta Lahir'};
- Future<void> showIncomplete(List<String> problems)async{
-   if(!mounted)return;
-   await showDialog<void>(context:context,builder:(dialog)=>AlertDialog(
-     title:const Text('Pengajuan Ahli Waris Belum Lengkap'),
-     content:ConstrainedBox(constraints:const BoxConstraints(maxHeight:370),
-       child:SingleChildScrollView(child:Column(
-         mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.start,
-         children:[
-           const Text('Mohon lengkapi atau perbaiki bagian berikut sebelum mengirim:'),
-           const SizedBox(height:12),
-           for(var i=0;i<problems.length;i++)Padding(
-             padding:const EdgeInsets.only(bottom:8),
-             child:Text((i+1).toString()+'. '+problems[i],
-               style:const TextStyle(fontSize:13))),
-         ],
-       ))),
-     actions:[FilledButton(onPressed:()=>Navigator.pop(dialog),
-       child:const Text('Perbaiki Isian'))],
-   ));
- }
- bool validDate(String value){
-   if(!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value))return false;
-   final parts=value.split('-').map(int.tryParse).toList();
-   if(parts.any((part)=>part==null))return false;
-   final date=DateTime(parts[0]!,parts[1]!,parts[2]!);
-   return date.year==parts[0]&&date.month==parts[1]&&date.day==parts[2] &&
-     !date.isAfter(DateTime.now())&&date.year>=1850;
- }
- Future<void> uploadWitnessDocuments(String reference)async{
-    final witnessFiles=<String,List<String>>{};
-    for(final e in witnessPhotos.entries){
-      final path=photoFor(e.key);
-      if(path!=null)witnessFiles[e.key]=[path];
-    }
-    if(witnessFiles.length!=witnessPhotos.length)throw ApiError('Mohon lengkapi kedua foto KTP saksi.');
-    await api.upload('waris_add_witnesses',{'reference':reference},witnessFiles,
-      progress:(p){if(mounted)setState(()=>progress=p);});
-  }
-  Future<void> send()async{
-    if(sending||completed)return;
-    if(savedReference!=null){
-      setState((){sending=true;progress=0;});
-      try{
-        await uploadWitnessDocuments(savedReference!);
-        if(mounted){setState(()=>completed=true);notify(context,'KTP kedua saksi berhasil melengkapi pengajuan '+savedReference!);}
-      }catch(_){
-        await showIncomplete(['Pengajuan '+savedReference!+' sudah tersimpan. KTP saksi belum dapat ditambahkan. Coba Kembali, atau lengkapi melalui Riwayat Pengajuan.']);
-      }finally{if(mounted)setState(()=>sending=false);}
-      return;
-    }
-   final missing=<String>[];
-   for(final key in const ['name','nik','phone','address','relation',
-       'deceased_name','heirs']){
-     if(v(key).text.trim().isEmpty)missing.add('Isian '+(names[key]??key)+' masih kosong.');
-   }
-   final nik=v('nik').text.trim();
-   if(nik.isNotEmpty&&!RegExp(r'^\d{16}$').hasMatch(nik)){
-     missing.add('NIK pemohon harus tepat 16 digit angka.');
-   }
-   final phone=v('phone').text.trim();
-   if(phone.isNotEmpty&&!RegExp(r'^\+?[0-9]{8,16}$').hasMatch(phone)){
-     missing.add('Nomor HP harus 8–16 digit angka, boleh diawali tanda +.');
-   }
-   for(final key in const ['birthdate','marriage_date','deathdate']){
-     final date=v(key).text.trim();
-     if(date.isNotEmpty&&!validDate(date)){
-       missing.add((names[key]??key)+' harus dipilih dari kalender dan tidak boleh melewati hari ini.');
-     }
-   }
-   for(final entry in {...requiredPhotos,...witnessPhotos}.entries){
-      final path=photoFor(entry.key);
-     if(path==null)missing.add('Foto '+entry.value+' belum dipilih (Kamera atau Galeri).');
-     else if(!await File(path).exists())missing.add('Foto '+entry.value+' tidak ditemukan; pilih ulang fotonya.');
-   }
-   for(var i=1;i<=children;i++){
-     if(v('child_name_'+i.toString()).text.trim().isEmpty){
-       missing.add('Nama anak ke-'+i.toString()+' belum diisi.');
-     }
-     for(final entry in childPhotos.entries){
-       final key='child_'+i.toString()+'_'+entry.key;
-       final path=photoFor(key);
-       if(path==null)missing.add('Foto '+entry.value+' anak ke-'+i.toString()+' belum dipilih.');
-       else if(!await File(path).exists())missing.add('Foto '+entry.value+' anak ke-'+i.toString()+' hilang; pilih ulang.');
-     }
-   }
-   for(final entry in optionalPhotos.entries){
-     final path=photoFor(entry.key);
-     if(path!=null&&!await File(path).exists()){
-       missing.add('Foto '+entry.value+' tidak ditemukan; pilih ulang atau kosongkan.');
-     }
-   }
-   if(!agree)missing.add('Centang pernyataan kebenaran data dan foto dokumen.');
-   if(missing.isNotEmpty){await showIncomplete(missing);return;}
-
-   setState((){sending=true;progress=0;});
-   try{
-     // Reject an outdated cPanel before sending potentially sensitive documents.
-     final capability=await api.call('waris_format');
-     if(capability['upload_format']!='split_v1'){
-        throw ApiError('Layanan Ahli Waris perlu diperbarui sebelum pengajuan dikirim.');
-      }
-      final witnessCapability=await api.call('waris_witness_capabilities');
-      if(witnessCapability['supported']!=true)throw ApiError('Fitur dua KTP saksi belum tersedia. Hubungi pengelola layanan.');
-     final count=requiredPhotos.length+children*childPhotos.length+
-       optionalPhotos.keys.where((key)=>photoFor(key)!=null).length;
-     final maxFiles=(capability['max_file_uploads'] as num?)?.toInt()??0;
-     final staged=capability['staged_uploads']==true;
-     final mainPhotos=<String,List<String>>{
-        for(final e in files.entries)
-          if(!witnessPhotos.containsKey(e.key))e.key:e.value,
-      };
-      final data=<String,String>{for(final e in inputs.entries)e.key:e.value.text.trim(),
-       'declaration':'1','child_count':children.toString(),
-       'document_format':'split_v1'};
-     late final Map<String,dynamic> response;
-     if(staged){
-       // Shared hosting may limit each POST to 20 files. Send 8 per request.
-       final random=Random.secure();
-       final draftKey=List.generate(16,
-         (_)=>random.nextInt(256).toRadixString(16).padLeft(2,'0')).join();
-       final photos=<MapEntry<String,String>>[
-         for(final entry in mainPhotos.entries)
-            for(final path in entry.value)MapEntry(entry.key,path),
-       ];
-       const batchSize=8;
-       final steps=(photos.length+batchSize-1)~/batchSize;
-       for(var i=0;i<photos.length;i+=batchSize){
-         final chunk=photos.skip(i).take(batchSize);
-         final subset=<String,List<String>>{
-           for(final photo in chunk)photo.key:[photo.value],
-         };
-         final batch=i~/batchSize;
-         await api.upload('waris_stage',{'draft_key':draftKey},subset,
-           progress:(value){
-             if(mounted)setState(()=>progress=(batch+value)/steps*0.95);
-           });
-       }
-       data['draft_key']=draftKey;
-       response=await api.upload('waris',data,{},progress:(value){
-         if(mounted)setState(()=>progress=0.95+0.05*value);
-       });
-     }else{
-       if(maxFiles>0&&count>maxFiles){
-         throw ApiError('Dokumen belum dapat dikirim. Foto yang telah dipilih tetap tersedia. Silakan coba kembali atau hubungi petugas kelurahan.');
-       }
-       response=await api.upload('waris',data,mainPhotos,
-         progress:(value){if(mounted)setState(()=>progress=value);});
-     }
-           savedReference='${response['reference']??''}'.trim();
-      if(savedReference!.isEmpty)throw ApiError('Nomor pengajuan belum tersedia. Periksa Riwayat Pengajuan.');
-      await uploadWitnessDocuments(savedReference!);
-      if(mounted){setState(()=>completed=true);notify(context,'Permohonan dan KTP saksi berhasil disimpan. Nomor: '+savedReference!);}
-   }catch(e){
-     final raw=e.toString();
-     final text=raw.contains('Endpoint tidak tersedia')||
-        raw.contains('Persyaratan foto belum lengkap: r4')
-       ?'Pengajuan belum dapat dikirim. Silakan coba kembali atau hubungi petugas kelurahan. '
-        'Foto yang telah dipilih tetap tersedia dalam formulir.'
-       :raw;
-     await showIncomplete([savedReference!=null
-        ?'Pengajuan '+savedReference!+' sudah tersimpan. KTP saksi belum berhasil ditambahkan. Jangan mengirim pengajuan baru. Gunakan Coba Lengkapi KTP Saksi atau buka Riwayat.'
-        :text]);
-   }finally{if(mounted)setState(()=>sending=false);}
- }
- @override
- Widget build(BuildContext context) => ListView(
-  padding: const EdgeInsets.fromLTRB(13, 12, 13, 30),
-  children: [
-   const CikokoPremiumHeader(
-    title: 'Pengajuan Ahli Waris',
-    subtitle: 'Identitas, foto dokumen, saksi, dan konfirmasi dalam satu layanan.',
-    icon: Icons.family_restroom_outlined),
-   const SizedBox(height: 12),
-   CikokoPremiumSurface(child:Row(children:[
-    Icon(Icons.verified_user_outlined,
-      color:Theme.of(context).colorScheme.primary,size:27),
-    const SizedBox(width:12),
-    Expanded(child:Text('Seluruh identitas dan foto dokumen akan diperiksa petugas. '
-      'Pastikan setiap dokumen terbaca dan sesuai data sebenarnya.',
-      style:Theme.of(context).textTheme.bodySmall)),
-   ])),
-   const SizedBox(height: 13),
-   CikokoFlowSection(
-    title: '01 · Identitas Pemohon dan Pewaris',
-    subtitle: 'Isi data keluarga sesuai dokumen asli.',
-    icon: Icons.badge_outlined,
-    child: Column(children:[
-     for (final e in names.entries)
-      Field(e.value,v(e.key),
-       lines:e.key=='heirs'||e.key=='address'?3:1,
-       date:const ['birthdate','marriage_date','deathdate'].contains(e.key),
-       keyboard:e.key=='nik'?TextInputType.number:
-        e.key=='phone'?TextInputType.phone:TextInputType.text),
-    ]),
-   ),
-   const CikokoPremiumSection(
-     title:'02 · Foto Persyaratan Wajib',
-     subtitle:'Setiap foto mempunyai area pratinjau dan tombol ganti.'),
-   for (final e in requiredPhotos.entries)
-    PhotoInput(key:ValueKey(e.key),label:e.value,
-      currentPath:photoFor(e.key),
-      onChanged:(file)=>setState(()=>files[e.key]=[file])),
-   const SizedBox(height: 12),
-   const CikokoPremiumSection(title:'03 · Dua Orang Saksi',
-     subtitle:'Lengkapi identitas kedua saksi.'),
-   for (final e in witnessPhotos.entries)
-    PhotoInput(key:ValueKey(e.key),label:e.value,
-      currentPath:photoFor(e.key),
-      onChanged:(file)=>setState(()=>files[e.key]=[file])),
-   const SizedBox(height: 12),
-   const CikokoPremiumSection(title:'04 · Dokumen Kondisional',
-     subtitle:'Lampirkan jika berlaku untuk permohonan Anda.'),
-   for (final e in optionalPhotos.entries)
-    PhotoInput(key:ValueKey(e.key),label:e.value,
-      currentPath:photoFor(e.key),
-      onChanged:(file)=>setState(()=>files[e.key]=[file])),
-   const SizedBox(height: 12),
-   CikokoPremiumSurface(child:Column(
-    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-     Row(children:[
-      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-       Text('05 · Data Anak',style:Theme.of(context).textTheme.titleMedium),
-       Text('Maksimal 10 anak jika diperlukan.',
-        style:Theme.of(context).textTheme.bodySmall),
-      ])),
-      OutlinedButton.icon(
-       onPressed:children>=10?null:()=>setState(()=>children++),
-       icon:const Icon(Icons.add_rounded,size:17),
-       label:const Text('Tambah')),
-     ]),
-     for(var i=1;i<=children;i++)...[
-      const SizedBox(height: 12),
-      Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(children:[
-       Field('Nama anak ke-$i',v('child_name_$i')),
-       for (final e in childPhotos.entries)
-        PhotoInput(key:ValueKey('child_${i}_${e.key}'),
-          label:'${e.value} anak ke-$i',
-          currentPath:photoFor('child_${i}_${e.key}'),
-          onChanged:(file)=>setState(()=>
-            files['child_${i}_${e.key}']=[file])),
-      ]))),
-     ],
-    ])),
-   const SizedBox(height: 13),
-   CikokoPremiumSurface(child:Column(
-    crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-     Text('06 · Pernyataan dan Pengiriman',
-       style:Theme.of(context).textTheme.titleMedium),
-     const SizedBox(height:8),
-     CheckboxListTile(
-      value:agree,contentPadding:EdgeInsets.zero,
-      controlAffinity:ListTileControlAffinity.leading,
-      onChanged:sending||completed?null:
-       (value)=>setState(()=>agree=value??false),
-      title:const Text('Saya menyatakan seluruh data dan foto dokumen '
-        'sesuai keadaan sebenarnya.',style:TextStyle(fontSize:12,height:1.4)),
-     ),
-     if(sending)...[
-      LinearProgressIndicator(value:progress>0?progress:null),
-      const SizedBox(height:8),
-      Text('Mengirim ${(progress*100).toStringAsFixed(0)}%',
-        style:Theme.of(context).textTheme.bodySmall),
-     ],
-     const SizedBox(height: 12),
-     FilledButton.icon(
-      key:const Key('waris_premium_submit'),
-      onPressed:sending||completed?null:send,
-      icon:Icon(completed?Icons.check_circle_rounded:
-        savedReference!=null?Icons.cloud_upload_outlined:Icons.send_outlined),
-      label:Padding(padding:const EdgeInsets.symmetric(vertical:10),
-       child:Text(completed?'Pengajuan dan KTP Saksi Tersimpan':
-         savedReference!=null?'Coba Lengkapi KTP Saksi':
-          'Kirim Permohonan Ahli Waris',
-         textAlign:TextAlign.center)),
-     ),
-    ])),
-   const CikokoPageSignature(),
-  ],
- );
-}
 class ReportForm extends StatefulWidget{final String kind;const ReportForm({super.key,required this.kind});@override State<ReportForm> createState()=>_ReportState();}
 class _ReportState extends State<ReportForm>{final address=TextEditingController(),phone=TextEditingController(),notes=TextEditingController();String? photo;bool sending=false;double progress=0;
  @override void dispose(){address.dispose();phone.dispose();notes.dispose();super.dispose();}
@@ -1631,14 +1350,17 @@ class _ChatState extends State<ChatPage>{final ctrl=TextEditingController();List
 }
 class AdminChatPage extends StatefulWidget{const AdminChatPage({super.key});@override State<AdminChatPage> createState()=>_AdminChatState();}
 class _AdminChatState extends State<AdminChatPage> with WidgetsBindingObserver {
- List<dynamic> threads=[];Timer? timer;bool fetching=false,loading=true;String? error;
+ List<dynamic> threads=[];AdaptivePoller? timer;bool fetching=false,loading=true,hasMore=false;String? error;final chatSearch=TextEditingController();Timer? searchDelay;
  @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);load();startPolling();}
- void startPolling(){timer?.cancel();timer=Timer.periodic(const Duration(seconds:3),(_)=>load());}
+ void startPolling(){timer?.cancel();timer=AdaptivePoller(()async{final before=threads.map((e)=>'${e['id']}').join(',');await load();if(error!=null)throw StateError('offline');return before!=threads.map((e)=>'${e['id']}').join(',');})..start(immediate:false);}
  @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed){startPolling();load();}else{timer?.cancel();}}
- @override void dispose(){WidgetsBinding.instance.removeObserver(this);timer?.cancel();super.dispose();}
- Future<void> load()async{
+ @override void dispose(){WidgetsBinding.instance.removeObserver(this);timer?.cancel();searchDelay?.cancel();chatSearch.dispose();super.dispose();}
+ Future<void> load({bool older=false,bool reset=false})async{
   if(fetching)return;fetching=true;
-  try{final d=await api.call('chat_threads');if(mounted)setState((){threads=List<dynamic>.from(d['threads']??[]);error=null;});}
+  try{final d=await api.callWithParams('chat_threads',{'search':chatSearch.text.trim(),if(older&&threads.isNotEmpty)'before_id':'${threads.last['id']}'});if(mounted)setState((){
+    final incoming=List<dynamic>.from(d['threads']??[]);final byUser={for(final e in [...(reset?[]:threads),...incoming])'${e['user_id']}':e};
+    threads=byUser.values.toList()..sort((a,b)=>(int.tryParse('${b['id']}')??0).compareTo(int.tryParse('${a['id']}')??0));if(older||reset||threads.length<=50)hasMore=d['has_more']==true;error=null;
+   });}
   catch(e){if(mounted)setState(()=>error=cikokoFormalMessage(e));}
   finally{fetching=false;if(mounted)setState(()=>loading=false);}
  }
@@ -1656,6 +1378,8 @@ class _AdminChatState extends State<AdminChatPage> with WidgetsBindingObserver {
     title:'Pesan Masuk',
     subtitle:'Percakapan warga yang tersedia untuk akun petugas ini.',
     icon:Icons.mark_chat_unread_outlined),
+   Padding(padding:const EdgeInsets.all(12),child:TextField(controller:chatSearch,decoration:const InputDecoration(labelText:'Cari nama atau pesan',prefixIcon:Icon(Icons.search)),onChanged:(_){searchDelay?.cancel();searchDelay=Timer(const Duration(milliseconds:400),()=>load(reset:true));})),
+   if(hasMore)TextButton(onPressed:()=>load(older:true),child:const Text('Muat Percakapan Sebelumnya')),
    const SizedBox(height:12),
    if(loading)const Center(child:CircularProgressIndicator()),
    if(error!=null)Padding(padding:const EdgeInsets.all(12),child:Column(children:[Text(error!),TextButton(onPressed:load,child:const Text('Coba Kembali'))])),

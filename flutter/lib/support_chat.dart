@@ -1,3 +1,4 @@
+import 'adaptive_poll.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'api.dart';
@@ -13,19 +14,27 @@ class SupportChatPage extends StatefulWidget {
 class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserver {
   final message=TextEditingController();
   List<dynamic> messages=[];
-  Timer? timer;
-  bool sending=false,loading=true,fetching=false;
+  AdaptivePoller? timer;
+  bool sending=false,loading=true,fetching=false,hasOlder=false;
   String? error;
   bool get admin=>widget.residentId!=null;
   @override void initState(){super.initState();WidgetsBinding.instance.addObserver(this);refresh();startPolling();}
-  void startPolling(){timer?.cancel();timer=Timer.periodic(const Duration(seconds:3),(_)=>refresh());}
+  void startPolling(){timer?.cancel();timer=AdaptivePoller(()async{final before=messages.length;await refresh();if(error!=null)throw StateError('offline');return before!=messages.length;})..start(immediate:false);}
   @override void didChangeAppLifecycleState(AppLifecycleState state){if(state==AppLifecycleState.resumed){startPolling();refresh();}else{timer?.cancel();}}
   @override void dispose(){WidgetsBinding.instance.removeObserver(this);timer?.cancel();message.dispose();super.dispose();}
-  Future<void> refresh()async{
+  Future<void> refresh({bool older=false})async{
     if(fetching)return;fetching=true;
     try{
-      final result=admin?await widget.api.callWithParams('support_admin_thread',{'user_id':widget.residentId!}):await widget.api.call('chat');
-      if(mounted)setState((){messages=List<dynamic>.from(result['messages'] as List? ?? const []);error=null;});
+      final query=<String,String>{if(admin)'user_id':widget.residentId!,
+       if(messages.isNotEmpty)(older?'before_id':'after_id'):'${older?messages.first['id']:messages.last['id']}'};
+      final result=await widget.api.callWithParams(admin?'support_admin_thread':'chat',query);
+      if(mounted)setState((){
+       final incoming=List<dynamic>.from(result['messages'] as List? ?? const []);
+       final byId={for(final row in [...messages,...incoming])'${row['id']}':row};
+       messages=byId.values.toList()..sort((a,b)=>(int.tryParse('${a['id']}')??0).compareTo(int.tryParse('${b['id']}')??0));
+       if(older||query['after_id']==null)hasOlder=result['has_more']==true;
+       error=null;
+      });
     }catch(e){if(mounted)setState(()=>error=cikokoFormalMessage(e));}
     finally{fetching=false;if(mounted)setState(()=>loading=false);}
   }
@@ -48,6 +57,7 @@ class _SupportChatState extends State<SupportChatPage> with WidgetsBindingObserv
         Expanded(child:Text(error!)),TextButton(onPressed:refresh,child:const Text('Coba Kembali'))])),
       Expanded(child:loading?const Center(child:CircularProgressIndicator()):RefreshIndicator(onRefresh:refresh,child:ListView(
         padding:const EdgeInsets.all(14),physics:const AlwaysScrollableScrollPhysics(),children:[
+          if(hasOlder)TextButton(onPressed:fetching?null:()=>refresh(older:true),child:const Text('Muat Pesan Sebelumnya')),
           if(messages.isEmpty&&error==null)const CikokoEmptyState(icon:Icons.chat_bubble_outline_rounded,title:'Belum ada pesan',subtitle:'Mulai percakapan dengan mengirim pesan.'),
           for(final row in messages)Align(alignment:(row['sender']=='admin')==admin?Alignment.centerRight:Alignment.centerLeft,
             child:Container(constraints:const BoxConstraints(maxWidth:340),margin:const EdgeInsets.only(bottom:10),padding:const EdgeInsets.all(13),

@@ -50,14 +50,24 @@ class ApiError implements Exception {
 class CikokoApi {
   static const root = 'https://datawebs.my.id/mobile-api/index.php';
   final _storage = const FlutterSecureStorage();
+  final sessionRevision=ValueNotifier<int>(0);
   String? token;
   Map<String,dynamic>? profile;
-  Future<void> restore() async { token = await _storage.read(key:'cikoko_token'); if(token!=null) {try {profile = (await call('me'))['user'] as Map<String,dynamic>?;}catch(_) {/* Saat server sementara tidak tersedia, jangan hapus sesi tersimpan. */}} }
+  Future<void> expireSession() async {
+    token=null;profile=null;sessionRevision.value++;
+    await _storage.delete(key:'cikoko_token');
+  }
+  Future<void> restore() async {
+    token=await _storage.read(key:'cikoko_token');
+    if(token!=null){try{profile=(await call('me'))['user'] as Map<String,dynamic>?;}
+    on ApiError catch(e){if(e.statusCode==401)await expireSession();}}
+  }
   Future<Map<String,dynamic>> call(String action, {Map<String,dynamic>? body, bool authorized = false}) async {
     final u=Uri.parse('${action.startsWith('v211_') ? root.replaceFirst('index.php','v211.php') : root}?action=$action');
     final progressId=body!=null?CikokoRequestProgress.begin():null;
     var successful=false;
     try {
+      final requestToken=token;
       final headers={'Accept':'application/json','Content-Type':'application/json'};
       if(token!=null)headers['Authorization']='Bearer $token';
       final http.Response r= body==null ? await http.get(u,headers:headers).timeout(const Duration(seconds:25)) : await http.post(u, headers:headers,body:jsonEncode(body)).timeout(const Duration(seconds:40));
@@ -70,6 +80,7 @@ class CikokoApi {
       if(d is! Map<String,dynamic>) {
         throw ApiError('Informasi belum dapat dimuat. Silakan coba kembali.',statusCode:r.statusCode);
       }
+      if(r.statusCode==401&&action!='login'&&requestToken!=null&&requestToken==token)await expireSession();
       if(r.statusCode>=400 || d['ok']==false){
         final msg='${d['error']??'Layanan belum tersedia.'}';
         throw ApiError(
@@ -97,7 +108,7 @@ class CikokoApi {
     await _storage.write(key:'cikoko_token',value:token);
   }
   Future<void> register(Map<String,dynamic> fields) async { await call('register',body:fields); }
-  Future<void> logout() async {if(token!=null){try{await call('logout',body:{});}catch(_){}}token=null;profile=null;await _storage.delete(key:'cikoko_token');}
+  Future<void> logout() async {if(token!=null){try{await call('logout',body:{});}catch(_){}}await expireSession();}
   String media(String? path) {
     final p=path??'';
     if(p.isEmpty)return '';
@@ -108,6 +119,7 @@ class CikokoApi {
   }
   Future<Map<String,dynamic>> upload(String action,Map<String,String> fields,
       Map<String,List<String>> files,{void Function(double)? progress}) async {
+    final uploadToken=token;
     final req=http.MultipartRequest('POST',Uri.parse(
       "${action.startsWith('v211_') ? root.replaceFirst('index.php','v211.php') : root}?action=$action"));
     req.headers['Accept']='application/json';
@@ -156,6 +168,7 @@ class CikokoApi {
         final response=await pending;
         final str=await response.stream.bytesToString();
         final data=jsonDecode(str);
+        if(response.statusCode==401&&token==uploadToken)await expireSession();
         if(data is! Map<String,dynamic> || response.statusCode>=400 || data['ok']!=true){
           throw ApiError(data is Map? "${data['error']??'Upload gagal'}":'Upload gagal');
         }
